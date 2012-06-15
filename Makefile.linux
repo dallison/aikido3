@@ -28,6 +28,22 @@ LDFLAGS += -L.
 
 build: xdebug xgtk midclean xopt 
 
+AIKIDOZIP = aikido_zip.o
+AIKIDOZIPC = aikido_zip.cc
+
+
+$(ZIPFILE):
+	cd src ; $(ZIPCMD)  ../$(ZIPFILE) $(ZIPFILES)
+	cd src/gtk ; $(ZIPCMD) ../../$(ZIPFILE) $(GTKFILES)
+
+$(AIKIDOZIP): $(ZIPFILE)
+	echo 'extern "C" {' > $(AIKIDOZIPC)
+	xxd -i $(ZIPFILE) >> $(AIKIDOZIPC)
+	echo '}' >> $(AIKIDOZIPC)
+	$(CXX) -c $(CXXFLAGS) -o $(AIKIDOZIP) $(AIKIDOZIPC)
+	rm -f $(ZIPFILE)
+
+
 xdebug:
 	$(MAKE) -f $(MAKEFILE) DEBUG="-g -DDEBUGON" LIB=$(GLIB) BIN=$(GBIN) STATICLIB=$(GSTATICLIB) $(GBIN)
 
@@ -44,18 +60,13 @@ driver: driver.o
 //OBJS += network.o math.o 
 
 $(LIB) : $(OBJS)
-	ar ruv $(LIB) $(OBJS)
+	ar ruv $(LIB) $(AIKIDOZIP) $(OBJS)
 	gcc $(BITS) -Wl,-r -nostdlib -o $(STATICLIB) $(OBJS)
 
 
-$(BIN): $(LIB) $(EOBJS) $(SUPPORTLIBS) $(ZIPFILE)
+$(BIN): $(AIKIDOZIP) $(LIB) $(EOBJS) $(SUPPORTLIBS) 
 	$(LINK.cc) -o $(BIN) $(PROFILE) $(EOBJS) $(LDLIBS) $(GPROF)
 
-
-$(ZIPFILE):
-	cd src ; $(ZIPCMD)  ../$(ZIPFILE) $(ZIPFILES)
-	cd src/gtk ; $(ZIPCMD) ../../$(ZIPFILE) $(GTKFILES)
-	xxd -i $(ZIPFILE) > src/aikido_zip.c
 
 
 bin/mkelf: src/mkelf.cc

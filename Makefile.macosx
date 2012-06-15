@@ -52,7 +52,7 @@ $(AIKIDOZIP): $(ZIPFILE)
 	echo 'extern "C" {' > $(AIKIDOZIPC)
 	xxd -i $(ZIPFILE) >> $(AIKIDOZIPC)
 	echo '}' >> $(AIKIDOZIPC)
-	$(CC) -c $(CFLAGS) -o $(AIKIDOZIP) $(AIKIDOZIPC)
+	$(CXX) -c $(CXXFLAGS) -o $(AIKIDOZIP) $(AIKIDOZIPC)
 	rm -f $(ZIPFILE)
 
 bin/mkelf: src/mkelf.cc
