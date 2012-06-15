@@ -1,0 +1,9 @@
+
+the value is ###{p}.  The square is #{p*p}
+
+<%
+foreach i 2 {
+    println ("hello")
+}
+%>
+
