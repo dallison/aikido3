@@ -30,7 +30,7 @@
 
 #include <map>
 #include <vector>
-#include <stdio.h>
+#include <iostream>
 #include <string>
 #if defined(_CC_GCC) && __GNUC__ == 2
 #include <strstream>
@@ -68,6 +68,7 @@ class ZipFile {
     friend class ZipDirEntry ;
 public:
     ZipFile (string filename) ;
+    ZipFile (void *data, int length) ;
     ~ZipFile() ;
     
     ZipEntry *open (string filename) ;
@@ -81,8 +82,9 @@ private:
     int read2() ;
     int read4() ;
     int read (char *buf, int len) ;
-    int seek (int offset, int whence) ;
-    FILE *fp ;
+    int seek (int offset, const std::ios_base::seekdir &whence) ;
+    int seek (int offset);
+    std::istream *in ;
 } ;
 
 //
@@ -99,7 +101,7 @@ public:
     long long uniqueId() ;
 #endif
 
-    int seek (int offset, int whence) ;
+    //int seek (int offset, const std::ios_base::seekdir &whence) ;
     int read() ;
     int read (char *buf, int len) ;
 #if defined(_CC_GCC) && __GNUC__ == 2

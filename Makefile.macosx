@@ -18,6 +18,9 @@ LDFLAGS += -L.
 LIBFLAGS = -bundle -undefined suppress -flat_namespace
 BUNDLEFLAGS = -fno-common
 
+AIKIDOZIP = aikido_zip.o
+AIKIDOZIPC = aikido_zip.cc
+
 xdebug:
 	$(MAKE) -f $(MAKEFILE) DEBUG="-g -DDEBUGON" LIB=$(GLIB) BIN=$(GBIN) $(GBIN)
 
@@ -34,11 +37,10 @@ build:  xdebug midclean xopt
 
 $(LIB) : $(OBJS)
 	#$(LD) -r -o $(LIB) $(OBJS) 
-	ar ruv $(LIB) $(OBJS)
+	ar ruv $(LIB) $(AIKIDOZIP) $(OBJS)
 	ranlib $(LIB)
 
-#$(BIN): $(LIB) $(EOBJS) $(ZIPFILE)
-$(BIN): $(LIB) $(EOBJS) $(ZIPFILE) $(SUPPORTLIBS)
+$(BIN): $(AIKIDOZIP) $(LIB) $(EOBJS) $(SUPPORTLIBS)
 	$(LINK.cc) -o $(BIN) $(PROFILE) $(EOBJS) $(LDLIBS) 
 
 
@@ -46,6 +48,12 @@ $(ZIPFILE):
 	cd src ; $(ZIPCMD)  ../$(ZIPFILE) $(ZIPFILES)
 	cd src/gtk ; $(ZIPCMD) ../../$(ZIPFILE) $(GTKFILES)
 
+$(AIKIDOZIP): $(ZIPFILE)
+	echo 'extern "C" {' > $(AIKIDOZIPC)
+	xxd -i $(ZIPFILE) >> $(AIKIDOZIPC)
+	echo '}' >> $(AIKIDOZIPC)
+	$(CC) -c $(CFLAGS) -o $(AIKIDOZIP) $(AIKIDOZIPC)
+	rm -f $(ZIPFILE)
 
 bin/mkelf: src/mkelf.cc
 	$(CC) -o bin/mkelf src/mkelf.cc -lstdc++

@@ -55,6 +55,7 @@ $(BIN): $(LIB) $(EOBJS) $(SUPPORTLIBS) $(ZIPFILE)
 $(ZIPFILE):
 	cd src ; $(ZIPCMD)  ../$(ZIPFILE) $(ZIPFILES)
 	cd src/gtk ; $(ZIPCMD) ../../$(ZIPFILE) $(GTKFILES)
+	xxd -i $(ZIPFILE) > src/aikido_zip.c
 
 
 bin/mkelf: src/mkelf.cc

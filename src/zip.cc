@@ -30,6 +30,8 @@
 
 #include <fcntl.h>
 #include <string.h>
+#include <fstream>
+#include <sstream>
 
 namespace zip {
 
@@ -51,21 +53,26 @@ ZipDirEntry::~ZipDirEntry() {
 
 ZipFile::ZipFile (string filename) {
     int flags = 0 ;
-    fp = fopen (filename.c_str(), "rb") ;
-    if (fp == NULL) {
+    in = new std::ifstream (filename.c_str());
+    if (!(*in)) {
         throw "Unable to open file" ;
     }
-#ifndef _OS_WINDOWS
-    // Do we care about return codes if close-on-exec isn't set?
-    flags = fcntl (fileno(fp), F_GETFD, 0) ;
-    flags |= FD_CLOEXEC ;
-    fcntl(fileno(fp), F_SETFD, flags) ;
-#endif
+    readDirectory() ;
+}
+
+ZipFile::ZipFile (void *data, int length) {
+    int flags = 0 ;
+    in = new std::stringstream ();
+    std::stringstream *sin = (std::stringstream*)in;
+    char *cdata = (char*)data;
+    for (int i = 0 ; i < length ; i++) {
+        sin->put (cdata[i]);
+    }
     readDirectory() ;
 }
 
 ZipFile::~ZipFile() {
-    fclose (fp) ;
+   delete in;
 }
 
 
@@ -76,7 +83,7 @@ ZipEntry *ZipFile::open (string filename) {
         return NULL ;
     }
     ZipDirEntry *entry = (*f).second ;
-    seek (entry->index, SEEK_SET) ;
+    seek (entry->index) ;
     int localsig = read4() ;
     if (localsig != 0x04034b50) {
         throw "Invalid local file signature" ;
@@ -121,9 +128,9 @@ void ZipFile::list (std::vector<std::string> &files) {
 void ZipFile::readDirectory() {
     char buf[256] ;			// space for 2 end records
     memset (buf, 0, sizeof (buf)) ;
-    seek (0, SEEK_END) ;	// go to end of file
+    seek (0, std::ios_base::end) ;	// go to end of file
     int pos, len ;
-    len = pos = ftell (fp) ; 			// length of file
+    len = pos = in->tellg() ; 			// length of file
     unsigned char *end = NULL ;
     while (end == NULL && len - pos < 0xffff) {        // end header must be in final 64K
         int count = 0xffff - (len - pos) ;
@@ -132,7 +139,7 @@ void ZipFile::readDirectory() {
         }
         memcpy (buf + count, buf, count) ;		// shift previous block
         pos -= count ;
-        seek (pos, SEEK_SET) ;
+        seek (pos) ;
         read (buf, count) ;
         for (unsigned char *bp = (unsigned char *)buf ; bp < (unsigned char*)buf + count ; bp++) {
             if (bp[0] == 0x50 && bp[1] == 0x4b && bp[2] == 0x05 && bp[3] == 0x06) {
@@ -146,7 +153,7 @@ void ZipFile::readDirectory() {
     }
     int cenpos = end[16] | end[17] << 8 | end[18] << 16 | end[19] << 24 ;
     int censize = end[10] | end[11] << 8 ;
-    seek (cenpos, SEEK_SET) ;
+    seek (cenpos) ;
     for (int i = 0 ; i < censize ; i++) {
         int sig = read4() ;
         if (sig != 0x02014b50) {
@@ -186,38 +193,43 @@ void ZipFile::readDirectory() {
 }
 
 int ZipFile::read() {
-    int c = fgetc(fp) ;
+    int c = in->get() & 0xff ;
     return c ;
 }
 
 int ZipFile::read2() {
     int w ;
-    w = fgetc (fp) ;
-    w |= fgetc (fp) << 8 ;
+    w = read() ;
+    w |= read() << 8 ;
     return w ;
 }
 
 int ZipFile::read4() {
     int w ;
-    w = fgetc (fp) ;
-    w |= fgetc (fp) << 8 ;
-    w |= fgetc (fp) << 16 ;
-    w |= fgetc (fp) << 24 ;
+    w = read() ;
+    w |= read() << 8 ;
+    w |= read() << 16 ;
+    w |= read() << 24 ;
     return w ;
 }
 
 int ZipFile::read (char *buf, int len) {
     int n = 0 ;
     while (len-- > 0) {
-        *buf++ = fgetc (fp) ;
+        *buf++ = read() ;
         n++ ;
     }
     return n ;
 }
 
-int ZipFile::seek (int offset, int whence) {
-    fseek (fp , offset, whence) ;
-    return ftell (fp) ;
+int ZipFile::seek (int offset, const std::ios_base::seekdir &whence) {
+    in->seekg (offset, whence) ;
+    return in->tellg() ;
+}
+
+int ZipFile::seek (int offset) {
+    in->seekg (offset) ;
+    return in->tellg() ;
 }
 
 
@@ -245,7 +257,7 @@ int ZipEntry::read() {
     if (index == entry->length) {
         return -1 ;
     }
-    file->seek (index++, SEEK_SET) ;
+    file->seek (index++) ;
     int c = file->read() ;
     return c ;
 }
@@ -255,13 +267,14 @@ int ZipEntry::read (char *buf, int len) {
     if (len > bytesleft) {
         len = bytesleft ;
     }
-    file->seek (index, SEEK_SET) ;
+    file->seek (index) ;
     int c = file->read (buf, len) ;
     index += len ;
     return c ;
 }
 
-int ZipEntry::seek (int offset, int whence) {
+#if 0
+int ZipEntry::seek (int offset) {
     switch (whence) {
         case SEEK_SET:
             index = entry->datastart + offset ;
@@ -275,6 +288,7 @@ int ZipEntry::seek (int offset, int whence) {
     }    
     return index ;
 }
+#endif
 
 // read the entry into a strstream
 #if defined(_CC_GCC) && __GNUC__ == 2
@@ -289,7 +303,7 @@ std::stringstream *ZipEntry::getStream() {
 #else
     std::stringstream *s = new std::stringstream ;
 #endif
-    file->seek (entry->datastart, SEEK_SET) ;
+    file->seek (entry->datastart) ;
     int remaining = entry->length ;
     while (remaining > 0) {
         int n = file->read (buffer, remaining < sizeof (buffer) ? remaining : sizeof(buffer)) ;

@@ -38,6 +38,11 @@
 
 
 
+// this is the binary for the aikido.zip file genetated by xxd
+extern "C" {
+   extern unsigned char bin_aikido_zip[];
+   extern int bin_aikido_zip_len;
+}
 
 #if defined(_OS_MACOSX)
 #include <sys/stat.h>		// for some reason this needs to be before aikido.h
@@ -696,6 +701,9 @@ Node *Aikido::addFixedTypeVar (string name, Token t, const Value &v, bool iscons
 //
 
 void Aikido::findSystemZip() {
+    systemZip = new zip::ZipFile (bin_aikido_zip, bin_aikido_zip_len);
+#if 0
+
 #if defined(_OS_WINDOWS)
     string sysfilename = "\\aikido.zip" ;
 #else
@@ -734,6 +742,8 @@ void Aikido::findSystemZip() {
             return ;
         }
     }
+#endif
+
 #endif
 }
 
