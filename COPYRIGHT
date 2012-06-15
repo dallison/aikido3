@@ -51,3 +51,8 @@ The terminal.cc code contains the source code for tgoto.  This is copyright as f
  * SUCH DAMAGE.
  */
 
+Closure support is Copyright (C) 2004 David Allison.
+
+Portions created by David Allison at Xsigo Systems Inc are Copyright (C) 2004-2012 Xsigo Systems
+Inc.
+
