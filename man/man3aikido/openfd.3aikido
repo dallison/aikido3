@@ -1,0 +1,31 @@
+.\" Aikido manual
+.\" David Allison
+.TH openfd 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+openfd \- Attach a stream to an already open file descriptor
+.SH SYNOPSIS
+\fBSystem.openfd(fd)
+.SH DESCRIPTION
+The System.openfd() function is used to attach a stream to an operating
+system file descriptor that is already open.  The stream can then be used
+like any other stream in the program.
+.P
+Sometimes a program has to use low level operating system descriptors
+when dealing with things such as pipes and TCP connections.  While
+Aikido does provide these facilities already, there may be occasions
+where the Aikido functionality is not appropriate.
+
+.SH RETURN VALUES
+A stream attached to the open file is returned
+.SH EXAMPLE
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+open(3aikido), openout(3aikido), openup(3aikido), openin(3aikido),
+close(3aikido), seek(3aikido), eof(3aikido), flush(3aikido),
+getchar(3aikido), get(3aikido)
+

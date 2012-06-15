@@ -1,0 +1,19 @@
+.\" Aikido manual
+.\" David Allison
+.TH rewind 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+rewind \- Rewind a stream to the start
+.SH SYNOPSIS
+\fBSystem.rewind(stream)
+.SH DESCRIPTION
+The System.rewind() function moves the 'current location' of a stream back to the
+start of the stream.  There is no effect if the stream is not 'seekable'.  An
+example of a non-seekable stream is one attached to a network connection.
+.SH RETURN VALUES
+Nothing is returned
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

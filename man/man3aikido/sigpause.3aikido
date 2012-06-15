@@ -1,0 +1,17 @@
+.\" Aikido manual
+.\" David Allison
+.TH sigpause 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+sigpause \- 
+.SH SYNOPSIS
+\fBSystem.sigpause()
+.SH DESCRIPTION
+The System.sigpause() function
+.SH RETURN VALUES
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

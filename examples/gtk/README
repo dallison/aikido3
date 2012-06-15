@@ -1,0 +1,18 @@
+GTK+ examples
+-------------
+
+I didn't write these.  They are taken from the GTK+ release
+and converted into Aikido.  They are provided purely
+as examples of how to use the GTK package to write
+GUI programs.
+
+For copyright information about a specific example, see
+the file of the same name in the GTK+ release.
+
+You will need to set your AIKIDOPATH to tell the
+interpreter where the GTK+ libraries are.  For
+example, if the libraries are in /usr/local/lib/gtk:
+
+% setenv AIKIDOPATH /usr/local/lib/gtk
+
+

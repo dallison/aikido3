@@ -1,0 +1,47 @@
+.\" Aikido manual
+.\" David Allison
+.TH getlimit 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+getlimit \- Get the value of an operating system resource limit
+.SH SYNOPSIS
+\fBSystem.getlimit(limitname)
+.SH DESCRIPTION
+The System.getlimit() function retrieves the current value of an operating system
+resource limit.  The limitname is a string and can take the following values:
+.IP "cputime" 10
+The maximum CPU time (in seconds)
+.IP "filesize" 10
+The maximum file size (in 512-byte blocks)
+.IP "datasize" 10
+The maximum size of the data segment or heap (in kbytes)
+.IP "stacksize" 10
+The maximum size of the stack (in kbytes)
+.IP "coredumpsize" 10
+The maximum size of of a core file (in 512-byte blocks)
+.IP "descriptors" 10
+The maximum number of file descriptors (plus 1)
+.IP "memorysize" 10
+The maximum size of virtual memory (in kbytes)
+
+.SH RETURN VALUES
+The value returned is an integer that may be:
+.P
+.IP "System.RLIM_INFINITY" 10
+Unlimited value
+.IP "System.RLIM_SAVED_MAX" 10
+Operating system dependent
+.IP "System.RLIM_SAVED_CUR" 10
+Operating system dependent
+
+.SH EXCEPTIONS
+If the name of the resource is unknown a 
+.I System.ParameterException 
+is thrown.
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+getlimit(2), setlimit(3aikido)

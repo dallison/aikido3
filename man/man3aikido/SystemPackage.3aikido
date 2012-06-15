@@ -1,0 +1,769 @@
+.\" Aikido manual
+.\" David Allison
+.TH System 3aikido 3/10/2003 aikido "Aikido packages"
+
+.SH NAME
+System\- System package
+.SH SYNOPSIS
+\fBpackage System {
+.br
+    const username 
+.br
+    const hostname 
+.br
+    const domainname 
+.br
+    const pid 
+.br
+    const ppid 
+.br
+    const pgrp 
+.br
+    const ppgrp 
+.br
+    const uid 
+.br
+    const gid 
+.br
+    const operatingsystem 
+.br
+    const osinfo 
+.br
+    const machine 
+.br
+    const architecture 
+.br
+    const platform 
+.br
+    const manufacturer 
+.br
+    const serialnumber 
+.br
+    const hostid 
+.br
+    const pagesize 
+.br
+    const numpages 
+.br
+    const numprocessors 
+.br
+    
+.br
+    const fileSeparator 
+.br
+    const extensionSeparator 
+.br
+    const clocksPerSec 
+.br
+
+.br
+    public function println (s = "", str = output) 
+.br
+
+.br
+    public function print (s = "", str = output) 
+
+    package StreamAttributes {
+.br
+        const BUFFERSIZE 
+.br
+        const MODE 
+.br
+        const AUTOFLUSH 
+.br
+        const LINEMODE 
+.br
+        const CHARMODE 
+.br
+    }
+.br
+
+.br
+    public native clone (object, recurse)		
+.br
+    public native fill (object, value, start, end)	
+.br
+    public native resize (object, size)	   		
+.br
+    public native sort (vec)			
+.br
+    public native bsearch (vec, val)		
+.br
+    public native findn (obj, val, index, dir)		
+.br
+    public native split (obj, sep)		
+.br
+    public native transform (val, func)		
+.br
+    public native trim (val)			
+.br
+    public native replace (val, find, repl, all)
+.br
+    public native hash (val)			
+.br
+    public native malloc (size)			
+.br
+    public native append (obj, val)		
+.br
+    public native insert (obj, val, index)	
+.br
+    public native clear (val)                   
+.br
+
+.br
+    
+.br
+    public native open (file, mode)
+.br
+    public native openin (file)
+.br
+    public native openout (file)
+.br
+    public native openup (file)
+.br
+    public native openfd (fd)
+.br
+    public native close (stream)
+.br
+    public native select (stream, timeout)
+.br
+    public native eof (stream)
+.br
+    public native flush (stream)
+.br
+    public native getchar (stream)		
+.br
+    public native get (stream, n)		
+.br
+    public native getbuffer (stream)		
+.br
+    public native availableChars (stream)
+.br
+    public native setStreamAttribute (stream, attr, value)
+.br
+    public native rewind (stream)
+.br
+    public native seek (stream, offset, whence)
+.br
+    public native stat(file)
+.br
+    public native readdir (dirname)
+.br
+    public native chdir (dirname)
+.br
+    public native getwd()			
+.br
+    public native rename (oldname, newname)
+.br
+    public native remove (filename)
+.br
+    public native mknod (nodename, mode) 		
+.br
+    public native tmpnam()				
+.br
+    public native glob (pattern)                        
+.br
+    
+.br
+    public function mkdir (dirname, mode = 0666) {
+.br
+        mkdir1 (dirname, mode)
+.br
+    }
+.br
+
+.br
+    public native isatty (stream)
+.br
+    public native ttyname (stream)
+.br
+
+.br
+    
+.br
+    public native getStackTrace()
+.br
+    public native pipeclose (stream)
+.br
+    public native pipewait (stream)
+.br
+    public native abort()
+.br
+    public native exit (code)
+.br
+    public native rand()
+.br
+    public native srand (seed)
+.br
+    public native getenv (variable)		
+.br
+    public native setenv (variable, value)      
+.br
+    public native error (str)
+.br
+    public native format (str,...)
+.br
+    public native vformat (str,args)
+.br
+    public native scan (str, var ...) 
+.br
+    public native getUser (name)
+.br
+    public native setlimit (limitname, limitvalue)
+.br
+    public native getlimit (limitname)
+.br
+    public function printf (f : string, ...) 
+.br
+    const RLIM_INFINITY 
+.br
+    const RLIM_SAVED_MAX 
+.br
+    const RLIM_SAVED_CUR 
+.br
+
+.br
+    public function system (command, env = [], dir = "") 
+.br
+    public native getSystemStatus ()    
+.br
+
+.br
+    public function exec (command, outstream = output, errstream = stderr, env = [], dir = "") 
+.br
+    public function pipe (command, redirectStderr = true, env = [], dir = "") 
+.br
+    public function find (obj, val, index = 0) 
+.br
+    public function rfind (obj, val, index = sizeof (obj) - 1) 
+.br
+    public function poke (address, value, size = 1) 
+.br
+    public function peek (address, size = 1) 
+.br
+    public native bitsToReal (bits)
+.br
+
+.br
+    public function mail (subject, stream, address, cc = [], bcc = []) 
+.br
+    public native eval (expression)
+.br
+    public function load (from, name = "<anon>") 
+.br
+    public native loadLibrary (filename)
+.br
+
+.br
+    public class RegexMatch (str, ex) {
+.br
+        public function expr (e) 
+.br
+        public function nExprs 
+.br
+    }
+.br
+
+.br
+    public function match (str: string, expr : string) 
+.br
+    public native kill (pid, signal)		
+.br
+    public native sigset (signal, handler)	
+.br
+    public native sighold (signal)		
+.br
+    public native sigrelse (signal) 		
+.br
+    public native sigignore (signal)		
+.br
+    public native sigpause (signal)		
+.br
+
+.br
+    
+.br
+    const SIG_DFL 
+.br
+    const SIG_IGN 
+.br
+    const SIG_HOLD 
+.br
+
+.br
+    package Signals {
+.br
+        const SIGHUP  
+.br
+        const SIGINT  
+.br
+        const SIGQUIT 
+.br
+        const SIGILL  
+.br
+        const SIGTRAP 
+.br
+        const SIGIOT  
+.br
+        const SIGABRT 
+.br
+        const SIGEMT  
+.br
+        const SIGFPE  
+.br
+        const SIGKILL 
+.br
+        const SIGBUS  
+.br
+        const SIGSEGV 
+.br
+        const SIGSYS  
+.br
+        const SIGPIPE 
+.br
+        const SIGALRM 
+.br
+        const SIGTERM 
+.br
+        const SIGUSR1 
+.br
+        const SIGUSR2 
+.br
+        const SIGCLD  
+.br
+	const SIGCHLD 
+.br
+        const SIGPWR  
+.br
+        const SIGWINCH 
+.br
+        const SIGURG  
+.br
+        const SIGPOLL 
+.br
+        const SIGIO   
+.br
+        const SIGSTOP 
+.br
+        const SIGTSTP 
+.br
+        const SIGCONT 
+.br
+        const SIGTTIN 
+.br
+        const SIGTTOU 
+.br
+        const SIGVTALRM 
+.br
+        const SIGPROF 
+.br
+        const SIGXCPU 
+.br
+        const SIGXFSZ 
+.br
+        const SIGWAITING 
+.br
+        const SIGLWP  
+.br
+        const SIGFREEZE 
+.br
+        const SIGTHAW 
+.br
+        const SIGCANCEL 
+.br
+        const SIGLOST 
+.br
+    }
+.br
+
+    public class User {
+.br
+    public:
+.br
+        var name 
+.br
+        var uid 
+.br
+        var gid 
+.br
+        var fullname 
+.br
+        var dir 
+.br
+        var shell 
+.br
+        var password 
+.br
+    }
+.br
+
+.br
+    
+.br
+    
+.br
+    public class StackFrame {
+.br
+    public:
+.br
+        var filename 
+.br
+        var lineno 
+.br
+        var block 
+.br
+    }
+.br
+
+.br
+    
+.br
+    
+.br
+    
+.br
+
+.br
+    public function printStackTrace (trace : vector) 
+.br
+    public function whereami 
+.br
+    public class Regex {
+.br
+    public:
+.br
+        var start 
+.br
+        var end 
+.br
+    }
+.br
+
+.br
+    
+.br
+    
+.br
+    
+.br
+
+.br
+    public function readfile (filename : string) 
+.br
+    public function readline (instream) 
+.br
+    public native time()		
+.br
+    public native date()		
+.br
+    public native gmdate()		
+.br
+    public native makedate (time)	
+.br
+    public native makegmdate (time)	
+.br
+    public native parsedate (str, obj)  
+.br
+    public class Date (s : string = "") {
+.br
+    public:
+.br
+        var sec 
+.br
+        var min 
+.br
+        var hour 
+.br
+        var mday 
+.br
+        var mon 
+.br
+        var year 
+.br
+        var wday 
+.br
+        var yday 
+.br
+        var isdst 
+.br
+        var tzdiff 
+.br
+        var tz 
+.br
+        static const defaultFormat = "%a %b %e %T %Z %Y"
+.br
+        function format (f) 
+.br
+        function toString 
+.br
+        function normalize 
+.br
+        operator -> (stream, isout) 
+.br
+        operator + (secs) 
+.br
+        operator - (secs) 
+.br
+        operator == (otherdate) 
+.br
+        operator != (d) 
+.br
+        operator < (otherdate) 
+.br
+        operator > (otherdate) 
+.br
+        operator <= (d) 
+.br
+        operator >= (d) 
+.br
+        operator in (d1, d2) 
+.br
+        static function makeDate (time) 
+.br
+        static function makeUTCDate (time) 
+.br
+    }
+.br
+
+.br
+    public class Stat {
+.br
+    public:
+.br
+        var mode 
+.br
+        var inode 
+.br
+        var dev 
+.br
+        var rdev 
+.br
+        var nlink 
+.br
+        var uid 
+.br
+        var gid 
+.br
+        var size 
+.br
+        var atime 
+.br
+        var mtime 
+.br
+        var ctime 
+.br
+        var blksize 
+.br
+        var blocks 
+.br
+
+.br
+        
+.br
+        static const S_IFMT 
+.br
+        static const S_IAMB 
+.br
+        static const S_IFIFO
+.br
+        static const S_IFCHR
+.br
+        static const S_IFDIR
+.br
+        static const S_IFNAM
+.br
+        static const S_INSEM
+.br
+        static const S_INSHD
+.br
+        static const S_IFBLK
+.br
+        static const S_IFREG
+.br
+        static const S_IFLNK
+.br
+        static const S_IFSOCK
+.br
+        static const S_IFDOOR
+.br
+        static const S_ISUID 
+.br
+        static const S_ISGID 
+.br
+        static const S_ISVTX 
+.br
+        static const S_IREAD 
+.br
+        static const S_IWRITE
+.br
+        static const S_IEXEC 
+.br
+        static const S_ENFMT 
+.br
+
+.br
+        static const S_IRWXU 
+.br
+        static const S_IRUSR 
+.br
+        static const S_IWUSR 
+.br
+        static const S_IXUSR 
+.br
+        static const S_IRWXG 
+.br
+        static const S_IRGRP 
+.br
+        static const S_IWGRP 
+.br
+        static const S_IXGRP 
+.br
+        static const S_IRWXO 
+.br
+        static const S_IROTH 
+.br
+        static const S_IWOTH 
+.br
+        static const S_IXOTH 
+.br
+
+.br
+        function S_ISFIFO 
+.br
+        function S_ISCHR 
+.br
+        function S_ISDIR
+.br
+        function S_ISBLK
+.br
+        function S_ISREG
+.br
+        function S_ISLNK
+.br
+        function S_ISSOCK
+.br
+        function S_ISDOOR 
+.br
+    }
+.br
+
+.br
+    public class Pair {
+.br
+    public:
+.br
+        generic first ;
+.br
+        generic second ;
+.br
+    }
+.br
+
+.br
+    public function redirectStream (var s, newvalue) 
+.br
+    public package OpenMode {
+.br
+    public:
+.br
+        const APPEND 
+.br
+        const BINARY 
+.br
+        const IN 
+.br
+        const OUT 
+.br
+        const TRUNC 
+.br
+        const ATEND 
+.br
+        const NOCREATE 
+.br
+        const NOREPLACE 
+.br
+    }
+.br
+
+.br
+    
+.br
+    const SEEK_SET 
+.br
+    const SEEK_CUR 
+.br
+    const SEEK_END 
+.br
+
+.br
+    
+.br
+    const MIN_PRIORITY 
+.br
+    const MAX_PRIORITY 
+.br
+
+.br
+    class Exception (protected reason) 
+.br
+        public function report (stream) 
+.br
+        public function printStackTrace (stream) 
+.br
+        public operator -> (stream, isout) 
+.br
+        public function toString() 
+.br
+    }
+.br
+
+.br
+    
+.br
+    class FileException (filename, r) extends Exception (r) {
+.br
+        public function getFileName() {
+.br
+        public operator -> (stream, isout) 
+.br
+        public function toString() 
+.br
+    }
+.br
+
+.br
+    class ParameterException (func, r) extends Exception (r) {
+.br
+        public function getFunction 
+.br
+        public operator -> (stream, isout) 
+.br
+        public function toString() 
+.br
+    }
+.br
+
+    public var out 
+.br
+    public var in 
+.br
+    public var err
+.br
+}
+.br
+
+.br
+.SH DESCRIPTION
+The System package provides the base runtime library for the Aikido system.
+It contains many functions and other definitions that are available for
+all Aikido programs to use.
+.P
+
+
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

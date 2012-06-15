@@ -1,0 +1,336 @@
+/*
+ * htmlpage.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.5
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+
+// an HTML page builder
+
+package HTML {
+
+    // atomic components
+    class Component {
+        var attributes = {}
+        public function setAttribute (name : string, value : string) {
+            attributes[name] = value
+        }
+
+        public function getAttrs () {
+           var str = ""
+           foreach attr attributes {
+               str += " " + attr.first + "=\"" + attr.second + "\""
+           }
+           return str
+        }
+    }
+
+    class Header (level, text) extends Component {
+        public function send (stream) {
+            ["<h", level, getAttrs(), ">", text, "</h", level, ">\n"] -> stream
+        }
+    }
+ 
+    class Link (url, text) extends Component {
+        public function send (stream) {
+            ["<a href=\"", url, "\"", getAttrs(), ">", text, "</a>\n"] -> stream
+        }
+    }
+ 
+    class Ruler (size) extends Component {
+        public function send (stream) {
+            ["<hr width=\"" , size, "\"", getAttrs(), ">\n"] -> stream
+        }
+    }
+ 
+    class Text (t) extends Component {
+        public function send (stream) {
+            t -> stream
+        }
+    }
+
+    class LineBreak extends Component {
+        public function send (stream) {
+            ["<br", getAttrs(), ">\n"] -> stream
+        }
+    }
+
+    class Italics (text) extends Component {
+        public function send (stream) {
+            ["<em>", text, "</em>"] -> stream
+        }
+    }
+ 
+    
+    class Bold (text)  extends Component{
+        public function send (stream) {
+            ["<b>", text, "</b>"] -> stream
+        }
+    }
+ 
+    // form elements
+    class Control (protected name) extends Component {
+    }
+
+    class Input (nm, type) extends Control (nm) {
+        public function send (stream) {
+            ["<input type=\"", type, "\" name=\"", nm, "\">"] -> stream
+        }
+    }
+
+    class SubmitButton (nm) extends Control (nm) {
+        public function send (stream) {
+            ["<input type=\"submit\" value=\"", nm, "\">"] -> stream
+        }
+    }
+
+    class TextInput (nm) extends Input (nm, "text") {
+    }
+
+    class TextArea (nm, cols, rows, wrap) extends Control (nm) {
+        public function send (stream) {
+            ["<textarea name=\"", nm, "\" cols=\"", cols, "\" rows=\"", rows, "\" wrap=\"", wrap, "\"", getAttrs(), "></textarea>"] -> stream
+        }
+    }
+
+    class ResetButton (nm) extends Control (nm) {
+        public function send (stream) {
+            ["<input type=\"reset\" value=\"", nm, "\">"] -> stream
+        }
+    }
+
+    class Radio (nm, labels, values, vertical) extends Control (nm) {
+        public function send (stream) {
+            for (var i = 0 ; i < sizeof (values) ; i++) {
+                var label = labels[i]
+                var value = values[i]
+                ["<input type=\"radio\" name=\"", nm, "\" value=\"", value, "\">"] -> stream
+                [label, "\n"] -> stream
+                if (vertical) {
+                    "<br>\n" -> stream
+                }
+                
+            }
+        }
+
+    }
+ 
+    // forward declarations of compound components
+    class Preformatted ...
+    class Paragraph ...
+    class Form...
+
+    // a list of components
+    class ComponentList extends Component {
+        var comps = []
+
+    public:
+        function streamIn (from) {
+            switch (typeof (from)) {
+            case "stream":
+                while (!System.eof(from)) {
+                    var line = ""
+                    from -> line
+                    new Text (line + "\n") -> comps
+                }
+                break
+            case "vector":
+                foreach line from {
+                    new Text (line) -> comps
+                }
+                break
+            default:
+                new Text (cast<string>(from)) -> comps
+                break
+            }
+        }
+
+        function streamOut (stream) {
+            foreach c comps {
+                c.send (stream)
+            }
+        }
+    
+        operator -> (data, isout) {
+            if (!isout) {
+                streamOut (data)
+            } else { 
+                streamIn (data)
+            }
+        }
+    
+        function header (level, text) {
+            new Header (level, text) -> comps
+        }
+     
+        function paragraph {
+            var p = new Paragraph() 
+            comps += p 
+            return p
+        }
+     
+        function rule(size = "100%") {
+            new Ruler(size) -> comps
+        }
+
+        function lineBreak() {
+            new LineBreak() -> comps
+        }
+     
+        function link (url, text) {
+            var l = new Link (url, text)
+            l -> comps
+            return l
+        }
+
+        function preformat() {
+            var p = new Preformatted()
+            comps += p			// can't stream
+            return p
+        }
+
+        function italics (t) {
+            new Italics (t) -> comps
+        }
+        
+        function bold (t) {
+            new Bold (t) -> comps
+        }
+        
+        function form(action, method = "get") {
+            var p = new Form(action, method)
+            comps += p			// can't stream
+            return p
+        }
+
+        function textInput (name) {
+            new TextInput (name) -> comps
+        }
+
+        function textArea (name, cols, rows, wrap) {
+            new TextArea (name, cols, rows, wrap) -> comps
+        }
+
+        function submitButton (name) {
+            new SubmitButton (name) -> comps
+        }
+
+        function resetButton (name) {
+            new ResetButton (name) -> comps
+        }
+
+        function radio (name, labels, values, vertical = true) {
+            new Radio (name, labels, values, vertical) -> comps
+        }
+    }
+
+    class Paragraph extends ComponentList {
+        public function send (stream) {
+            ["<p", getAttrs(), ">\n"] -> stream
+            streamOut (stream)
+        }
+
+        operator -> (data, isout) {
+            if (!isout) {
+                send (data)
+            } else { 
+                streamIn (data)
+            }
+        }
+    }
+ 
+    // preformatted component list
+    class Preformatted extends ComponentList {
+         public function send (stream) {
+             ["<pre", getAttrs(), ">\n"] -> stream
+             streamOut (stream)
+             "</pre>\n" -> stream
+         }
+
+        operator -> (data, isout) {
+            if (!isout) {
+                send (data)
+            } else { 
+                streamIn (data)
+            }
+        }
+    }
+
+    class Form (action, method = "get") extends ComponentList {
+    public:
+         public function send (stream) {
+             ["<form action=\"", action, "\" method=\"", method, "\"", getAttrs(), ">\n"] -> stream
+             streamOut (stream)
+             "</form>\n" -> stream
+         }
+
+        operator -> (data, isout) {
+            if (!isout) {
+                send (data)
+            } else { 
+                streamIn (data)
+            }
+        }
+    
+    }
+
+    // an HTML page
+    public class Page (title = "") extends ComponentList {
+       var refresh = -1
+       var refreshurl = ""
+    public:
+        function setTitle (t) {
+            title = t
+        }
+    
+       
+        function setRefresh (secs, url = "") {  
+            refresh = secs
+        }
+
+        operator -> (data, isout) {
+            if (!isout) {
+                "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n" -> data
+                "<html>\n" -> data
+                "<head>\n" -> data
+                ["<title>", title, "</title>\n"] -> data
+                if (refresh >= 0) {
+                    if (refreshurl == "") {
+                        ["<META HTTP-EQUIV=\"Refresh\" CONTENT=", refresh, ">\n"] -> data
+                    } else {
+                        ["<META HTTP-EQUIV=\"Refresh\" CONTENT=", refresh, "; URL=", refreshurl,">\n"] -> data
+                    }
+                } 
+                "</head>\n" -> data
+             
+                "<body>\n" -> data
+                streamOut (data)
+                "</body>\n" -> data
+                "</html>\n" -> data
+            } else { 
+                streamIn (data)
+            }
+        }
+    
+    }
+}
+    

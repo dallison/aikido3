@@ -1,0 +1,231 @@
+.\" Aikido manual
+.\" David Allison
+.TH Math 3aikido 3/10/2003 aikido "Aikido packages"
+
+.SH NAME
+Math \- Mathematics package
+.SH SYNOPSIS
+\fBimport math
+.P
+\fBpackage Math {
+.br
+    public function sin (x: real) : real 
+.br
+    public function cos (x: real) : real 
+.br
+    public function tan (x: real) : real 
+.br
+    public function acos (x: real) : real 
+.br
+    public function asin (x: real) : real 
+.br
+    public function atan (x: real) : real 
+.br
+    public function sinh (x: real) : real 
+.br
+    public function cosh (x: real) : real 
+.br
+    public function tanh (x: real) : real 
+.br
+    public function exp (x: real) : real 
+.br
+    public function log (x: real) : real 
+.br
+    public function log10 (x: real) : real 
+.br
+    public function sqrt (x: real) : real 
+.br
+    public function ceil (x: real) : real 
+.br
+    public function fabs (x: real) : real 
+.br
+    public function floor (x: real) : real 
+.br
+    public function atan2 (x: real,y: real) : real 
+.br
+    public function pow (x: real,y: real) : real 
+.br
+    public function ldexp (x: real,y: integer) : real 
+.br
+    public function fmod (x: real,y: real) : real 
+.br
+    public function trunc (x: real) : integer 
+.br
+    public function round (x: real) : integer 
+.br
+    public function deg (x : real) : real 
+.br
+    public function rad (x : real) : real 
+.br
+
+.br
+    public const E             
+.br
+    public const LOG2E         
+.br
+    public const LOG10E        
+.br
+    public const LN2           
+.br
+    public const LN10          
+.br
+    public const PI            
+.br
+    public const PI_2          
+.br
+    public const PI_4          
+.br
+    public const SQRT2         
+.br
+    public const SQRT1_2       
+.br
+}
+.br
+.SH DESCRIPTION
+The Math package provides a set of mathematical functions and constants
+for use in an Aikido program.  Most of the functions operate on real
+numbers and return real numbers.
+.P
+.SH Functions
+The functions provided are:
+.IP "function sin (x: real): real" 10
+The sine of
+.I x
+measured in radians.
+.IP "function cos (x: real): real" 10
+The cosine of
+.I x
+measured in radians.
+.IP "function tan (x: real): real" 10
+The tangent of
+.I x
+measured in radians.
+.IP "function acos (x: real): real" 10
+The arc consine of
+.I x
+measured in radians.  The value of
+.I x
+should be in the range [-1:1]
+.IP "function asin (x: real): real" 10
+The arc sine of
+.I x
+measured in radians.
+.IP "function atan (x: real): real" 10
+The arc tangent of
+.I x
+measured in radians.
+.IP "function sinh (x: real): real" 10
+The hyperbolic sine of
+.I x
+measured in radians.
+.IP "function cosh (x: real): real" 10
+The hyperbolic cosine of
+.I x
+measured in radians.
+.IP "function tanh (x: real): real" 10
+The hyperbolic tangent of
+.I x
+measured in radians.
+.IP "function exp (x: real): real" 10
+The exponential of 
+.I x
+defined as e to-the-power-of x.
+.IP "function log (x: real): real" 10
+The natural logarithm of 
+.I x
+..  The value of x must be positive.
+.IP "function log10 (x: real): real" 10
+The logarithm to base 10 of 
+.I x
+.. The value of x must be positive.
+.IP "function sqrt (x: real): real" 10
+The square root of 
+.I x
+..
+.IP "function ceil (x: real): real" 10
+The smallest integral value not less than 
+.I x
+..
+.IP "function fabs (x: real): real" 10
+The absolute value of 
+.I x
+..
+.IP "function floor (x: real): real" 10
+The largest integral value not greater than 
+.I x
+..
+.IP "function atan2 (x: real, y: real): real" 10
+The arc tangent of 
+.I y
+/
+.I x
+using the signs of both argument to determine the quadrant of the
+return value.  See atan2(2) for more information.
+.IP "function pow (x: real, y:real): real" 10
+The value of
+.I x
+raised to the power of
+.I y
+..
+.IP "function ldexp (x: real, y: integer): real" 10
+Computes the value 
+.I x
+* 2**
+.I y
+..
+.IP "function fmod (x: real, y: real): real" 10
+The remainder of the division of 
+.I x
+by
+.I y
+..   This is also provided by the 
+.I %
+operator in Aikido.
+.IP "function trunc (x: real): real" 10
+The value of 
+.I x
+converted to an largest integral value not greater than 
+.I x
+..
+.IP "function round (x: real): real" 10
+The value of 
+.I x
+rounded to the nearest integral value.
+.IP "function deg (x: real): real" 10
+The value of 
+.I x
+(in radians) converted to degrees.
+.IP "function rad (x: real): real" 10
+The value of 
+.I x
+(in degrees) converted to radians.
+.P
+.SH Constants
+The following constants are provided:
+.IP "E" 10
+The number E
+.IP "LOG2E" 10
+The base-2 logarithm of E.
+.IP "LOG10E" 10
+The base-10 logarithm of E.
+.IP "LN2" 10
+The natural logarithm of 2
+.IP "LN10" 10
+The natural logarithm of 10
+.IP "PI" 10
+The number 
+.I pi
+..
+.IP "PI_2" 10
+pi/2
+.IP "PI_4" 10
+pi/4
+.IP "SQRT2" 10
+The square root of 2.
+.IP "SQRT1_2" 10
+The square root of 1/2.
+.SH EXAMPLE
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+sin(2), cos(2), tan(2)

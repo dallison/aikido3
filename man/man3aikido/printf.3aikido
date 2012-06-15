@@ -1,0 +1,46 @@
+.\" Aikido manual
+.\" David Allison
+.TH printf 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+printf \- C-style printf function
+.SH SYNOPSIS
+\fBSystem.printf(format, ...)
+.SH DESCRIPTION
+The System.printf() function is similar to the C
+.I printf
+function.  Internally is uses the 
+.I System.vformat
+and
+.I System.print
+functions, therefore is formats the string using vformat and prints it
+using print.
+.P
+In fact, the definition of printf is:
+.br
+
+.br
+    public function printf (f : string, ...) {
+.br
+        print (vformat (f, args))
+.br
+    }
+.br
+
+.SH RETURN VALUES
+Nothing is returned
+.SH EXAMPLE
+.br
+
+.br
+foreach i 10 {
+.br
+    printf ("Hello world %d", i)
+.br
+}
+.br
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

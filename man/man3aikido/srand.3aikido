@@ -1,0 +1,28 @@
+.\" Aikido manual
+.\" David Allison
+.TH srand 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+srand \- Set the seed of the pseudo-random number generator.
+.SH SYNOPSIS
+\fBSystem.srand(seed)
+.SH DESCRIPTION
+The System.srand() function takes an integral argument and uses this to
+set the
+.I seed
+of the pseudo-random number generator.
+.SH RETURN VALUES
+No value is returned
+.SH EXAMPLE
+.br
+
+.br
+System.srand (System.time())
+.br
+println (System.rand())
+.br
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

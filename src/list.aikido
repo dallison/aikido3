@@ -1,0 +1,183 @@
+/*
+ * list.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.7
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+
+import container
+
+//
+// a doubly-linked list monitor
+//
+
+monitor List implements Container {
+    protected var items =  null
+    protected var lastitem = null
+    protected var nitems = 0
+
+    class Item (public value) {
+        public var next = null
+        public var prev = null
+    }
+
+    public function insertEnd (v) {
+       var item = new Item (v)
+       if (lastitem == null) {
+           lastitem = item
+           items = item
+       } else {
+           item.prev = lastitem
+           lastitem.next = item
+           lastitem = item
+       }
+       nitems++
+    }
+
+    public function insertStart (v) {
+       var item = new Item (v)
+       item.next = items
+       if (items != null) {
+           items.prev = item
+       }
+       items = item
+       if (lastitem == null) {
+           lastitem = item
+       }
+       nitems++
+    }
+
+    public function insertBefore (i, v) {
+        var item = new Item (v)
+        item.next = i
+        item.prev = i.prev
+        if (i.prev == null) {
+            items = item
+        } else {
+            i.prev.next = item
+        }
+        i.prev = item
+        nitems++
+    }
+
+    public function insertAfter (i, v) {
+        var item = new Item (v)
+        item.prev = i
+        item.next = i.next
+        if (i.next == null) {
+            lastitem = item
+        } else {
+            i.next.prev = item
+        }
+        i.next = item
+        nitems++
+    }
+
+    public function clear() {
+        items = null
+        lastitem = null
+        nitems = 0
+    }
+
+
+    public operator sizeof() {
+        return nitems
+    }
+
+    // find the item corresponding to the value.  This is
+    // suitable for passing to erase
+
+    public function find (v, start = null) {
+        var i = start == null ? items : start
+        while (i != null) {
+            if (i.value == v) {
+                return i
+            }
+            i = i.next
+        }
+        return null
+    }
+
+    public operator in (v) {
+        return find (v) != null
+    }
+
+    // erase either an item (from find()) or a value.  If a value
+    // look for it in the list
+
+    public function erase (i) {
+        // if passed a value that is not an item, look for it
+        if (!(i instanceof Item)) {
+            i = find (i)
+            if (i == null) {
+                throw "No such value in list"
+            }
+        }
+        if (i.prev == null) {
+            items = i.next 
+        } else {
+            i.prev.next = i.next 
+        }
+        if (i.next == null) {
+            lastitem = i.prev 
+        } else {
+            i.next.prev = i.prev 
+        }
+        nitems--
+        i.prev = null
+        i.next = null
+    }
+
+    public function empty {
+        return items == null
+    }
+
+// compatibility
+    public function push_back (v) {
+        insertEnd (v)
+    }
+
+    public function push_front (v) {
+        insertStart (v)
+    }
+
+    public function size() {
+        return nitems
+    }
+
+
+// iterator
+    public operator foreach (var i) {
+        if (typeof (i) == "none") {
+            i = items
+            return i.value 
+        } elif (i == lastitem) {
+            i = none
+        } else {
+            i = i.next
+            return i.value 
+        }
+
+    }
+
+}
+

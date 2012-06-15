@@ -1,0 +1,25 @@
+.\" Aikido manual
+.\" David Allison
+.TH poke 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+poke \- Write values to raw memory
+.SH SYNOPSIS
+\fBSystem.poke(address, value, size = 1)
+.SH DESCRIPTION
+The System.poke() function writes a value into memory.  The address written
+is either an integer or a value returned from the
+.I System.malloc
+function (possibly modified by an integer).  The size of the value written
+is passed in the optional 
+.I size
+parameter.  The default is 1 byte.
+.P
+The value may be
+.SH RETURN VALUES
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

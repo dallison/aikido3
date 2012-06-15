@@ -1,0 +1,22 @@
+.\" Aikido manual
+.\" David Allison
+.TH clear 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+clear \- clear a value
+.SH SYNOPSIS
+\fBSystem.clear(v)
+.SH DESCRIPTION
+The System.clear() function clears its argument.  The type of the 
+argument determines how it will be cleared.  For example, a vector
+will be resized to 0 size and a string will be cleared to ""
+.SH RETURN VALUES
+None
+.SH EXAMPLE
+System.clear (v)                // clear a vector
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

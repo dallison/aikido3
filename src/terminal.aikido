@@ -1,0 +1,89 @@
+class Terminal {
+    var native_term = 0
+
+    native function terminal_create()
+    native_term = terminal_create()
+
+    native function terminal_open()
+    native function terminal_close()
+    native function terminal_put_string(s)
+    native function terminal_put_char(ch)
+    native function terminal_get (var ch, timeout)
+    native function terminal_erase_line()
+    native function terminal_insert_char(ch)
+    native function terminal_delete_left()
+    native function terminal_amove (x,y)
+    native function terminal_move (x,y)
+    native function terminal_clear_screen()
+    native function terminal_get_screen_size (var rows, var cols)
+    native function terminal_set_screen_size (rows, cols)
+    native function terminal_scroll (top, bottom, direction, nlines)
+
+    public function open {
+        terminal_open()
+    }
+
+    public function close {
+        terminal_close()
+    }
+
+    public function put (v) {
+        if (typeof (v) == "char") {
+            terminal_put_char (v)
+        } elif (typeof (v) == "string") {
+            terminal_put_string (v)
+        }
+    }
+
+    public function get (var ch, timeoutms=1) {
+        return terminal_get (ch, timeoutms)
+    }
+
+    public function printAt (x,y, s) {
+        terminal_amove (x,y)
+        put (s)
+    }
+    
+    public function erase_line {
+        terminal_erase_line() 
+    }
+
+    public function delete_left {
+        terminal_delete_left() 
+    }
+
+    public function clear_screen {
+        terminal_clear_screen() 
+    }
+
+    public function insert_char(ch) {
+        terminal_insert_char(ch)
+    }
+
+    public function amove(x, y) {
+        terminal_amove(x, y)
+    }
+
+    public function move(x, y) {
+        terminal_move(x, y)
+    }
+
+    public function get_screen_size(var rows, var cols) {
+        terminal_get_screen_size(rows, cols)
+    }
+
+    public function set_screen_size(rows, cols) {
+        terminal_set_screen_size(rows, cols)
+    }
+
+    // scroll directions
+    public const SCROLL_UP = -1
+    public const SCROLL_DOWN = 1
+
+    public function scroll (top, bottom, direction, nlines=1) {
+        terminal_scroll (top, bottom, direction, nlines)
+    }
+
+
+}
+

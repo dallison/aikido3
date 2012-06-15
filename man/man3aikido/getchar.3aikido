@@ -1,0 +1,18 @@
+.\" Aikido manual
+.\" David Allison
+.TH getchar 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+getchar \- Read a single character from an input stream
+.SH SYNOPSIS
+\fBSystem.getchar(stream)
+.SH DESCRIPTION
+The System.getchar() function reads a single character from an open
+input stream.  The character is returned.
+.SH RETURN VALUES
+The character read.  Undefined behavior if the stream has an EOF condition.
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

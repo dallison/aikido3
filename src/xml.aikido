@@ -1,0 +1,479 @@
+// change log:
+// ----------
+
+// 11/16/06 - dallison: added ?xml processing and fixed newline handling
+
+package XML {
+    import ctype
+    import stack
+
+
+    public class Attribute (public name, public value) {
+        public function print (out) {
+            [' ', name, "=\"", value, '"'] -> out
+        }
+    }
+
+    public class Element (public name) {
+        var attributes = []
+        var body = ""
+        var children = []
+        var isempty = false
+
+        /**
+         * dump the output for debugging
+         */
+
+        public function dump (out, indent = 0) {
+            foreach i indent {
+                ' ' -> out
+            }
+            ['<', name] -> out
+            foreach attr attributes {
+                attr.print (out)
+            }
+            if (isempty) {
+                "/>\n" -> out
+                return
+            }
+            ">\n" -> out
+            if (body != "") {
+                foreach i indent {
+                    ' ' -> out
+                }
+                body -> out
+            }
+            foreach child children {
+                child.dump (out, indent + 4)
+            }
+            foreach i indent {
+                ' ' -> out
+            }
+            ["</", name, ">\n"] -> out
+        }
+
+        public function print (out, indent = 0) {
+            if (name.size() > 4 && name[0:3] == "XML.") {               // internal element
+                body -> out
+
+                foreach child children {
+                    child.print (out, indent + 4)
+                }
+            } else {
+                foreach i indent {
+                    ' ' -> out
+                }
+                ['<', name] -> out
+                foreach attr attributes {
+                    attr.print (out)
+                }
+                if (isempty) {
+                    "/>\n" -> out
+                    return
+                }
+                ">\n" -> out
+                if (body != "") {
+                    foreach i indent {
+                        ' ' -> out
+                    }
+                    body -> out
+                }
+                foreach child children {
+                    child.print (out, indent + 4)
+                }
+                '\n' -> out
+                foreach i indent {
+                    ' ' -> out
+                }
+                ["</", name, ">\n"] -> out
+            }
+        }
+
+        public function getBody {
+            return body
+        }
+
+        public function setBody (b) {
+           body = b
+        }
+
+        public function setEmpty {
+            isempty = true
+        }
+
+        public function getAttribute (n) {
+            foreach attr attributes {
+                if (attr.name == n) {
+                    return attr.value
+                }
+            }
+            throw "Missing required attribute '" + n + "'"
+        }
+
+        public function attributePresent (n) {
+            foreach attr attributes {
+                if (attr.name == n) {
+                    return true
+                }
+            }
+            return false
+        }
+
+        public function addBody (s) {
+            var trimmed = s.trim()
+            if (trimmed == "") {
+                return
+            }
+            var bodyelement = new Element("XML.text")
+            bodyelement.setBody (s)
+            children.append (bodyelement)
+        }
+
+        public function addAttribute (n, v) {
+            attributes.append (new Attribute (n,v))
+        }
+
+        public function addChild (elem) {
+            children.append (elem)
+            isempty = false
+        }
+
+        // find an element with the given name
+        public function find (nm) {
+           if (nm == name) {
+               return this
+           }
+           foreach child children {
+               var r = child.find (nm)
+               if (r != null) {
+                   return r
+               }
+           }
+           return null
+        }
+
+        public operator foreach {
+            return children
+        }
+
+        // find an attribute given a name, return the attribute object if found
+        public function findAttribute (nm) {
+           foreach attr attributes {
+               if (attr.name == nm) {
+                   return attr
+               }
+           }
+           return null
+        }
+
+        @AllowOverride
+        public function replaceAttribute (name, value) {
+            for (var i = 0 ; i < attributes.size() ; i++) {
+                if (attributes[i].name == name) {
+                    attributes[i] = new Attribute (name, value)
+                    return
+                }
+            } 
+            attributes.append (new Attribute (name, value))
+        }
+
+        @AllowOverride
+        public function removeAttribute (name) {
+            for (var i = 0 ; i < attributes.size() ; i++) {
+                if (attributes[i].name == name) {
+                    delete attributes[i]
+                    return
+                }
+            }
+            throw "No such attribute " + name
+        }
+
+        @AllowOverride
+        public function removeBody {
+            body = ""
+        }
+
+        @AllowOverride
+        public function replaceChild (n, element) {
+            if (typeof (n) == "integer") {
+                if (n < 0 || n > children.size()) {
+                    throw "Illegal child number " + n
+                }
+                children[n] = element
+            } elif (typeof (n) == Element) {
+                for (var i = 0 ; i < children.size() ; i++) {
+                    if (children[i] == n) {
+                        children[i] = element
+                        break
+                    }
+                }
+            } else {
+                throw "Invalid type for replaceChild"
+            }
+        }
+
+        @AllowOverride
+        public function removeChild (n) {
+            if (typeof (n) == "integer") {
+                 if (n < 0 || n > children.size()) {
+                     throw "Illegal child number " + n
+                 }
+                 delete children[n]
+            } elif (typeof (n) == Element) {
+                for (var i = 0 ; i < children.size() ; i++) {
+                    if (children[i] == n) {
+                        delete children[i]
+                        break
+                    }
+                }
+            } else {
+                throw "Invalid type for removeChild"
+            }
+        }
+
+        @AllowOverride
+        public function findAll (nm,parent=null) {
+            var v = []
+            if (nm == name) {
+                v.append ([this, parent])
+            }
+            foreach child children {
+                var r = child.findAll (nm, this)
+                if (r.size() != 0) {
+                    v = v + r
+                }
+            }
+            return v
+        }
+
+    }
+
+
+    /**
+     * parse a stream that contains an XML WFF.
+     */
+
+    public function parseStream (str, filename="<unknown>") {
+        var lineno = 1
+
+        function getchar {
+            var ch = str.getchar()
+            if (ch == '\n') {
+                lineno++
+            }
+            return ch
+        }
+
+        /**
+         * read up to the next element.  Return true if we find an element.  The characters
+         * traversed on the way are stored in the result reference parameter
+         */
+        function readToElement (result) {
+            var wasElement = false
+            while (!str.eof()) {
+                var ch = getchar ()
+                if (str.eof()) {
+                    break
+                }
+                if (ch == '<') {
+                    wasElement = true
+                    break
+                }
+                result.append (ch)
+            }
+            return wasElement
+        }
+
+        /**
+         * skip spaces in the input stream and return the last character read
+         */
+        function skipSpaces (lastchar = '\0') {
+            if (lastchar != '\0' && lastchar != '\n' && !ctype.isspace(lastchar)) {
+                return lastchar
+            }
+            while (!str.eof()) {
+                var ch = getchar ()
+                if (!(ctype.isspace(ch) || ch == '\n')) {
+                    lastchar = ch
+                    break
+                }
+            }
+            return lastchar
+        }
+
+        /**
+         * read a name from the input.
+         *
+         * @param name output for name read
+         * @param lastchar reference parameter for the last character read
+         */
+        function readName (name, var lastchar) {
+            const terminators = ['>', '=', '/']
+            var ch = skipSpaces(lastchar)
+            name.append (ch)
+            while (!str.eof()) {
+                ch = getchar()
+                if (ctype.isspace (ch) || ch == '\n' || ch in terminators) {
+                    lastchar = ch
+                    break
+                }
+                name.append (ch)
+            }
+            lastchar = skipSpaces(lastchar)
+            name.trim()
+        }
+
+        function readAttributeValue (var lastchar) {
+            var value = ""
+            var ch = skipSpaces()
+            if (ch == '"') {            // string value
+                while (!str.eof()) {
+                    var ch = getchar()
+                    if (ch == '"') {
+                        lastchar = getchar () 
+                        break
+                    }
+                    value.append (ch)
+                }
+            } elif (ch == '>') {
+                throw "Missing attribute value"
+            } else {
+                value.append(ch)
+                while (!str.eof()) {
+                    var ch = getchar()
+                    if (ctype.isspace(ch) || ch == '\n' || ch == '/' || ch == '>') {
+                        lastchar = ch
+                        break
+                    }
+                    value.append (ch)
+                }
+            }
+            lastchar = skipSpaces (lastchar)
+            return value
+        }
+
+        function parse {
+            var stack = new Stack()             // main xml stack
+
+            stack.push (new Element ("XML.top"))                // top of the XML tree
+
+            var initial = ""
+            var foundElement = readToElement (initial)
+            stack.top().addBody (initial)             // before first element is part of top
+
+            while (!str.eof()) {
+                if (foundElement) {                 // are we looking at an element?
+                    var name = ""
+                    var termchar = '\0'             // terminating char of last read
+                    readName (name, termchar)       // read element name
+
+                    if (name.size() > 0) {          // any name?
+                        var len = name.size()
+                        if (len >= 3 && name[0:2] == "!--") {           // comment?
+                            var doskip = true
+                            if (name[len-2:len-1] == "--") {        // ends in --?
+                                if (termchar == '>') {
+                                    doskip = false
+                                }
+                            } 
+                            if (doskip) {
+                                while (!str.eof()) {
+                                   if (termchar == '-') {
+                                      termchar = getchar()
+                                      if (termchar == '-') {
+                                          termchar = getchar()
+                                          if (termchar == '>') {
+                                             break
+                                          }
+                                      }
+                                   } else {
+                                       termchar = getchar()
+                                   }
+                                }
+                            }
+                        } elif (name == "?xml") {
+                            // xml id tag
+                            while (!str.eof()) {
+                                var ch = getchar()
+                                if (ch == '>') {
+                                    break
+                                }
+                            }
+                        } elif (name == "![CDATA[") {
+                            var cdata = ""
+                            while (!str.eof()) {
+                                if (termchar == ']') {
+                                    termchar = getchar()
+                                    if (termchar == ']') {
+                                        termchar = getchar()
+                                        if (termchar == '>') {
+                                            break
+                                        } else {
+                                            cdata.append ("]]" + termchar)
+                                        }
+                                    } else {
+                                        cdata.append ("]" + termchar)
+                                    }
+                                } else {
+                                    cdata.append (termchar)
+                                }
+                                termchar = getchar()
+                            }
+                            var element = new Element ("XML.CData")
+                            element.setBody (cdata)
+                            stack.top().addChild (element)
+                        } elif (name[0] == '/') {           // end of an element?
+                            name <<= 1
+                            var top = stack.top()
+                            if (top.name == name) {
+                                stack.pop()
+                            } else {
+                                throw "Element " + name + " is not top of stack"
+                            }
+                        } else {                            // start of an element
+                            var element = new Element (name)
+                            stack.top().addChild (element)
+
+                            var empty = false
+                            while (termchar != '>') {            // collect attributes
+                                var attrname = ""
+                                readName (attrname, termchar)
+                                if (attrname == '/' && termchar == '>') {
+                                     empty = true
+                                     element.setEmpty()
+                                } elif (termchar == '=') {
+                                    var attrvalue = readAttributeValue (termchar)
+                                    element.addAttribute (attrname, attrvalue)
+                                } else {
+                                    element.addAttribute (attrname, "")             // no value
+                                }
+                            }
+                            if (!empty) {
+                                stack.push (element)
+                            }
+                        }
+                    }
+                } 
+
+                var body = ""
+                foundElement = readToElement (body)
+                if (body != "") {
+                    stack.top().addBody (body)
+                }
+            }
+            return stack.top()
+        }
+
+        try {
+            return parse()
+        } catch (e) {
+            if (typeof(e) == "string") {
+                throw "XML error in " + filename + " at line: " + lineno + ", " + e
+            } else {
+                throw "XML error in " + filename + " at line: " + lineno + ", " + e.toString()
+            }
+        }
+    }
+
+}
+

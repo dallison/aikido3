@@ -1,0 +1,146 @@
+/*
+ * string.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.13
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+//
+// wrapper for the builtin string types.  Provides more functionality
+//
+
+class String (val = "") {
+    protected var value = cast<string>(val)
+
+public:
+    function append (s) {
+        value += s
+    }
+
+    function length {
+        return sizeof (value)
+    }
+
+    //
+    // split the string up into a vector of strings.  The separator is a regular
+    // expession
+    //
+
+    function split (sep) {
+        var tmp = value
+        var result = []
+        while (sizeof (tmp) > 0) {
+            var regex = tmp[sep]
+            if (sizeof (regex) == 0) {
+                result += tmp
+                break
+            } else {
+                var end = regex[0].start
+                if (end > 0) {
+                    var s = tmp[0:end - 1]
+                    result += s
+                }
+                tmp <<= regex[0].end + 1
+            }
+        }
+        return result
+    }
+
+    //
+    // replace all occurrences of s1 by s2 in the string and return a new string
+    //
+
+    function replace (s1, s2) {
+	    var tmp = value 
+	    var result = ""
+	    while (sizeof (tmp) > 0) {
+            var r = tmp[s1]		// find first occurrence of s1 in line
+            if (sizeof (r) == 0) {		// none found?	copy rest of string
+		    result += tmp[0:sizeof (tmp) -1]
+		    break
+            } else {			// copy from s up to start of s1
+		    var s = r[0].start
+		    if (s > 0) {
+                    result += tmp[0:s - 1]
+		    }
+                result += s2		// append replace string
+		    tmp <<= r[0].end + 1
+            }
+	    }
+        return result
+    }
+
+    function substring (start, end = 0) {
+        if (end == 0) {
+            end = sizeof (value)
+        }
+        if (start > end) {
+            throw "substring exception: start > end"
+        }
+        return value[start:end]
+    }
+
+    function toInteger() {
+        return cast<integer>(value)
+    }
+
+    function indexOf (s) {
+        var regex = value[s]
+        if (sizeof (regex) == 0) {
+            return -1
+        } else {
+            return regex[0].start
+        }
+    }
+
+    operator-> (stream, read) {
+        if (read) {
+            stream -> value
+        } else {
+            value -> stream
+        }
+    }
+
+    operator+ (s) {
+        if (typeof (s) == String) {
+            return String (value + s.value)
+        } else {
+            return String (value + cast<String>(s)) 
+        }
+        
+    }
+
+    operator[] (i, j = -1) {
+        if (j == -1) {
+            return value[i]
+        } else {
+            return String (value[i:j])
+        }
+    }
+
+    operator sizeof {
+        return sizeof (value)
+    }
+
+    function charAt (index) {
+        return value[index]
+    }
+}

@@ -1,0 +1,71 @@
+
+# common makefile included by the OS specific ones.  The win32
+# makefile is sufficiently different that it doesn't use this file
+#
+
+
+OSPATH = src/unix
+OLIB = lib/libaikido_o.a
+GLIB = lib/libaikido_g.a
+OBIN = bin/aikido_o
+GBIN = bin/aikido_g
+OSTATICLIB = lib/aikido_o.o
+GSTATICLIB = lib/aikido_g.o
+
+
+default all: startup build
+
+VERSION=1_00
+.KEEP_STATE:
+
+ZIPFILE = bin/aikido.zip
+
+VPATH = src:$(OSPATH):src/pcre
+
+OSDEPS = os.o
+
+PCREOBJS = chartables.o get.o maketables.o pcre.o pcregrep.o pcreposix.o study.o
+
+DRIVER = bin/aikido
+
+EOBJS=  main.o
+
+OBJS = parser.o value.o interpret.o native.o monitor.o debug.o zip.o codegen.o $(OSDEPS) $(PCREOBJS) terminal.o xml.o
+
+#JAVAFILES = java/lang/System.aikido java/lang/Boolean.aikido java/lang/Process.aikido \
+            java/lang/String.aikido java/lang/Thread.aikido java/lang/Exception.aikido \
+            java/lang/Runtime.aikido java/lang/StringBuffer.aikido java/lang/ThreadGroup.aikido \
+            java/lang/Object.aikido java/io/DataOutputStream.aikido java/io/FileNotFoundException.aikido  \
+            java/io/InputStream.aikido java/io/File.aikido  java/io/FileOutputStream.aikido \
+            java/io/OutputStream.aikido java/io/FileDescriptor.aikido  java/io/FilterOutputStream.aikido  \
+            java/io/PrintStream.aikido java/io/FileInputStream.aikido java/io/IOException.aikido
+
+GTKFILES = gdk.aikido gtk.aikido gtkevents.aikido gtkfields.aikido
+
+ZIPFILES = system.aikido math.aikido net.aikido string.aikido stringstream.aikido streambuffer.aikido vector.aikido \
+        map.aikido properties.aikido ctype.aikido security.aikido database.aikido lex.aikido \
+        filename.aikido $(JAVAFILES) list.aikido queue.aikido stack.aikido hashtable.aikido container.aikido\
+	xml.aikido terminal.aikido base64.aikido 
+
+mkdirs:
+	-mkdir bin lib include include/unix 
+
+includes: mkdirs
+	cp -f src/aikido.h         include
+	cp -f src/aikidozip.h            include
+	cp -f src/aikidotoken.h          include
+	cp -f src/unix/os.h        include/unix
+	cp -f src/pcre/aikidopcreposix.h         include
+	cp -f src/aikidointerpret.h         include
+	cp -f src/aikidocodegen.h         include
+	cp -f src/aikidodebug.h         include
+
+bin/mkstandalone: mkstandalone
+	sed -e 's!%%@aikidohome%%@!$(PWD)!' mkstandalone > bin/mkstandalone
+
+# startup rules
+startup: includes .WAIT bin/mkelf bin/mkstandalone driver
+
+debug:	startup .WAIT xdebug
+opt: startup .WAIT xopt 
+

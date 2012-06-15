@@ -1,0 +1,32 @@
+.\" Aikido manual
+.\" David Allison
+.TH fill 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+fill \- fill a value with other values
+.SH SYNOPSIS
+\fBSystem.fill(object, value, start, end)
+.SH DESCRIPTION
+The System.fill() function fills a subrange of a composite value with another
+value.  It is most useful for filling strings, vectors and bytevectors with
+constant values.
+.P
+The first parameter is the value to be filled.  The second is the value to
+be inserted.  The third and fourth parameters are the start and end
+indices for the fill.  The range is inclusive of the start, but exclusive
+of the end index.
+.SH RETURN VALUES
+No value is returned.
+.SH EXAMPLE
+var v = new int [10]
+.br
+System.fill (v, -1, 0, 3)               // fill v[0],v[1],v[2] with -1
+.br
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+resize(3aikido), transform(3aikido)
+

@@ -1,0 +1,54 @@
+.\" Aikido manual
+.\" David Allison
+.TH getStackTrace 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+getStackTrace \- Get a trace of the current program position
+.SH SYNOPSIS
+\fBSystem.getStackTrace()
+.SH DESCRIPTION
+The System.getStackTrace() function returns a vector of 
+.I System.StackFrame
+objects.  There is one object per function call in the
+current stack trace.  Each object consists of:
+.br
+
+.br
+    public class StackFrame {
+.br
+    public:
+.br
+        var filename = ""
+.br
+        var lineno = 1
+.br
+        var block = ""
+.br
+    }
+.br
+
+.br
+The members are:
+.IP "filename" 10
+The name of the file
+.IP "lineno" 10
+The line number (1 is the first)
+.IP "block" 10
+The name of the function, class or other block at that point
+
+.SH RETURN VALUES
+The function returns a vector of System.StackFrame objects.
+.SH EXAMPLE
+var stack = System.getStackTrace()
+.br
+foreach f stack {
+.br
+    println (f.block + "() at " + f.filename + ":" + f.lineno)
+.br
+}
+.br
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

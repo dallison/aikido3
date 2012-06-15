@@ -1,0 +1,17 @@
+.\" Aikido manual
+.\" David Allison
+.TH load 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+load \- 
+.SH SYNOPSIS
+\fBSystem.load()
+.SH DESCRIPTION
+The System.load() function
+.SH RETURN VALUES
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

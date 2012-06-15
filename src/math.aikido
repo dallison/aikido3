@@ -1,0 +1,170 @@
+/*
+ * %M%
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  %I%
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on %E%
+ */
+
+public package Math {
+    //import libaikidomath		// import the shared library
+    
+private:
+
+    native _sin (x)
+    native _cos (x)
+    native _tan (x)
+    native _acos (x)
+    native _asin (x)
+    native _atan (x)
+    native _sinh (x)
+    native _cosh (x)
+    native _tanh (x)
+    native _exp (x)
+    native _log (x)
+    native _log10 (x)
+    native _sqrt (x)
+    native _ceil (x)
+    native _fabs (x)
+    native _floor (x)
+    native _atan2 (x,y)
+    native _pow (x,y)
+    native _ldexp (x,y)
+    native _fmod (x,y)
+    native _trunc (x)
+    native _round (x)
+
+public:
+    function sin (x: real) : real {
+        return _sin (x)
+    }
+
+    function cos (x: real) : real {
+        return _cos (x)
+    }
+
+    function tan (x: real) : real {
+        return _tan (x)
+    }
+
+    function acos (x: real) : real {
+        return _acos (x)
+    }
+
+    function asin (x: real) : real {
+        return _asin (x)
+    }
+
+    function atan (x: real) : real {
+        return _atan (x)
+    }
+
+    function sinh (x: real) : real {
+        return _sinh (x)
+    }
+
+    function cosh (x: real) : real {
+        return _cosh (x)
+    }
+
+    function tanh (x: real) : real {
+        return _tanh (x)
+    }
+
+    function exp (x: real) : real {
+        return _exp (x)
+    }
+
+    function log (x: real) : real {
+        return _log (x)
+    }
+
+    function log10 (x: real) : real {
+        return _log10 (x)
+    }
+
+    function sqrt (x: real) : real {
+        return _sqrt (x)
+    }
+
+    function ceil (x: real) : real {
+        return _ceil (x)
+    }
+
+    function fabs (x: real) : real {
+        return _fabs (x)
+    }
+
+    function floor (x: real) : real {
+        return _floor (x)
+    }
+
+    function atan2 (x: real,y: real) : real {
+        return _atan2 (x, y)
+    }
+
+    function pow (x: real,y: real) : real {
+        return _pow (x, y)
+    }
+
+    function ldexp (x: real,y: integer) : real {
+        return _ldexp (x, y)
+    }
+
+    function fmod (x: real,y: real) : real {
+        return _fmod (x, y)
+    }
+
+    function trunc (x: real) : integer {
+        return _trunc (x)
+    }
+
+    function round (x: real) : integer {
+        return _round (x)
+    }
+
+
+// a few useful constants
+    const E             = 2.7182818284590452354
+    const LOG2E         = 1.4426950408889634074
+    const LOG10E        = 0.43429448190325182765
+    const LN2           = 0.69314718055994530942
+    const LN10          = 2.30258509299404568402
+    const PI            = 3.14159265358979323846
+    const PI_2          = 1.57079632679489661923
+    const PI_4          = 0.78539816339744830962
+    const SQRT2         = 1.41421356237309504880
+    const SQRT1_2       = 0.70710678118654752440
+
+    // convert from radians to degrees
+    function deg (x : real) : real {
+        return 180.0 * x / PI
+    }
+
+
+    // convert from degrees to radians
+    function rad (x : real) : real {
+        return PI * x / 180.0
+    }
+
+
+
+}
+

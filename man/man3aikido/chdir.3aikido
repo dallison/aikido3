@@ -1,0 +1,21 @@
+.\" Aikido manual
+.\" David Allison
+.TH chdir 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+chdir \- Change current directory
+.SH SYNOPSIS
+\fBSystem.chdir(dirname)
+.SH DESCRIPTION
+The System.chdir() function changes the current directory of the 
+process to that given.
+.SH RETURN VALUES
+No value is returned.
+.SH EXCEPTIONS
+If the chdir() function cannot change the directory, a System.FileException
+exception is thrown and the current directory is not changed.
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

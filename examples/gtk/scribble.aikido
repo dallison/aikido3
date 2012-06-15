@@ -1,0 +1,107 @@
+import gtk
+
+
+var pixmap = 0
+
+function configure_event (widget, event, data) {
+    if (pixmap != 0) {
+        GDK.pixmap_unref (pixmap)
+    }
+    var allocation = widget.get_allocation()
+    pixmap = new GDK.pixmap_new (widget.get_window(),
+		             allocation.width,
+		             allocation.height, -1)
+    var style = widget.get_style()
+    GDK.draw_rectangle (pixmap, widget.get_style().white_gc,
+				true,
+				0, 0,
+		             allocation.width,
+		             allocation.height)
+    return true ;
+}
+
+function expose_event (widget, event, data) {
+    var style = widget.get_style()
+    GDK.draw_pixmap (widget.get_window(), style.fg_gc[widget.get_state()],
+			pixmap, event.x, event.y,
+                                event.x, event.y,
+                                event.width, event.height)
+    return false
+
+}
+
+function draw_brush (widget, x : int, y : int) {
+    var rect = new GDK.Rectangle (x - 5, y - 5, 10, 10)
+    var style = widget.get_style()
+    GDK.draw_rectangle (pixmap, style.black_gc,
+			true,
+			rect.x, rect.y,
+                        rect.width, rect.height)
+    widget.draw (rect)
+}
+
+
+function button_press_event (widget, event, data) {
+    if (event.button == 1 && pixmap != 0) {
+        draw_brush (widget, event.x, event.y)
+    }
+    return true
+}
+
+function motion_notify_event (widget, event, data) {
+    var x = 0
+    var y = 0
+    var state = 0
+    if (event.is_hint) {
+        GDK.window_get_pointer (event.window, x, y, state)
+    } else {
+        x = cast<int>(event.x)
+        y = cast<int>(event.y)
+        state = cast<int>(event.state)
+    }
+    if (state & GDK.BUTTON1_MASK && pixmap != 0) {
+        draw_brush (widget, x, y)
+    }
+    return true
+}
+
+function quit (widget, event) {
+    System.exit (0)
+}
+
+function destroy_widget (obj, window) {
+    window.destroy()
+}
+
+var window = new GTK.Window (GTK.WINDOW_TOPLEVEL)
+window.set_name ("Test input")
+
+var vbox = new GTK.VBox (false, 0)
+window.add (vbox)
+vbox.show()
+
+window.signal_connect ("destroy", quit, null)
+
+var drawing_area = new GTK.DrawingArea()
+drawing_area.size (200, 200)
+vbox.pack_start (drawing_area, true, true, 0)
+drawing_area.show()
+
+drawing_area.signal_connect ("expose_event", expose_event, null)
+drawing_area.signal_connect ("configure_event", configure_event, null)
+drawing_area.signal_connect ("motion_notify_event", motion_notify_event, null)
+drawing_area.signal_connect ("button_press_event", button_press_event, null)
+
+drawing_area.set_events (GDK.EXPOSURE_MASK
+                         | GDK.LEAVE_NOTIFY_MASK
+                         | GDK.BUTTON_PRESS_MASK
+                         | GDK.POINTER_MOTION_MASK
+                         | GDK.POINTER_MOTION_HINT_MASK)
+
+var button = new GTK.Button ("Quit")
+vbox.pack_start (button, false, false, 0)
+button.signal_connect ("clicked", destroy_widget, window)
+
+button.show()
+window.show()
+GTK.mainloop()

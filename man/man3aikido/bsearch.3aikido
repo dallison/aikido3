@@ -1,0 +1,22 @@
+.\" Aikido manual
+.\" David Allison
+.TH bsearch 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+bsearch \- binary search a sorted vector
+.SH SYNOPSIS
+\fBSystem.bsearch(vec, val)
+.SH DESCRIPTION
+The System.bsearch() function searches a sorted vector for the given value
+and returns true or false depending on whether the value is in the vector.
+
+.SH RETURN VALUES
+Returns true if the value is present
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+sort(3aikido)

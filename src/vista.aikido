@@ -1,0 +1,527 @@
+//
+// This file is completely open source.  There are no restrictions on its use.
+//
+// Author: David Allison
+//
+
+// this package allows a GTK+ application to be created using an XML description of the windows and widgets within
+// them.
+//
+//
+// This has nothing to do with the Microsoft operating system of the same name.  The names comes from a GUI package
+// I wrote for Acorn RISC OS in the 90's, long before Microsoft chose it.
+/*
+
+To use it, you must write an XML file containing something like this:
+
+<Window name="login">
+    <VBox name="box1" homogeneous="false" spacing="0" direction="down">
+       <Table name="info" cols=2 rows=2 vbox.expand="false" vbox.fill="false">
+           <Label name="lhost" value="Hostname" table.left=0 table.right=1 table.top=0 table.bottom=1 table.xpadding=5 table.ypadding=5/>
+           <Entry name="hostname" hot table.left=1 table.right=2 table.top=0 table.bottom=1 table.xpadding=5 table.ypadding=5/>
+
+           <Label name="lusername" value="Username" table.left=0 table.right=1 table.top=1 table.bottom=2 table.xpadding=5 table.ypadding=5/>
+           <Entry name="username" hot table.left=1 table.right=2 table.top=1 table.bottom=2 table.xpadding=5 table.ypadding=5/>
+
+           <Label name="lpassword" value="Password" table.left=0 table.right=1 table.top=2 table.bottom=3 table.xpadding=5 table.ypadding=5/>
+           <Entry name="password" hot table.left=1 table.right=2 table.top=2 table.bottom=3 table.xpadding=5 table.ypadding=5/>
+       </Table>
+
+        <HBox name="actionbuttons" vbox.direction="down" spacing="10">
+            <Button name="login" value="Login" hbox.spacing=20/>
+            <Button name="cancel" value="Cancel" hbox.spacing=20 hbox.direction="left"/>
+        </HBox>
+    </VBox>
+</Window>
+
+Then use the following code to read it:
+
+import vista
+
+var s = openin ("example.xml")
+Vista.read_templates (s)
+s.close()
+
+A window is defined as follows.  The variable 'cli' is an object representing the thing you want
+to log into.
+
+class LoginWindow (cli) extends GTK.Window (GTK.WINDOW_TOPLEVEL) {
+    var l = Vista.make_window ("login", this, "login")
+    set_usize (250,150)
+    set_title ("Login to CLI")
+    show_all()
+    
+    var hname =  Vista.widget (this, "login.login.box1.info.hostname")
+    var uname = Vista.widget (this, "login.login.box1.info.username")
+    var passwd = Vista.widget (this, "login.login.box1.info.password")
+    passwd.set_visibility (false)
+
+    function login (w,d) {
+        var hostname = hname.get_text()
+        var username = uname.get_text()
+        var password = passwd.get_text()
+        cli.open(username, password, hostname)
+        hide() 
+    }
+
+    function cancel (w,d) {
+        System.exit(0)
+    }
+
+    
+    // default values
+    hname.set_text ("wibble")
+    uname.set_text ("admin")
+    passwd.set_text ("admin")
+
+    // attach the signals
+    Vista.widget (this, "login.login.box1.actionbuttons.login").signal_connect ("clicked", login, null)
+    Vista.widget (this, "login.login.box1.actionbuttons.cancel").signal_connect ("clicked", cancel, null)
+}
+
+The main loop is run as a regular GTK+ program:
+
+GTK.mainloop()
+
+
+
+*/
+
+
+
+package Vista {
+    import xml
+    import gtk
+
+    var windows = {}            // map of name vs XML element
+
+    
+    class AttributeSet {
+        public var attrs = []
+    }
+
+    // since widgets are tied to a particular parent, we need to 
+    // keep a map of parent vs the map of widget names and widgets
+    class WidgetMap {
+        var widgets = {}
+        var widgetattributes = {}               // map of widget object vs attributeset
+
+        public function insert (name, widget) {
+            widgets[name] = widget
+            widgetattributes[widget] = new AttributeSet()
+        }
+
+        public operator foreach {
+            return widgets
+        }
+
+        public function find (name) {
+            return widgets[name]
+        }
+
+        public function set_attr (widget, name) {
+           var set = widgetattributes[widget]
+           set.attrs.append (name)
+        }
+
+        public function get_attrs (widget) {
+            return widgetattributes[widget].attrs
+        }
+    }
+
+    var current_widget_map = null
+    var widget_registry = {}            // map of parent widget vs WidgetMap
+
+    // register the hierarchical name of a widget vs the widget itself
+    function register_widget (parent: string, child: XML.Element, widget: GTK.Widget) {
+       var name = parent
+       if (child != null) {
+           var cn = child.findAttribute ("name")
+           if (cn == null) {
+               throw "Missing name attribute for element: " + child.name
+           }
+           name = parent + "." + cn.value
+       }
+       //println ("registering widget " + name)
+       current_widget_map.insert (name, widget)
+       return name
+    }
+
+    public function widget (parent, name) {
+        var wm = widget_registry[parent]
+        if (typeof(wm) == "none") {
+            throw "Unregistered parent widget"
+        }
+        var w = wm.find (name)
+        if (typeof(w) == "none") {
+            throw "No such widget: " + name
+        }
+        return w
+    }
+
+    public function widget_list (parent, prefix, attrs=[]) {
+        var wm = widget_registry[parent]
+        if (typeof(wm) == "none") {
+            throw "Unregistered parent widget"
+        }
+        var result = []
+        foreach w wm {
+            if (prefix in w.first) {
+                if (attrs.size() > 0) {
+                    var ok = true
+                    foreach attr attrs {
+                        if (!(attr in wm.get_attrs(w.second))) {
+                            ok = false
+                            break
+                        }
+                    }
+                    if (ok) {
+                        result.append (clone (w, false))
+                    }
+                } else {
+                    result.append (clone (w, false))
+                }
+            }
+        }
+        return result
+    }
+
+    public function read_templates (stream) {
+        var templates = XML.parseStream (stream)
+        foreach template templates {
+            switch (template.name) {
+            case "Window":
+            case "window":
+                var name = template.getAttribute ("name")
+                windows[name] = template
+                break
+            default:
+                throw "Unknown template type: " + template.name
+            }
+        }
+    }
+
+    private function getattr (data, name, def) {
+        var attr = data.findAttribute (name)
+        if (attr == null) {
+            return def
+        }
+        if (',' in attr.value) {
+            return cast<def>(attr.value)            // type must match that of default
+        }
+        try {
+            return cast<def>(eval(attr.value))            // type must match that of default
+        } catch (e) {
+            return cast<def>(attr.value)            // type must match that of default
+        }
+    }
+
+    private function make_widget...
+
+    private function make_Label (template, parent) {
+        var value = template.getAttribute ("value")
+        var widget = new GTK.Label (value)
+        register_widget (parent, template, widget)
+        return widget
+    }
+
+    private function make_Button (template, parent) {
+        var value = template.getAttribute ("value")
+        var widget = new GTK.Button (value)
+        register_widget (parent, template, widget)
+        return widget
+    }
+
+    private function make_CheckButton (template, parent) {
+        var value = template.getAttribute ("value")
+        var widget = new GTK.CheckButton (value)
+        register_widget (parent, template, widget)
+        return widget
+    }
+
+    private function make_VBox (template, parent) {
+        var hg = getattr (template, "homogeneous", "false") == "true"
+        var spacing = getattr (template, "spacing", 0)
+        var direction = getattr (template, "direction", "down")
+        var vb = new GTK.VBox (hg, spacing)
+        parent = register_widget (parent, template, vb)
+
+        foreach child template {
+           var child_widget = make_widget (child.name, child, parent)
+           var expand = getattr (child, "vbox.expand", 0)
+           var fill = getattr (child, "vbox.fill", 0)
+           var spacing = getattr (child, "vbox.spacing", 0)
+           var mydir = getattr (child, "vbox.direction", direction)
+           if (mydir == "down") {
+               vb.pack_start (child_widget, expand, fill, spacing)
+           } else {
+               vb.pack_end (child_widget, expand, fill, spacing)
+           }
+        }
+        return vb
+    }
+
+    private function make_HBox (template, parent) {
+        var hg = getattr (template, "homogeneous", "false") == "true"
+        var spacing = getattr (template, "spacing", 0)
+        var direction = getattr (template, "direction", "right")
+        var hb = new GTK.HBox (hg, spacing)
+        parent = register_widget (parent, template, hb)
+
+        foreach child template {
+           var child_widget = make_widget (child.name, child, parent)
+           var expand = getattr (child, "hbox.expand", 0)
+           var fill = getattr (child, "hbox.fill", 0)
+           var spacing = getattr (child, "hbox.spacing", 0)
+           var mydir = getattr (child, "hbox.direction", direction)
+
+           if (mydir == "right") {
+               hb.pack_start (child_widget, expand, fill, spacing)
+           } else {
+               hb.pack_end (child_widget, expand, fill, spacing)
+           }
+        }
+        return hb
+    }
+
+    private function make_Table (template, parent) {
+        var rows = getattr (template, "rows", 0)
+        var cols = getattr (template, "cols", 0)
+        var hg = getattr (template, "homogeneous", "false") == "true"
+        var default_xpadding = getattr (template, "xpadding", 0)
+        var default_ypadding = getattr (template, "ypadding", 0)
+
+        var table = new GTK.Table (rows, cols, hg)
+        parent = register_widget (parent, template, table)
+
+        var lastx = 0
+        var lasty = 0
+        var lastwidth = 1
+        var lastheight = 1
+
+        foreach child template {
+           var child_widget = make_widget (child.name, child, parent)
+           var left = 0
+           var right = 0
+           var top = 0
+           var bottom = 0
+           var xpos = getattr (child, "table.xpos", "none")
+           var ypos = getattr (child, "table.ypos", "none")
+           var width = getattr (child, "table.width", 1)
+           var height = getattr (child, "table.height", 1)
+           switch (ypos) {
+           case "below":
+               top = lasty+lastheight
+               bottom = top + height
+               break
+           case "above":
+               bottom = lasty-lastheight
+               top = bottom - height
+               break
+           case "none":
+               top = getattr (child, "table.top", lasty)
+               bottom = getattr (child, "table.bottom", top+height)
+               break
+           default:
+               throw "Bad value for table.ypos: " + ypos
+           } 
+           switch (xpos) {
+           case "toright":
+               left = lastx + lastwidth
+               right = left+width
+               break
+           case "toleft":
+               right = lastx - lastwidth
+               left = right-width
+               break
+           case "none":
+               left = getattr (child, "table.left", lastx)
+               right = getattr (child, "table.right", left+width)
+               break
+           default:
+               throw "Bad value for table.xpos: " + xpos
+           }
+           var xoptions = getattr (child, "table.xoptions", 0)
+           var yoptions = getattr (child, "table.yoptions", 0)
+           var xpadding = getattr (child, "table.xpadding", default_xpadding)
+           var ypadding = getattr (child, "table.ypadding", default_ypadding)
+
+           table.attach (child_widget, left, right, top, bottom, xoptions, yoptions, xpadding, ypadding) ;
+           lastx = left
+           lasty = top
+           lastwidth = right - left
+           lastheight = bottom - top
+        }
+        return table
+    }
+
+    private function make_CList (template, parent) {
+        var cols = getattr (template, "columns", 0)
+        var titlestring = getattr (template, "titles", "")
+        var ts = titlestring.split (',')
+        
+        var titles = []
+        foreach title ts {
+            titles.append (title.trim())
+        }
+        if (cols == 0) {
+            cols = titles.size()
+        }
+
+        var widthstring = getattr (template, "widths", "")
+        var widths = []
+        var ws = widthstring.split (',')
+        foreach w ws {
+            widths.append (cast<int>(w.trim()))
+        }
+
+        var clist = new GTK.CList (cols, titles)
+        register_widget (parent, template, clist)
+        foreach i widths.size() {
+            clist.set_column_width (i, widths[i])
+        }
+        return clist
+    }
+
+    private function make_Frame (template, parent) {
+        var value = template.getAttribute ("value")
+        var widget = new GTK.Frame (value)
+        parent = register_widget (parent, template, widget)
+
+        foreach child template {
+           var child_widget = make_widget (child.name, child, parent)
+           widget.add (child_widget)
+        }
+        return widget
+    }
+
+    // XXX: this is horizontal only, make is vertical with a direction attribute?
+    private function make_radioset (template, parent) {
+        var ishot = template.findAttribute ("hot")
+        var buttonstring = getattr (template, "buttons", "")
+        var buttons = []
+        var bs = buttonstring.split (',')
+        foreach button bs {
+            buttons.append (button.trim())
+        }
+
+        var group = 0
+        var table = new GTK.Table (1, buttons.size(), false)
+        parent = register_widget (parent, template, table)
+        var x = 0
+        foreach n buttons {
+            var button = new GTK.RadioButton(group, n)
+            register_widget (parent+"."+n, null, button)
+            table.attach (button, x, x+1, 0, 1, GTK.FILL, GTK.FILL, 0, 0)
+            group = button.group()
+            x++
+            if (ishot != null) {
+                current_widget_map.set_attr (button, "hot")
+            }
+        }
+        return table
+    }
+
+    private function make_Notebook (template, parent) {
+        var tabpos = getattr (template, "tabpos", "top")
+        var notebook = new GTK.Notebook()
+        switch (tabpos) {
+        case "top":
+            notebook.set_tab_pos (GTK.POS_TOP)
+            break
+        case "bottom":
+            notebook.set_tab_pos (GTK.POS_BOTTOM)
+            break
+        case "left":
+            notebook.set_tab_pos (GTK.POS_LEFT)
+            break
+        case "right":
+            notebook.set_tab_pos (GTK.POS_RIGHT)
+            break
+        default:
+            throw "Bad tabpos for notebook"
+        }
+        parent = register_widget (parent, template, notebook)
+
+        foreach child template {
+           var child_widget = make_widget (child.name, child, parent)
+           var labeltxt = getattr (child, "notebook.label", "")
+           var label = new GTK.Label (labeltxt)
+           register_widget (parent+".label", null, label)
+           label.show()
+           notebook.append_page (child_widget, label)
+        }
+        return notebook
+    }
+
+    // make a text widget with optional scrollbar
+    private function make_Text (template, parent) {
+        var editable = getattr (template, "editable", "true") == "true"
+
+        var text = new GTK.Text (null, null)
+        text.set_editable (editable)
+        parent = register_widget (parent, template, text)
+
+        var table = new GTK.Table (2, 2, false)
+        table.set_row_spacing (0, 2)
+        table.set_col_spacing (0, 2)
+        table.attach (text, 0, 1, 0, 1, GTK.EXPAND|GTK.SHRINK|GTK.FILL,  GTK.EXPAND|GTK.SHRINK|GTK.FILL, 0, 0)
+        var vadj = null
+        var hadj = null
+        text.get_adjustments (hadj, vadj)
+        var scrollbar = new GTK.VScrollbar (vadj)
+        table.attach (scrollbar, 1, 2, 0, 1, GTK.FILL,  GTK.EXPAND|GTK.SHRINK|GTK.FILL, 0, 0)
+        return table
+    }
+
+    // make a widget according to the template and return it
+    private function make_widget (type, template, parent) {
+       //template.print (stdout)
+       var f = "make_" + type
+
+       var ishot = template.findAttribute ("hot")
+       var isrecorded = template.findAttribute ("recorded")
+       var widget = null
+       var widgetname = template.getAttribute ("name")
+
+       // specialist function?
+       if (f in Vista) {
+           widget = eval (f + "(template, parent)")
+       } else {
+           var s = "new GTK." + type
+           var args = template.findAttribute ("args")
+           if (args != null) {
+               s.append ("(" + args.value + ")")
+           }
+           widget = eval (s)
+           parent = register_widget (parent, template, widget)
+
+           foreach child template {
+              var child_widget = make_widget (child.name, child, parent)
+              widget.add (child_widget)
+           }
+       }
+       if (ishot != null) {
+           current_widget_map.set_attr (widget, "hot")
+       }
+       if (isrecorded != null) {
+           current_widget_map.set_attr (widget, "recorded")
+       }
+       return widget
+    }
+
+    public function make_window (instancename, parent, name) {
+        var template = windows[name]
+        if (typeof (template) == "none") {
+            throw "unknown window template: " + name
+        }
+        current_widget_map = new WidgetMap()            // allocate a new widget map for this parent
+        widget_registry[parent] = current_widget_map    // add it to the registry
+        foreach child template {
+            var w = make_widget (child.name, child, instancename + "." + name)
+            parent.add (w)
+        }
+    }
+
+}
+

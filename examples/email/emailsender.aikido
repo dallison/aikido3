@@ -1,0 +1,135 @@
+/*
+ * emailsender.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ *
+ * The contents of this file are subject to the Sun Public License Version
+ * 1.0 (the "License"). You may not use this file except in compliance with
+ * the License. A copy of the License is included as the file "license.terms",
+ * and also available at http://www.sun.com/
+ *
+ * The Original Code is from:
+ *    Aikido Language System release 1.00
+ * The Initial Developer of the Original Code is: David Allison
+ * Portions created by David Allison are Copyright (C) Sun Microsystems, Inc.
+ * All Rights Reserved.
+ *
+ * Contributor(s): dallison
+ *
+ * Version:  1.1
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 02/09/20
+ */
+
+
+//
+// example of dialog to send an email message
+//
+
+import gtk
+
+package Email {
+
+    //
+    // simple class to present a window and allow the user to fill
+    // in the fields of an email message.  When 'send' is clicked
+    // the email is sent (using System.email()) and the program
+    // exits
+    //
+
+    public class SendWindow extends GTK.Dialog {
+        set_border_width (10)
+        set_modal(true)
+        set_title ("Email Composition")
+        set_usize (500, 500)
+
+        var vbox = get_vbox()
+
+        var table = new GTK.Table (2,4,false)
+        vbox.pack_start (table, true, true, 0)
+
+        var infotable = new GTK.Table (2, 3, false)
+        infotable.show()
+        table.attach (infotable, 0, 2, 0, 1, GTK.FILL|GTK.EXPAND|GTK.SHRINK, GTK.FILL|GTK.SHRINK, 5, 5)
+
+        function makeinfofield (label, x, y) {
+            var lab = new GTK.Label (label + ":")
+            lab.show()
+            infotable.attach (lab, x, x+1, y, y+1, GTK.FILL, GTK.FILL|GTK.SHRINK, 0, 0)
+    
+            var info = new GTK.Entry()
+            info.show()
+            infotable.attach (info, x+1, x+22, y, y+1, GTK.FILL|GTK.EXPAND|GTK.SHRINK, GTK.FILL|GTK.SHRINK, 5, 5)
+            return info
+        }
+
+        var to = makeinfofield ("To", 0, 0)
+        var cc = makeinfofield ("CC", 0, 1)
+        var subject = makeinfofield ("Subject", 0, 2)
+
+
+        var text = new GTK.Text (null, null)
+        text.set_editable (true)
+        table.attach (text, 0, 1, 1, 2,
+                            GTK.EXPAND | GTK.SHRINK | GTK.FILL,
+                            GTK.EXPAND | GTK.SHRINK | GTK.FILL, 0, 0);
+        text.show()
+
+        var vadj = null
+        var hadj = null
+        text.get_adjustments (hadj, vadj)
+        var vscrollbar = new GTK.VScrollbar (vadj)
+        table.attach (vscrollbar, 1, 2, 1, 2,
+                            GTK.FILL, GTK.EXPAND | GTK.SHRINK | GTK.FILL, 0, 0);
+
+        vscrollbar.show()
+        text.realize()
+        table.show()
+
+        function send_clicked (widget, p) {
+            var message = text.get_chars (0, -1)
+
+            // split a list of addresses separated by commas into a vector and
+            // trim the elements
+            function splitlist (list) {
+                var vec = split (list, ',')
+                foreach i sizeof (vec) {
+                    vec[i] = trim (vec[i])
+                }
+                return vec
+            }
+
+            var recipients = splitlist (to.get_text())
+            var ccvec = splitlist (cc.get_text())
+
+            System.mail (subject.get_text(),  message, recipients, ccvec)
+            hide()
+            System.exit (0)
+        }
+
+        var actarea = get_action_area()
+        var send = new GTK.Button ("Send")
+        send.set_flags (GTK.CAN_DEFAULT)
+        actarea.pack_start (send, true, true, 0)
+        send.grab_default()
+        send.show()
+
+        var cancel = new GTK.Button ("Cancel")
+        actarea.pack_start (cancel, true, true, 0)
+        cancel.show()
+
+        send.signal_connect ("clicked", send_clicked, null)
+        cancel.signal_connect ("clicked", function (a,b) { System.exit(0) }, null)
+    }
+}
+
+function main {
+    var win = new Email.SendWindow()            // instance of window
+    win.show()                                  // show the window
+
+    GTK.mainloop()                              // GTK main loop, doesn't return
+}

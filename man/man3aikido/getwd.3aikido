@@ -1,0 +1,18 @@
+.\" Aikido manual
+.\" David Allison
+.TH getwd 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+getwd \- Get the name of the current directory
+.SH SYNOPSIS
+\fBSystem.getwd()
+.SH DESCRIPTION
+The System.getwd() function returns a string containing the name
+of the current directory
+.SH RETURN VALUES
+The current directory.
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

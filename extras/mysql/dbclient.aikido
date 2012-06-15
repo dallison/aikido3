@@ -1,0 +1,42 @@
+import mysql
+import base64
+
+var db = new MySQL.Database ("localhost", "test", "test")
+
+for (;;) {
+    System.print ("SQL> ")
+    System.flush (stdout)
+    var q = ""
+    stdin -> q
+    if (q == "quit") {
+        break
+    }
+    try {
+        var res = db.query (q)
+
+        if (res == null) {
+            println ("No data returned")
+        } else {
+            foreach row res {
+                println (row)
+/*
+                foreach col row {
+                    System.print ("\t")
+                    try {
+                       System.print (col)
+                    } catch (e) {
+                        print ("exception: " + e + ", type: " + typeof (col))
+                        throw "error"
+                    }
+                }
+                System.println ("")
+*/
+           }
+        }
+    } catch (e) {
+        System.println ("Error: " + e)
+    }
+}
+
+
+db.close()

@@ -1,0 +1,42 @@
+.\" Aikido manual
+.\" David Allison
+.TH openin 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+openin \- Open a file for input
+.SH SYNOPSIS
+\fBSystem.openin(filename)
+.SH DESCRIPTION
+The System.openin() function opens the named file for input.  The file must
+exist and be readable by the process.
+
+.SH RETURN VALUES
+The return value is a stream attached to the open file.
+.SH EXCEPTIONS
+If the System.openin() function cannot open the file, it throws a
+.I System.FileException
+exception.
+
+.SH EXAMPLE
+var s = stdin
+.br
+try {
+.br
+    s = System.openin ("commands.txt")
+.br
+} catch (e) {
+.br
+    // failed to open file, deal with it
+.br
+}
+.br
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+open(3aikido), openout(3aikido), openup(3aikido), openfd(3aikido),
+close(3aikido), seek(3aikido), eof(3aikido), flush(3aikido),
+getchar(3aikido), get(3aikido)
+

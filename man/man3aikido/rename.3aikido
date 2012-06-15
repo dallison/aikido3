@@ -1,0 +1,19 @@
+.\" Aikido manual
+.\" David Allison
+.TH rename 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+rename \- Rename a file
+.SH SYNOPSIS
+\fBSystem.rename(oldname, newname)
+.SH DESCRIPTION
+The System.rename() function renames the given file to a new name.
+.SH RETURN VALUES
+Nothing is returned.
+.SH EXCEPTIONS
+The exception System.Exception is thrown if the rename fails.
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

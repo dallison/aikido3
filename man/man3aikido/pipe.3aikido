@@ -1,0 +1,53 @@
+.\" Aikido manual
+.\" David Allison
+.TH pipe 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+pipe \- Open a pipe to an operating system command
+.SH SYNOPSIS
+\fBSystem.pipe(command, redirectStderr = true, env = [], dir = "")
+.SH DESCRIPTION
+The System.pipe() function executes an operating system command and
+redirects the standard output (and optionally standard error also) to
+pipes connected to a stream.  The stream is returned from the pipe()
+function.
+.P
+This function is most useful for executing commands that run for
+a long time and produce output that you would like to see before
+the command completes.  Unlike the system(3aikido) and exec(3aikido)
+functions, this does not wait for the command to complete.  The function
+is also useful for a command that requires input.  This input can be
+sent through the pipe to the command.
+.P
+The return value is a pipe connected to the standard input and
+standard output streams of the command.  The standard error
+stream may also be connected to this stream.  The stream may
+be used in the Aikido program to send and receive data to and
+from the running program.
+.P
+The optional
+.I env
+parameter allows the command to be passed additional evironment variables
+to be added to the set of environment variables already defined for the
+process.  The parameter consists of a vector of strings of the form:
+.I varname=value
+..
+.P
+The optional
+.I dir
+parameter allows the command to be run with a different working
+directory than the current one.
+.P
+The command is executed by the system shell (/bin/sh on UNIX). 
+
+.SH RETURN VALUES
+The function returns an open stream connected to the process
+running the command.
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+system(3aikido), exec(3aikido)
+

@@ -1,0 +1,34 @@
+.\" Aikido manual
+.\" David Allison
+.TH transform 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+transform \- transform a value by applying a function to all parts of it
+.SH SYNOPSIS
+\fBSystem.transform(value, func)
+.SH DESCRIPTION
+The System.transform() function applies the function passed in the
+.I func
+argument to the value passed in the 
+.I value
+argument.  The System.transform() function does not modify the value being
+transformed, but creates a copy of it during the transformation.  The
+function works on values of any type, but certain types are ignored.  The ignored
+types are: map and block.
+.P
+The 
+.I func
+function is best supplied by an anonymous function (see example).
+
+.SH RETURN VALUES
+The function returns the newly transformed copy of the value.
+
+.SH EXAMPLE
+var upper = System.transform (s, function (ch) { return ctype.toupper (ch) })
+
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

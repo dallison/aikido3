@@ -1,0 +1,20 @@
+.\" Aikido manual
+.\" David Allison
+.TH ttyname 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+ttyname \- Get name of terminal device
+.SH SYNOPSIS
+\fBSystem.ttyname(stream)
+.SH DESCRIPTION
+The System.ttyname() function gets the name of the terminal connected
+to a stream.
+.SH RETURN VALUES
+A string containing the name of the terminal.
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+isatty(3aikido), isatty(2)

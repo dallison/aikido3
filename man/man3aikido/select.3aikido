@@ -1,0 +1,24 @@
+.\" Aikido manual
+.\" David Allison
+.TH select 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+select \- Check for data waiting on a stream connection
+.SH SYNOPSIS
+\fBSystem.select(stream, timeout)
+.SH DESCRIPTION
+The System.select() function is used to check if there is any
+data available to be read from the stream.  This is most
+useful when the stream is connected to a network socket. 
+.P
+The second parameter is the number of microseconds to wait
+before returning if there is no data available.  A value of
+0 means to wait forever,..
+.SH RETURN VALUES
+The value 1 is returned if data is available, 0 otherwise
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

@@ -1,0 +1,22 @@
+.\" Aikido manual
+.\" David Allison
+.TH format 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+format \- Format a string
+.SH SYNOPSIS
+\fBSystem.format(str,...)
+.SH DESCRIPTION
+The System.format() function is analagous to the sprintf(3c) function.  It formats
+its arguments given a format string into a string.  The format codes supported
+by the format() function are almost identical to sprintf(3c) with the addition
+of a "%b" format that allows binary numbers to be formatted.
+.SH RETURN VALUES
+The formatted string is returned.
+.SH EXAMPLE
+var s = System.format ("Total: %d, average: %-10d", total, average)
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

@@ -1,0 +1,35 @@
+.\" Aikido manual
+.\" David Allison
+.TH openup 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+openup \- Open a file for update
+.SH SYNOPSIS
+\fBSystem.openup(filename)
+.SH DESCRIPTION
+The System.openup() function opens a file for update.  The file may
+or may not exist.  If it does exist, the current location pointer is
+placed at the end of the file.  If it doesn't exist, it is created.
+The file may be read or written.
+
+.SH RETURN VALUES
+A stream attached to the file is returned.  The stream can be both
+read from and written to.
+
+.SH EXCEPTIONS
+A 
+.I System.FileException
+is thrown if the file cannot be opened.
+
+.SH EXAMPLE
+var s = System.openup ("trace.out")
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+open(3aikido), openout(3aikido), openin(3aikido), openfd(3aikido),
+close(3aikido), seek(3aikido), eof(3aikido), flush(3aikido),
+getchar(3aikido), get(3aikido)
+

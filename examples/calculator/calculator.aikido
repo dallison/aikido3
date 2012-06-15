@@ -1,0 +1,141 @@
+/*
+ * calculator.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.2
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+//
+// simple, but very powerful calculator
+//
+
+package Calculator {
+    import math                 // mathematics functions
+    import ctype
+    import net                  // just for fun
+
+    using Math
+
+    function help {
+        println ("Aikido calculator")
+        println ("David Allison, Sun Microsystems Laboratories\n")
+        println ("Type any valid Aikido expression and the program")
+        println ("print the result.  The expression can be any type")
+        println ("supported by the Aikido language\n")
+        println ("For mathematics functions, just use their name")
+        println ("e.g sin (PI/2)\n")
+        println ("Variables can be declared by use of an assignment")
+        println ("e.g.")
+        println ("> x = 2")
+        println ("> x / 3")
+        println ("1\n")
+        println ("To print a number in hex, use the 'hex()' function:")
+        println ("> hex(1234)")
+        println ("4d2\n")
+        println ("You can also format the output using the 'format' function")
+        println ("e.g.")
+        println ("> format (\"%x\", 1234)")
+        println ("4d2\n")
+        println ("Type quit to exit (or ^C)\n")
+    }
+
+    // common function to print in hex
+    function hex (n) {
+        return format ("%x", n)
+    }
+
+    // set of functions defined by the user.  These are read from
+    // the ~/.acinit file
+
+    var myfuncs = null
+
+    var user = System.getUser (System.username)
+    const initfile = user.dir + System.fileSeparator + ".acinit"
+    if (stat (initfile) != null) {
+        var s = openin (initfile)
+        try {
+            myfuncs = load (s)
+        } catch (e) {
+                // ignore errors in init file
+        }
+        close (s)
+    }
+
+    // run the main program
+    public function run {
+       while (!eof (stdin)) {
+            if (isatty (stdin)) {               // not from a tty, no prompt
+                print ("> ")
+                flush (stdout)
+            }
+            // read the expression from stdin
+            // note: because the user can declare variables, we need to 
+            // keep our variables separate.  This is why they begin
+            // with an _.  The is because the variables declared in 'eval'
+            // are placed in the enclosing block scope (this one)
+            var _expr = ""
+            stdin -> _expr
+            if (_expr == "") {
+                continue
+            }
+            if (_expr == "quit") {
+                break
+            }
+            var _i = 0
+            while (ctype.isspace (_expr[_i])) _i++
+            if (_expr[_i] == '#') {                       // comment?
+               continue
+            }
+            // evaluate it and print the answer
+            try {
+                var _val = eval (_expr)
+                println (_val)
+            } catch (e) {
+                e -> stderr
+            }
+        }
+    }
+
+    // calculate from the program arguments
+    public function runargs (args) {
+       var expr = ""
+       foreach arg args {               // append all args together into a string
+           expr.append (arg +  ' ')
+       }
+       try {
+           println (eval (expr))        // evaluate and print
+       } catch (e) {
+           e -> stderr
+       }
+    }
+}
+
+function main {
+    if (args.size() > 0) {              // if we have any args, print the result
+        Calculator.runargs (args)
+    } else {                            // no args, enter script or interactive mode
+        if (isatty (stdin)) {
+            println ("Aikido calculator, help() for help")
+        }
+        Calculator.run()
+    }
+}
+

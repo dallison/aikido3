@@ -1,0 +1,30 @@
+.\" Aikido manual
+.\" David Allison
+.TH getSystemStatus 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+getSystemStatus \- Get exit status of last system command
+.SH SYNOPSIS
+\fBSystem.getSystemStatus()
+.SH DESCRIPTION
+The System.getSystemStatus() function returns the integer that was
+the exit status of the last executed 
+.I System.system
+command.
+.SH RETURN VALUES
+The exit status is returned
+.SH EXAMPLE
+.P
+system ("diff x y")
+.br
+if (System.getSystemStatus() == 1) {
+.br
+    println ("diffs were present")
+.br
+}
+.br
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

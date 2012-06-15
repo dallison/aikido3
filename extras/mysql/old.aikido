@@ -1,0 +1,163 @@
+import mysql
+
+class User (db, name, id = -1) {
+    public operator -> (data, isout) {
+       if (isout) {
+       } else {
+           [name, " (", id , ")\n"] -> data
+       }
+    } 
+
+    public function insert {
+        id = db.addUser (name) 
+    }
+}
+
+class NightlyDatabase (host, name, user): Database (host, name, user) {
+public:
+    function createSchema (nuke) {
+        // see what tables exist
+        var tables =  query ("show tables")
+        var tabmap = {}
+        foreach tab tables {
+            tabmap[tab[0]] = true
+        }
+        function createTable (tab, cols) {
+            if (typeof (tabmap[tab]) != "none") {
+                if (nuke) {
+                    query ("drop table " + tab)
+                } else {
+                    return false
+                }
+            }
+            var command = "create table " + tab + "( " ;
+            foreach col cols {
+                command += col + ", "
+            }
+            command >>= 2
+            command += ")"
+
+            System.println (command)
+            query (command)
+            return true
+        }
+
+        var users = ["id integer",
+                         "name varchar(32)"]
+        var tests = ["testid integer",
+                           "testname varchar(50)"]
+        var failures = ["id integer",
+                             "fail2dictid integer",
+                             "testsid integer"]
+        var diff2users = ["id integer",
+                               "userid integer",
+                               "groupname varchar(50)",
+                               "priority integer"]
+        var dictionary = ["id integer",
+                          "diff2usersid integer",
+                          "priority integer"]
+        var fail2dict = ["id integer",
+                         "failuresid integer",
+                         "dictionaryid integer",
+                         "priority integer",
+                         "comments varchar(255)"]
+        var failurehistory = ["id integer",
+                              "fail2dictid integer",
+                              "datefailed varchar(50)",		// XXX fix this as a date
+                              "datefixed varchar(50)"]
+                              
+
+        var ids = ["userid integer",
+                   "failureid integer",
+                   "testid integer",
+                   "diffid integer",
+                   "dictid integer",
+                   "failid integer"]
+
+        createTable ("users", users)
+        createTable ("failures", failures)
+        if (createTable ("ids", ids)) {
+            query ("insert into ids values (1,1,1,1,1,1)")
+        }
+        createTable ("tests", tests)
+        createTable ("diff2users", diff2users)
+        createTable ("dictionary", dictionary)
+        createTable ("fail2dict", fail2dict)
+        createTable ("failurehistory", failurehistory)
+    }
+
+    function getUsers {
+        var users = query ("select * from users")
+        var allusers = []
+        foreach u users {
+            var user = new User (this, u[1], u[0]) ;
+            user -> allusers
+        }
+        return allusers
+    }
+
+    function newId (id) {
+        query ("update ids set " + id + " = " + id + " + 1")
+        var idtab = query ("select " + id + " from ids")
+        if (sizeof (idtab) == 0) {
+           throw "no id available"
+        }
+        var row = idtab[0]
+        return row[0]
+    }
+
+    function addUser (username) {
+        var newid = newId("userid")
+        if (sizeof (query ("select * from users where name = '" + username + "'")) != 0) {
+            throw "user already exists"
+        } else {
+            query ("insert into users values (" + newid + ", '" + username + "')")
+        }
+        return newid
+    }
+
+
+    function addTest (name) {
+        var id = newId("testid")
+        if (sizeof (query ("select testid from tests where name = '" + name + "'")) != 0) {
+            throw "duplicate test"
+        } else {
+            query ("insert into tests values (" + id + ", '" + name + "')")
+        }
+    }
+
+    function addFailure (name, description, owner) {
+        var now = System.date().toString()
+        var id = newId("failureid")
+        if (sizeof (query ("select id from failures where name = '" + name + "'")) != 0) {
+            throw "duplicate failure"
+        } else {
+            query ("insert into failures values (" + id + ", '" + name + "', '" + description + "', " +
+                     owner + ", '" + now + "')")
+        }
+        
+    }
+
+    function getFailures {
+        var failures = query ("select * from failures")
+        return failures
+    }
+
+}
+
+var db = new NightlyDatabase ("databank1", "test", "root")
+
+db.createSchema(true)
+
+var me = new User (db, "dallison")
+me.insert()
+
+var users = db.getUsers()
+System.println ("users")
+
+foreach u users {
+    u -> stdout
+}
+
+}
+

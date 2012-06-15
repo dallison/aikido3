@@ -1,0 +1,2221 @@
+/*
+ * test.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.9
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+// Tests added:
+//   6/12/2007: David Allison of Xsigo Systems Inc.
+//     added tests for coroutines and new switch statement case expression operators
+
+//
+// Aikido test suite
+//
+
+System.println ("*********************")
+System.println ("* Aikido test suite *")
+System.println ("*********************")
+System.println ("")
+
+System.println ("System configuration:")
+System.println ("   username: " + username)
+System.println ("   hostname: " + hostname)
+System.println ("   domainname: " + domainname)
+System.println ("   pid: "+ pid)
+System.println ("   ppid: " + ppid)
+System.println ("   pgrp: " + pgrp)
+System.println ("   ppgrp: " + ppgrp)
+System.println ("   uid: " + uid)
+System.println ("   gid: " + gid)
+System.println ("   operatingsystem: " + operatingsystem)
+System.println ("   osinfo: " + osinfo)
+System.println ("   machine: " + machine)
+System.println ("   architecture: " + architecture)
+System.println ("   platform: " + platform)
+System.println ("   manufacturer: " + manufacturer)
+System.println ("   serialnumber: " + serialnumber)
+System.println ("   hostid: " + System.format ("%x", hostid))
+System.println ("   pagesize: " + pagesize)
+System.println ("   numpages: " + numpages)
+System.println ("   numprocessors: " + numprocessors)
+System.println ("   fileSeparator: " + fileSeparator)
+System.println ("   extensionSeparator: " + extensionSeparator)
+System.println ("")
+
+var totalmem = System.numpages * System.pagesize
+var totalmem_meg = cast<real>(totalmem) / (1024.0 *1024.0)
+System.println ("Total memory: " + totalmem_meg + "MB")
+System.println ("Process memory size: " + os.getProcessMemorySize() + "MB")
+System.println()
+
+// some simple assignments
+
+var i = 1000
+var r = 1000.0
+var s = "hello world"
+var v = []
+var v2 = [1,2,3,4]
+var m = {}
+var m2 = {1 = 2, 3 = 4}
+var ok = true
+
+
+// test the exceptions
+
+var throwok = false
+try {
+    throw 100 
+} catch (e) {
+    if (typeof (e) != "integer") {
+        throw "bad exception type: " + typeof (e)
+    }
+    if (e != 100) {
+        throw "bad exception value: " + e
+    }
+    throwok = true
+}
+
+if (!throwok) {
+    throw "throw didn't work"
+}
+
+macro assert e {
+   if (!($e)) {
+       throw "Assertion failed: $e"
+   }
+}
+
+// integer arithmetic tests
+var i1 = i * 2 ; assert i1 == 2000
+i1 = i + 100 ; assert i1 == 1100
+i1 = i - 100 ; assert i1 == 900
+i1 = i / 3 ; assert i1 == 333
+i1 = i % 999 ; assert i1 == 1
+i1 = i << 4 ; assert i1 == 16000
+i1 = i >> 3 ; assert i1 == (1000 / 8)
+i1 = i >>> 4 ; assert i1 == (1000 / 16)
+i1 = i == 1000 ; assert i1 == true
+i1 = i != 1000 ; assert i1 == false
+i1 = i < 1001 ; assert i1 == true
+i1 = i > 1001 ; assert i1 == false
+i1 = i <= 1000 ; assert i1 == true
+i1 = i >= 1000 ; assert i1 == true
+
+// string tests
+var s1 = s + "1" ; assert s1 == "hello world1"
+s1 = s >> 4 ; assert s1 == "hello w"
+s1 = s << 5 ; assert s1 == " world"
+s1 = s + 100 ; assert s1 == "hello world100"
+s1 = 200 + s ; assert s1 == "200hello world"
+s1 = s + 100.0 ; assert s1 == "hello world100"
+s1 = 200.0 + s ; assert s1 == "200hello world"
+
+// real tests
+var r1 = r * 2 ; assert r1 == 2000
+r1 = r + 100 ; assert r1 == 1100
+r1 = r - 100 ; assert r1 == 900
+r1 = r / 4 ; assert r1 == 250
+r1 = r % 31 ; assert r1 == 8
+r1 = r % 31.0 ; assert r1 == 8
+i1 = r == 1000 ; assert i1 == true
+i1 = r != 1000 ; assert i1 == false
+i1 = r < 1001 ; assert i1 == true
+i1 = r > 1001 ; assert i1 == false
+i1 = r <= 1000 ; assert i1 == true
+i1 = r >= 1000 ; assert i1 == true
+
+// vector tests
+var v3 = [1]
+var v4 = [1,2,3,4,5]
+
+var v1 = v + 1 ; assert v1 == [1]
+v1 = v2 + 5 ; assert sizeof (v1) == 5 && v1 == v4
+i1 = v < v3 ; assert i1 == true
+i1 = v > v3 ; assert i1 == false
+
+assert (v3 & v4) == [1]
+
+// statements
+
+var loop = 0
+
+// if statements
+var res = 1
+if (100 > 500) {
+    res = 2
+} elif (200 < 100) {
+    res = 3
+} else {
+    res = 4
+}
+assert res == 4
+
+if (600 > 500) {
+    res = 2
+} elif (200 < 100) {
+    res = 3
+} else {
+    res = 4
+}
+assert res == 2
+
+if (400 > 500) {
+    res = 2
+} elif (200 < 300) {
+    res = 3
+} else {
+    res = 4
+}
+assert res == 3
+
+// switch statements
+res = 1
+var sw = 5
+switch (sw) {
+case 4:
+    res = 4
+    break
+case 5:
+    res = 5
+case 6:
+    res = 6
+    break
+default:
+    res = -1
+}
+assert res == 6
+
+switch (sw) {
+case 5:
+    res = 4
+    break
+case 4:
+    res = 5
+case 6:
+    res = 6
+    break
+default:
+    res = -1
+}
+assert res == 4
+
+switch (sw) {
+case 4:
+    res = 4
+    break
+case 7:
+    res = 5
+case 5:
+    res = 6
+    break
+default:
+    res = -1
+}
+assert res == 6
+
+switch (sw) {
+case 4:
+    res = 4
+    break
+case 7:
+    res = 5
+case 8:
+    res = 6
+    break
+default:
+    res = -1
+}
+assert res == -1
+
+// new feature test: operators for cases
+switch (sw) {
+case < 5:
+    res = 4
+    break
+case > 5:
+    res = 6
+    break
+case == 5:
+    res = 5
+    break
+}
+
+assert res == 5
+
+switch (sw) {
+case < 6:
+    res = 5
+    break
+case > 5:
+    res = 6
+    break
+case == 5:
+    res = -1 
+    break
+}
+
+assert res == 5
+
+switch ("a") {
+case in "bc":
+    res = 1
+    break
+case in "abc":
+    res = 2
+    break
+}
+assert res == 2
+
+switch (4) {
+case in 2..3:
+    res = 1
+    break
+case in 1..5
+    res = 2
+    break
+}
+assert res == 2
+
+// while
+loop = 0
+while (loop < 10) {
+    loop++
+}
+assert loop == 10
+
+loop = 0
+while (loop > 10) {
+    loop++
+}
+assert loop == 0
+
+
+
+// do
+
+loop = 0
+do {
+    loop++
+} while (loop < 10)
+
+assert loop == 10
+
+loop = 0
+do {
+    loop++
+}while (loop > 10)
+
+assert loop == 1
+
+
+
+// for
+for (loop = 100 ; loop > 90 ; loop--) {
+}
+assert loop == 90
+
+loop = 0
+for ( ; loop < 90 ; loop++) {
+}
+assert loop == 90
+
+
+var a1 = 0
+var a2 = 0
+for (a1 = 100,a2=1 ; a2 < 10 ; a1--,a2++) {
+}
+
+assert a1 == 91
+assert a2 == 10
+
+
+// foreach integer
+loop = 0 
+foreach i 10 {
+    loop++
+}
+assert loop == 10
+
+loop = 0 
+foreach i -10 {
+    loop++
+}
+assert loop == 10
+
+// foreach integer in a range
+loop = 0
+foreach i in 2..5 {
+    loop++
+}
+assert loop == 4
+
+// 'in' is optional
+
+loop = 0
+foreach i 2..5 {
+    loop++
+}
+assert loop == 4
+
+
+
+// foreach string
+
+loop = 0
+var teststr = "abcdefghijklmnopqrstuvwxyz"
+foreach ch teststr {
+    assert typeof (ch) == "char"
+    loop++
+}
+assert loop == 26
+
+
+
+
+// foreach vector
+loop = 0
+var testvec = [1,2,3,4]
+foreach i testvec {
+    assert typeof (i) == "integer"
+    loop++
+}
+assert loop == 4
+
+
+// break and continue
+
+var marker = "marker"
+ok = true
+while (1) {
+    if (1) {
+        break ;
+        ok = false
+    }
+    ok = false
+}
+assert ok
+
+i = 0
+while (true) {
+    if (i == 0) {
+        i = 10
+        continue 
+    } elif (i == 10) {
+        break 
+    }
+    assert false
+}
+assert i == 10
+
+ok = false
+i = 1
+while (i < 4) {
+    switch (i) {
+    case 1:
+        i++		// i goes to 2
+        break
+    case 3:		
+        ok = true
+        i++
+        continue
+
+    default:
+        assert false
+    }
+    i++			// i should be 3 the first time around
+}
+assert ok
+assert i == 4
+
+// in operator
+
+// vectors
+var inv = [1,2,3]
+assert 1 in inv
+assert 3 in inv
+assert [1] in inv
+assert !(5 in inv)
+assert !([5] in inv)
+
+// maps
+var inm = {1=2,3=4}
+assert 1 in inm
+assert 3 in inm
+assert !(2 in inm)
+
+// strings
+var ins = "dave"
+assert 'd' in ins
+assert "d" in ins
+assert 'a' in ins
+assert !('p' in ins)
+
+class InClass {
+   var v = [1,2,3]
+public:
+    operator in (x) {
+        return x in v
+    }
+}
+
+var inc = new InClass()
+assert 1 in inc
+assert 2 in inc
+assert [1] in inc
+assert !(4 in inc)
+assert !([4] in inc)
+
+ok =  1 in 1..3
+assert ok
+
+ok =  3 in 1..3
+assert ok
+
+ok = 3 in 1..2
+assert !ok
+
+assert "println" in System
+assert !("xxx" in System)
+
+
+// enumerations
+
+enum Enum {
+    ONE, TWO, THREE
+}
+
+var en = TWO
+var en1 = en + 1
+assert en1 == THREE
+en1 = en - 1
+assert en1 == ONE
+
+assert en1 in ONE..THREE
+assert !(en1 in TWO..THREE)
+
+loop = 0
+foreach e Enum {
+    loop++
+}
+assert loop == 3
+
+
+loop = 0
+foreach e ONE..TWO {
+    loop++
+}
+assert loop == 2
+
+enum Color {
+    RED, GREEN = 1 << 4, BLUE = GREEN 
+}
+
+extend Color {
+    PURPLE
+}
+
+enum MyColor extends Color {
+    CYAN
+}
+
+assert cast<string>(CYAN) == "CYAN"
+assert cast<int>(RED) == 0
+assert cast<int>(GREEN) == 1 << 4
+assert cast<int>(GREEN) == 1 << 4
+assert cast<int>(PURPLE) == (1 << 4) + 1
+assert cast<int>(CYAN) == cast<int>(PURPLE) + 1
+
+var evec = new int [sizeof (Color)]
+assert sizeof (evec) == 4
+evec[RED] = 999
+assert evec[0] == 999
+
+// virtual and static functions and forward declarations
+var aa = 1
+
+class A {
+    public function print ...
+
+    public function run() {
+       print (1)
+    }
+
+    public static function test (a) {
+        aa = 3
+    }
+
+    public static var x = 5432 
+
+    public function print (x) {
+        aa = 2
+    }
+}
+
+class B extends A {
+    public function print (x) {
+        aa = 4
+    }
+}
+
+class C extends A {
+    public function print (x) {
+        aa = 5
+    }
+}
+
+A.test (1234)
+assert aa == 3
+
+assert A.x == 5432
+
+var a = new A()
+var b = new B()
+var c = new C()
+b.run()
+assert aa == 4
+
+a.run()
+assert aa == 2
+
+c.run()
+assert aa == 5
+
+
+// abstract blocks
+
+aa = 0
+class AbsBase {
+    public function f...
+}
+
+class AbsDerived extends AbsBase {
+    public function f {
+       aa = 1
+    }
+}
+
+//
+// try to create an instance of an abstract class
+//
+ok = false
+try {
+    var ab = new AbsBase()
+} catch (e) {
+    ok = true
+}
+
+assert ok
+
+// try to create an instance of a class that makes an abstract class concrete
+ok = true
+try {
+    var ab = new AbsDerived()
+    ab.f()
+} catch (e) {
+    ok = false
+}
+ 
+assert ok
+assert aa == 1
+
+// foreach map
+
+var m1 = {1 = "a", 3 = "b", 5 = "c"}
+loop = 0
+foreach m m1 {
+    assert typeof (m) == System.Pair
+    assert typeof (m.first) == "integer"
+    assert typeof (m.second) == "string"
+    loop++
+}
+assert loop == 3
+
+
+
+
+// operator overloading
+
+class Value (x) {
+public:
+    var nOpCalls = 0
+
+    operator + (y) {
+        nOpCalls++
+        return x + y
+    }
+    operator - (y) {
+        nOpCalls++
+        return x - y
+    }
+    operator * (y) {
+        nOpCalls++
+        return x * y
+    }
+    operator / (y) {
+        nOpCalls++
+        return x / y
+    }
+    operator < (y) {
+        nOpCalls++
+        return x < y
+    }
+    operator <= (y) {
+        nOpCalls++
+        return x <= y
+    }
+    operator > (y) {
+        nOpCalls++
+        return x > y
+    }
+    operator >= (y) {
+        nOpCalls++
+        return x >= y
+    }
+    operator == (y) {
+        nOpCalls++
+        return x == y
+    }
+    operator != (y) {
+        nOpCalls++
+        return x != y
+    }
+    operator >> (y) {
+        nOpCalls++
+        return x >> y
+    }
+    operator >>> (y) {
+        nOpCalls++
+        return x >>> (y + 1)
+    }
+    operator << (y) {
+        nOpCalls++
+        return x << y
+    }
+    operator sizeof {
+        nOpCalls++
+        return 600
+    }
+
+    operator typeof {
+        nOpCalls++
+        return "hello"
+    }
+    
+    operator foreach (var i){
+        nOpCalls++
+        if (typeof (i) == "none") {
+            i = 0
+            return i
+        } elif (i == 2) {
+            i = none
+        } else {
+            return ++i
+        }
+    }
+
+    operator cast (y) {
+        nOpCalls++
+        return x
+    }
+
+    operator -> (stream, isout) {
+        nOpCalls++
+    }
+
+    operator[] (i, j = -1) {
+        nOpCalls++ ;
+        return i
+    }
+   
+    operator() (i) {
+        nOpCalls++ ;
+        return i
+    }
+}
+
+var val = new Value (120)
+
+var val1 = val + 1 ; assert val1 == 121
+val1 = val - 1  ; assert val1 == 119
+val1 = val * 2  ; assert val1 == 240
+val1 = val / 2  ; assert val1 == 60
+val1 = val < 120  ; assert val1 == false
+val1 = val <= 120  ; assert val1 == true
+val1 = val > 120  ; assert val1 == false
+val1 = val >= 120  ; assert val1 == true
+val1 = val == 120  ; assert val1 == true
+val1 = val != 120  ; assert val1 == false
+
+val1 = val >> 1 ; assert val1 == 60
+val1 = val << 1 ; assert val1 == 240
+val1 = val >>> 1 ; assert val1 == 30
+
+// sizeof and typeof operators
+var sz = sizeof (val) ; assert sz == 600
+var tp = typeof (val) ; assert tp == "hello"
+
+// operator foreach
+loop = 0
+foreach x val {
+    loop++
+}
+assert loop == 3
+
+// operator cast
+var cst = cast<int>(val) ; 
+assert typeof (cst) == "integer" 
+assert cst == 120
+
+// operator ->
+123 -> val
+val -> cst
+
+// subscript operator
+var qq = val[1]
+qq = val[1:3]
+
+// function call operator
+qq = val (1234)
+assert qq == 1234
+
+assert val.nOpCalls == 25
+
+
+// functions
+
+var ncalls = 0
+function fred (x) {
+    ncalls++
+}
+
+fred (1)
+assert ncalls == 1
+
+// reference parameter
+var yy = 0
+function joe (var y) {
+    y = 1234
+}
+
+joe (yy) ; assert yy == 1234
+
+// subscripts (reading)
+
+// integer subscripts
+
+var sub1 = 0b01010101
+var sub2 = sub1[0] ; assert sub2 == 0b1
+sub2 = sub1[1] ; assert sub2 == 0b0
+sub2 = sub1[1:0] ; assert sub2 == 0b01
+sub2 = sub1[7:4] ; assert sub2 == 0b0101
+
+// string subscripts
+var str = "dave"
+var ch1 = str[0] ; assert ch1 == 'd'
+var str1 = str[0:2] ; assert str1 == "dav"
+str1 = str[2:3] ; assert str1 == "ve"
+
+// vector subscripts
+
+var vec = [1,2,3]
+var vec1 = vec[1] ; assert vec1 == 2
+
+// map subscripts
+
+// XXX
+
+// subscripts (writing)
+
+sub1 = 0b10000001
+sub1[5:2] = 0b1111 ; assert sub1 == 0b10111101
+sub1[2] = 0 ; assert sub1 == 0b10111001
+
+vec[1] = 34 ; assert vec[1] == 34
+vec[0:1] = [56,78] ; assert vec[0] == 56 && vec[1] == 78
+vec[2:0] = 5 ; assert vec[0] == 5 && vec[1] == 5 && vec[2] == 5
+
+// regular expressions
+
+str = "abc def ghi"
+var ex1 = str["abc"]
+assert sizeof (ex1) == 1 && ex1[0].start == 0 && ex1[0].end == 2
+
+var ex2 = str["a(b)c"]
+assert sizeof (ex2) == 2 && ex2[0].start == 0 && ex2[0].end == 2 && ex2[1].start == 1 && ex2[1].end == 1
+
+// error condition tests
+
+
+// assignment of a different type
+try {
+    var x = 0
+    x = "hello"
+    ok = false
+} catch (e) {
+    "expected exception: " -> stdout
+    [e, '\n'] -> stdout
+    ok = true
+}
+assert ok
+
+// illegal operation (unary)
+try {
+    var v = []
+    var x = -v
+    ok = false
+} catch (e) {
+    "expected exception: " -> stdout
+    [e, '\n'] -> stdout
+    ok = true
+}
+assert ok
+
+// illegal operation (binary)
+try {
+    var v = []
+    var x = v ^ 1
+    ok = false
+} catch (e) {
+    "expected exception: " -> stdout
+    [e, '\n'] -> stdout
+    ok = true
+}
+assert ok
+
+// eval
+
+var ev = 0
+var n = 1234
+
+ev = System.eval ("n + 3")
+assert ev == 1237
+
+ok = false
+try {
+    ev = System.eval ("ksjhfs")
+} catch (e) {
+    "expected exception: " -> stdout
+    [e, '\n'] -> stdout
+    ok = true
+}
+assert ok
+
+// casts
+
+var c1 = cast<int>("1234")
+assert c1 == 1234
+
+// C style cast
+c1 = (int)"1234"
+assert c1 == 1234
+
+s1 =cast<string>(1234)
+assert s1 == "1234"
+
+s1 = (string)1234
+assert s1 == "1234"
+
+class Line (x) {
+    var str = x
+
+    public function toString() {
+        return str
+    }
+}
+
+var line = new Line ("dave")
+
+var line0 = "line" + line
+assert line0 == "linedave"
+
+var line1 = cast<Line>(line)			// should have no affect
+assert line == line1
+
+s1 = cast<string>(line)
+assert s1 == "dave"
+
+line = cast<Line>("fred")
+assert typeof (line) == Line
+
+s1 = cast<string>(line)
+assert s1 == "fred"
+
+ok = false
+switch (typeof (line)) {
+case "string":
+    assert false
+    break
+case Line:
+    ok = true
+    break
+default:
+    break
+}
+assert ok
+
+// delete
+
+var d1 = [1,2,3,4]
+delete d1[1]
+assert sizeof (d1) == 3
+assert d1[0] == 1
+assert d1[1] == 3
+assert d1[2] == 4
+
+d1 = [1,2,3,4,5]
+delete d1[2:4]
+assert sizeof(d1) == 2
+assert d1[0] == 1
+assert d1[1] == 2
+
+// load
+
+ok = true
+var sval = 0
+
+try {
+    var str = System.openin ("load.aikido")
+    var s = System.load (str)
+    System.close (str)
+    s.print ("testing loading to stdout")
+    s.print ("testing loading to stderr", stderr)
+    sval = s.val
+} catch (e) {
+println (e)
+    ok = false
+}
+assert ok
+assert sval == 1234
+
+// System value functions
+
+// System.find
+
+vec = [1,2,3,4,5,6,7]
+var index = System.find (vec, 4)
+assert index == 3
+
+index = System.find (vec, 8)
+assert index == -1
+
+str = "hello world" 
+index = System.find (str, 'w')
+assert index == 6
+
+index = System.find (str, "wor")
+assert index == 6
+
+index = System.find (str, "xx")
+assert index == -1
+
+index = System.find (str, "o", 5)
+assert index == 7
+
+index = System.rfind (str, "o")
+assert index == 7
+
+index = System.rfind (str, "o", 6)
+assert index == 4
+
+
+var value1 = System.find (main, "Value")
+assert value1 == Value
+
+var value2 = System.find (main, "NOVALUE")
+assert value2 == 0
+
+var value3 = System.find (Value, "operator+")
+assert value3 != 0
+
+var value4 = System.find (val, "operator-")
+assert value4 != 0
+
+var value5 = System.find (val, "notfound")
+assert value5 == 0
+
+// System.sort
+
+vec = [4,23,5,6,7,3,1]
+var vecs = System.sort (vec)
+assert vecs[0] == 1
+assert vecs[5] == 7
+
+// System.bsearch
+
+var x1 = System.bsearch (vecs, 5)
+assert x1 == true
+
+x1 = System.bsearch (vecs, 46)
+assert x1 == false
+
+// System.split
+
+str = "now   is the time for all good    men to come to the aid of the party"
+vec = System.split (str, ' ')
+assert sizeof (vec) == 16
+assert vec[0] == "now"
+assert vec[1] == "is"
+assert vec[15] == "party"
+
+vec = System.split (str, "the")
+assert sizeof (vec) == 4
+assert vec[3] == " party"
+
+v = [1,2,5, 3,4,5, 8,7,5, 8,9,0]
+vec = System.split (v, 5)
+assert sizeof (vec) == 4
+assert vec[0][0] == 1
+assert vec[1][1] == 4
+assert sizeof (vec[3]) == 3
+
+class Test (x) {
+    var v = 1
+    function test {
+    }
+}
+
+vec = System.split (Test, 0)
+assert sizeof (vec) == 5
+
+// block relationships (using classes defined above)
+
+assert A > B
+assert B < A
+assert C < A
+assert A > C
+assert (B < C) == false
+
+// tests for reported bugs
+
+
+// eval() scoping bug (Darryl Cooksley - darryl.cooksley@lateralsands.com)
+
+class XX {
+    var b = 1
+    var a = 2
+    foreach i 2 {
+        var a = i
+        System.eval ("a = b")
+        assert a == b
+    }
+}
+
+var xx = new XX()
+
+
+vec = [1,2,3,4]
+var proc = 3
+var r2 = [proc] & vec
+assert r2 == [3]
+proc = 5 
+r2 = [proc] & vec
+assert r2 == []
+
+
+// test for inheritance at different scope level
+
+ok = false
+class AA {
+    public function print() {
+       ok = true
+    }
+}
+
+class BB {
+    class C {
+        class D extends AA {
+            print()
+        }
+        var d = new D()
+    }
+    var c = new C()
+}
+
+var bb = new BB()
+assert ok
+
+// test for new inline block and anonymous block feature
+
+{
+var x = `println ("123")`
+assert x[0] == "123\n"
+
+var y = `var r = 0
+         for (var i = 0 ; i < 100 ; i++) {
+             r += i*i
+         }
+         println (r)`
+assert y[0] == "328350\n"
+
+
+var f = function {
+    return 3 
+}
+
+var g = f()
+assert g == 3
+
+function tester (f, p) {
+    return f(p) + 2
+}
+
+var a = tester (function (q) { return q }, 1)
+assert a == 3
+a = tester (function (q) { return q*q }, 2)
+assert a == 6
+
+}
+
+// System.trim stuff
+
+var trimstr1 = "   hello world "
+var trimstr2 = ""
+var trimstr3 = " "
+var trimstr4 = "hello "
+var trimstr5 = " hello"
+var trimstr = ""
+
+trimstr = System.trim (trimstr1) ; assert trimstr == "hello world"
+trimstr = System.trim (trimstr2) ; assert trimstr == ""
+trimstr = System.trim (trimstr3) ; assert trimstr == ""
+trimstr = System.trim (trimstr4) ; assert trimstr == "hello"
+trimstr = System.trim (trimstr5) ; assert trimstr == "hello"
+
+var trimvec1 = new [4]
+trimvec1[1] = 1
+trimvec1[2] = 2
+
+var trimvec2 = []
+var trimvec3 = [1,2,3,4]
+var trimvec4 = new [2]
+trimvec4[1] = 3
+
+var trimvec5 = new [2]
+trimvec5[0] = 4
+
+var trimvec = []
+trimvec = System.trim (trimvec1) ; assert sizeof (trimvec) == 2 && trimvec[0] == 1 && trimvec[1] == 2
+trimvec = System.trim (trimvec2) ; assert sizeof (trimvec) == 0 
+trimvec = System.trim (trimvec3) ; assert sizeof (trimvec) == 4 && trimvec[0] == 1 && trimvec[3] == 4
+trimvec = System.trim (trimvec4) ; assert sizeof (trimvec) == 1 && trimvec[0] == 3
+trimvec = System.trim (trimvec5) ; assert sizeof (trimvec) == 1 && trimvec[0] == 4
+
+// System.stat
+
+var stat = System.stat ("test.aikido")
+assert stat != null
+
+assert stat.S_ISDIR() == false
+assert (stat.mode & System.Stat.S_IFDIR) == 0
+
+// get and set limits
+
+var cpu = System.getlimit ("cputime")
+System.println ("cpu = " + cpu)
+
+var stacksize = System.getlimit ("stacksize")
+System.println ("stacksize = " + stacksize)
+
+var numfds = System.getlimit ("descriptors")
+System.println ("numfds = " + numfds)
+
+System.setlimit ("descriptors", 100)
+numfds = System.getlimit ("descriptors")
+assert numfds == 100
+
+// System.replace
+
+// replace strings
+str = "hello world, this is a test"
+str1 = System.replace (str, "o", "a", true)
+assert str1 == "hella warld, this is a test"
+str1 = System.replace (str, "o", "a", false)
+assert str1 == "hella world, this is a test"
+
+str = "/abc/xyz/def"
+str1 = System.replace (str, "xyz", "", true)
+assert str1 == "/abc//def"
+str1 = System.replace (str, "/abc", "", true)
+assert str1 == "/xyz/def"
+str1 = System.replace (str, "def", "", true)
+assert str1 == "/abc/xyz/"
+
+// replace chars
+str = "hello world"
+str1 = str.replace ('l', 'r', true)
+assert str1 == "herro worrd"
+
+// System.hash
+
+i = 1234
+ch = 'a'
+str = "hello"
+str1 = "hello"
+vec = [1,2,3,4]
+
+assert System.hash (i) == 1234
+assert System.hash (ch) == 97
+assert System.hash (str) == System.hash (str1)
+assert System.hash (vec) == 1+2+3+4
+
+// Filename package
+
+import filename
+
+if (System.operatingsystem != "Windows") {
+    var fn = "/a/b/c/d.e"
+    assert Filename.suffix (fn) == "e"
+    assert Filename.basename (fn) == "/a/b/c/d"
+    assert Filename.dirname (fn) == "/a/b/c"
+    assert Filename.filename (fn) == "d.e"
+    assert Filename.export (fn) == "/net/" + System.hostname + fn
+
+    vec = Filename.explode (fn)
+    assert sizeof (vec) == 5
+    assert vec[0] == ""
+    assert vec[1] == "a"
+    assert vec[2] == "b"
+    assert vec[3] == "c"
+    assert vec[4] == "d.e"
+    
+    assert Filename.implode (vec) == fn
+}
+
+// new scope to stop clashes
+{
+
+interface A {
+}
+
+class B {
+}
+
+class C extends B {
+}
+
+class D implements A {
+}
+
+class E extends B implements A {
+}
+
+macro assert e {
+   if (!($e)) {
+       throw "Assertion failed: $e"
+   }
+}
+
+var c = new C
+var d = new D
+var e = new E
+
+assert c instanceof C
+assert c instanceof B
+assert d instanceof A
+assert e instanceof B
+assert e instanceof A
+
+assert C < B
+assert C <= B
+assert C == C
+assert B > C
+assert B >= C
+
+}
+
+// test peek and poke
+
+var mem = malloc (1024)
+
+poke (mem, 0x55)
+var mem1 = peek (mem)
+assert mem1 == 0x55
+
+poke (mem+12, 0x12345678, 4)
+mem1 = peek (mem+12, 4)
+assert mem1 == 0x12345678
+
+var memstr = "dave allison"
+poke (mem + 100, memstr, sizeof (memstr))
+var memstr1 = peek (mem+100, sizeof (memstr))
+var memtype = typeof (memstr1)
+assert memtype == "bytevector"
+assert cast<string>(memstr1) == memstr
+
+poke (mem + 200, memstr1, sizeof (memstr1))
+var memcmp1 = peek (mem+200, sizeof (memstr1)) 
+var memcmp2 = peek (mem+100, sizeof (memstr1))
+assert memcmp1 == memcmp2
+
+
+// test builtin methods
+
+{
+macro assert e {
+   if (!($e)) {
+       throw "Assertion failed: $e"
+   }
+}
+
+// strings
+var str = "hello"
+assert str.size() == sizeof (str) && sizeof(str) == 5
+assert str.type() == typeof(str)
+str.append (" world")
+assert str == "hello world"
+str.clear()
+assert str == ""
+
+// vectors
+var vec = [1,2,3,4,5]
+assert vec.size() == sizeof (vec) && sizeof(vec) == 5
+assert vec.type() == typeof (vec)
+vec.append (6)
+assert vec.size() == 6 && vec[5] == 6
+vec.clear()
+assert vec.size() == 0
+
+// byte vectors
+var bvec = new byte [5]
+assert bvec.size() == sizeof (bvec) && sizeof(bvec) == 5
+assert bvec.type() == typeof (bvec)
+bvec.append (6)
+assert bvec.size() == 6 && bvec[5] == 6
+bvec.clear()
+assert bvec.size() == 0
+
+// maps
+var m = {1=2,3=4}
+assert m.size() == sizeof (m) && sizeof(m) == 2
+assert m.type() == typeof (m)
+m.append (6)
+assert m.size() == 3 && typeof (m[6]) != "none"
+m.clear()
+assert m.size() == 0
+
+
+}
+
+// test threads and monitors
+
+
+monitor JobQueue {
+    var v = []
+    public function put (x) {
+        v.append (x)
+        notify()
+    }
+
+    public function get(millisecs) {
+        while (sizeof(v) == 0) {
+            if (millisecs == -1) {
+                wait()
+            } else {
+                var t = timewait(millisecs * 1000)
+                if (!t) {
+                    return -1
+                }
+            }
+        }
+        var x = v[0]
+        v <<= 1
+        return x
+    }
+}
+
+var queue = new JobQueue()
+
+thread jobthread(id, iterations, result, timeout) {
+    foreach i iterations {
+        var x = queue.get(timeout)
+        result.append (x)
+    }
+}
+
+var threadresults = new [2][0]
+var threads = new [2]
+
+foreach i 2 {
+    threads[i] = jobthread (i, 10, threadresults[i], -1)
+}
+
+sleep (100000)
+
+foreach i 20 {
+    queue.put (i)
+}
+
+foreach i 2 {
+   join (threads[i])
+}
+
+var allresults = threadresults[0] + threadresults[1]
+allresults = sort (allresults)
+assert sizeof (allresults) == 20
+
+var ii = 0
+foreach i allresults {
+    assert i == ii
+    ii++
+}
+
+// lets try the clear() builtin method while we are here
+threadresults[0].clear()
+threadresults[1].clear()
+
+
+// create new threads with timeouts
+foreach i 2 {
+    threads[i] = jobthread (i, 10, threadresults[i], 10)
+}
+
+foreach i 2 {
+   join (threads[i])
+}
+
+// there was nothing in the queue, so everything should have timed out
+assert threadresults[0].size() == 10
+assert threadresults[1].size() == 10
+
+foreach i threadresults[0] {
+    assert i == -1
+}
+
+foreach i threadresults[1] {
+    assert i == -1
+}
+
+
+// test system, exec and pipe
+
+function checkload (vec) {
+    var lines = System.readfile ("load.aikido")
+    assert sizeof(vec) == sizeof (lines)
+ 
+    foreach i sizeof (vec) {
+        assert trim(vec[i]) == trim(lines[i])
+    }
+}
+
+if (System.operatingsystem != "Windows") {
+    // check that the system call works
+    var loadfile1 = System.system ("cat load.aikido")
+    checkload (loadfile1)
+
+    // test environment setting
+    var env1 = System.system ("echo $TEST", ["TEST=OK"])
+    assert env1[0] == "OK\n"
+
+    var env2 = []
+    // test directory setting
+    if (System.operatingsystem == "Mac OS X") {
+        env2 = System.system ("pwd", [], "/tmp")
+        assert env2[0] == "/private/tmp\n"
+    } else {
+        env2 = System.system ("pwd", [], "/tmp")
+        assert env2[0] == "/tmp\n"
+    }
+
+    // test System.exec
+    var out1 = []
+    var err1 = []
+
+    System.exec ("cat load.aikido", out1, err1)
+    assert sizeof (err1) == 0
+    checkload (out1)
+
+    // test environment setting
+    System.exec ("echo $TEST", env1, err1, ["TEST=OK"])
+    assert env1[0] == "OK\n"
+
+    // test directory setting
+    if (System.operatingsystem == "Mac OS X") {
+        System.exec ("pwd", env2, err1, [], "/tmp")
+        assert env2[0] == "/private/tmp\n"
+    } else {
+        System.exec ("pwd", env2, err1, [], "/tmp")
+        assert env2[0] == "/tmp\n"
+    }
+
+    var p = System.pipe ("cat load.aikido")
+    var loadlines = []
+    p -> loadlines
+    checkload (loadlines)
+    pipeclose (p)
+
+    p = System.pipe ("echo $TEST", true, ["TEST=OK"])
+    var env3 = []
+    p -> env3
+    assert env3[0] == "OK\n"
+    pipeclose (p)
+
+    if (System.operatingsystem == "Mac OS X") {
+        p = System.pipe ("pwd", true, [], "/tmp")
+        var env4 = []
+        p -> env4
+        assert env4[0] == "/private/tmp\n"
+        pipeclose (p)
+    } else {
+        p = System.pipe ("pwd", true, [], "/tmp")
+        var env4 = []
+        p -> env4
+        assert env4[0] == "/tmp\n"
+        pipeclose (p)
+    }
+} else {		// windows code
+
+    // check that the system call works
+    var loadfile1 = System.system ("..\\Release\\aikido cat.aikido -- load.aikido")
+    checkload (loadfile1)
+
+    // test environment setting
+    var env1 = System.system ("..\\Release\\aikido echo.aikido TEST", ["TEST=OK"])
+    assert env1[0] == "OK\n"
+
+    var cd = System.getwd()
+
+    var env2 = []
+    // test directory setting
+    env2 = System.system ("..\\Release\\aikido \"" + cd + "\\pwd.aikido\"", [], "C:\\windows")
+    assert env2[0] == "C:\\windows\n"
+
+    // test System.exec
+    var out1 = []
+    var err1 = []
+
+    System.exec ("..\\Release\\aikido cat.aikido -- load.aikido", out1, err1)
+    assert sizeof (err1) == 0
+    checkload (out1)
+
+    // test environment setting
+    System.exec ("..\\Release\\aikido echo.aikido TEST", env1, err1, ["TEST=OK"])
+    assert env1[0] == "OK\n"
+
+    // test directory setting
+    System.exec ("..\\Release\\aikido \"" + cd + "\\pwd.aikido\"", env2, err1, [], "C:\\windows")
+    assert env2[0] == "C:\\windows\n"
+
+    var p = System.pipe ("..\\Release\\aikido cat.aikido -- load.aikido")
+    var loadlines = []
+    p -> loadlines
+    checkload (loadlines)
+    pipeclose (p)
+
+    p = System.pipe ("..\\Release\\aikido echo.aikido TEST", true, ["TEST=OK"])
+    var env3 = []
+    p -> env3
+    assert trim(env3[0]) == "OK"
+    pipeclose (p)
+
+    p = System.pipe ("..\\Release\\aikido \"" + cd + "\\pwd.aikido\"", true, [], "C:\\windows")
+    var env4 = []
+    p -> env4
+    assert trim(env4[0]) == "C:\\windows"
+    pipeclose (p)
+
+}
+
+//
+// test dates
+//
+
+
+var now = new Date()
+var yesterday = now - (24*60*60)
+var tomorrow = now + (24*60*60)
+if (now.mday > yesterday.mday) {
+    assert now.mday == yesterday.mday + 1
+} else {
+    assert now.mday == 1
+}
+if (now.mday < tomorrow.mday) {
+    assert now.mday == tomorrow.mday - 1
+} else {
+    assert tomorrow.mday == 1
+}
+
+// this wont work exactly at midnight
+var now1 = Date.makeDate (System.time())
+assert now1.mday == now.mday
+assert now1.year == now.year
+assert now1.mon == now.mon
+
+// test date comparisons
+assert now == now
+assert yesterday < now
+assert now > yesterday
+assert now >= yesterday
+assert now >= now
+assert now < tomorrow
+assert now <= tomorrow
+assert now != yesterday
+
+var then = new Date ("july 13 2001")
+assert then.mon == 6
+assert then.year == 101
+assert then.mday == 13
+
+then = new Date ("aug 5 13:14:15")
+assert then.mon == 7
+assert then.year == now.year
+assert then.hour == 13
+assert then.min == 14
+assert then.sec == 15
+
+var then1 = new Date ("aug 5 1:14:15 pm")
+assert then1 == then
+
+assert now in yesterday..tomorrow
+
+assert Date("nov 21") in Date("nov 20")..Date("nov 22")
+
+//
+// coroutines
+//
+
+function squares (start, end) {
+    for (var i = start ; i < end ; i++) {
+        yield i*i
+    }
+}
+
+{
+var start = 10
+var end = 20
+
+var sres = []
+for (var i = start ; i < end ; i++) {
+    sres.append (i*i)
+}
+
+// foreach iterator
+var n = 0
+foreach s squares (start, end) {
+    assert sres[n++] == s
+}
+
+// value() and next()
+n = 0
+var f = squares(start,end)
+do {
+    assert sres[n++] == f.value()
+    f = f.next()
+} while (typeof(f) != "none")
+
+
+}
+
+
+// 
+// try catch finally
+//
+
+var fin1 = 0
+var fin2 = 0
+var fin3 = 0
+// test1: try and finally with no throw
+try {
+   fin1 = 1
+} finally {
+   fin2 = fin1
+}
+
+assert fin1 == 1
+assert fin2 == 1
+fin1 = 0
+fin2 = 0
+
+// test 2: try and finally with throw
+try {
+	try {
+	   fin1 = 1
+	   throw "catch"
+	} finally {
+	   fin2 = fin1
+	}
+} catch (e) {
+}
+
+assert fin1 == 1
+assert fin2 == 1
+fin1 = 0
+fin2 = 0
+
+
+// test 3: try, catch and finally with throw
+try {
+   fin1 = 1
+   throw "catch"
+} finally {
+   fin2 = fin3 + 1
+} catch (e) {
+   fin3 = fin1 + 1
+}
+
+assert fin1 == 1
+assert fin3 == 2
+assert fin2 == 3
+fin1 = 0
+fin2 = 0
+fin3 = 0
+
+// test 4: try, catch and finally with no throw
+try {
+   fin1 = 1
+} finally {
+   fin2 = fin1 + 1
+} catch (e) {
+   fin3 = fin1 + 1
+}
+
+assert fin1 == 1
+assert fin3 == 0
+assert fin2 == 2
+fin1 = 0
+fin2 = 0
+fin3 = 0
+
+// test 5: try, catch, finally with a throw in the catch
+var fin4 = 0
+
+try {
+    try {
+       fin1 = 1
+       throw "catch"
+    } finally {
+       fin2 = fin3 + 1
+    } catch (e) {
+        fin3 = fin1 + 1
+        throw e
+    }
+} catch (e) {
+    fin4 = fin2 + 1
+}
+assert fin1 == 1
+assert fin3 == 2
+assert fin2 == 3
+assert fin4 == 4
+fin1 = 0
+fin2 = 0
+fin3 = 0
+fin4 = 0
+
+// test 6: return
+function tryfoo() {
+    try {
+        fin1 = 1
+        return
+    } finally {
+        fin2 = fin1 + 1
+    }
+}
+tryfoo()
+
+assert fin1 == 1
+assert fin2 == 2
+fin1 = 0
+fin2 = 0
+
+// test 7: break
+foreach i 5 {
+    try {
+        fin1++
+        if (i == 3) {
+            break
+        }
+    } finally {
+        fin2 = fin1 + 1
+    }
+}
+assert fin1 == 4
+assert fin2 == 5
+fin1 = 0
+fin2 = 0
+
+// test 8: return within a loop
+function trytest1() {
+    foreach i 10 {
+        try {
+            fin1++
+            if (i == 3) {
+                return
+            }
+        } finally {
+            fin2 = fin1 + 1
+        }
+    }
+}
+trytest1()
+assert fin1 == 4
+assert fin2 == 5
+fin1 = 0
+fin2 = 0
+
+//
+// new syntax for 'for'
+//
+
+res = 0
+for (var i in [1,2,3]) {
+    res += i
+}
+assert res == 6
+
+res = 0
+var vv = [1,2,3,4]
+for (var i : vv) {
+    res += i
+}
+assert res == 10
+
+
+// javascript style objects
+var js1 = {
+    x:1,
+    y:'hello'
+}
+assert js1.x == 1
+assert js1.y == "hello"
+
+
+js1.x = 2
+js1.foo = 'bar';
+assert js1.x == 2
+assert js1.foo == 'bar'
+
+// multivalued objects
+
+{
+   var mv1 = (1,2,3)
+   assert mv1[0] == 1
+   assert mv1[1] == 2
+   assert mv1[2] == 3
+
+   var a =0, b = 0, c = 0
+   (a,b,c) = (1,2,3)
+   assert a == 1
+   assert b == 2
+   assert c == 3
+
+   function ff(x) {
+       return (x,x*2)
+   }
+
+   (a,b) = ff(4)
+   assert a == 4
+   assert b == 8
+
+}
+
+//
+// operator . 
+//
+
+{
+
+class T {
+    private function foo (a,b){
+        return a*10+b
+    }
+
+    public operator . (name) {
+       if (name == "dave") {
+           return findNativeFunction ("printf")
+       }
+       if (name == "foobar") {
+           return foo;
+       }
+       throw "Unknown function " + name
+    }
+}
+
+var t = new T()
+var x = t.foobar(1,2);
+assert x == 12
+
+for (var i in 5) {
+    var x = t.foobar (i,i)
+    assert x == i*10+i
+}
+
+}
+
+//
+// object factory
+//
+{
+
+var obj1 = 'foo'
+var obj2 = 0
+var obj3 = 0
+class D (name,args) {
+    obj1 = name
+    obj2 = args[0]
+    obj3 = args[1]
+}
+
+function newObject (name,args) {
+    if (name in ["NSObject"]) {
+        return new D(name, args)
+    }
+    return null
+}
+
+// before adding the factory we should get an exception
+var ex = ""
+try {
+    var x = new NSObject(1,2)
+} catch (e) {
+    ex = e
+}
+assert ex == "Cannot create object of type NSObject"
+
+// now add a factory
+System.addObjectFactory (newObject)
+
+var xx = new NSObject(1,2)
+assert obj1 == "NSObject"
+assert obj2 == 1
+assert obj3 == 2
+assert typeof(xx) == D
+
+// try an unknown object
+ex = ""
+try {
+    var x = new BadNSObject(1,2)
+} catch (e) {
+    ex = e
+}
+assert ex == "Cannot create object of type BadNSObject"
+
+
+// now remove the object factory and get an exception again
+System.removeObjectFactory (newObject)
+ex = ""
+try {
+    var x = new NSObject(1,2)
+} catch (e) {
+    ex = e
+}
+assert ex == "Cannot create object of type NSObject"
+
+
+}
+
+
+{
+// test for pass-by-name call semantics
+
+function test1 (a=4,b=6) {
+    return (a,b)
+}
+
+var x = test1 (a:5)
+assert x[0] == 5
+assert x[1] == 6
+
+x = test1()
+assert x[0] == 4
+assert x[1] == 6
+
+x = test1(b:9, a:3)
+assert x[0] == 3
+assert x[1] == 9
+
+var ok = false
+try {
+    test1(a:5,c:9)
+} catch (e) {
+    println ("expected exception: " + e)
+    ok = true
+}
+assert ok
+
+
+class Test (generic a, generic b) {
+    public function get {
+       return (a,b)
+    }
+
+    public function set (c,d) {
+       a = c
+       b = d
+    }
+}
+
+var t = new Test (b:22)
+x = t.get()
+assert typeof(x[0]) == "none"
+assert x[1] == 22
+
+t.set (c:7)
+x = t.get()
+assert typeof(x[1]) == "none"
+assert x[0] == 7 
+
+}
+
+{
+// defined types for variables
+
+// no initializer
+var intvar :int
+var stringvar : string
+
+assert intvar == int
+assert stringvar == string
+
+// with initializer
+var intvar2 : int = 0
+var stringvar2 : string = "hello"
+
+assert intvar2 == 0
+assert stringvar2 == "hello"
+
+// with initializer for different type
+var intvar3 : int = "1234"
+assert intvar3 == 1234
+
+var stringvar3 : string = 1234
+assert stringvar3 == "1234"
+
+
+}
+
+
+
+{
+   // transformations for vectors
+
+   var v = [1,2,3,4,5,6]
+   var v1 = v.reverse()
+   assert v1[0] == 6
+   assert v1[5] == 1
+
+}
+
+// test parser delegates
+
+{
+
+class Delegate implements ParserDelegate {
+    public function initialize() {
+        println ("Delegate.initialize")
+    }
+
+    public function parse (cmdstream, outstream, instream) {
+        println ("Delegate.parse")
+    }
+
+    public function isClaimed (line) {
+        println ("Delegate.isClaimed")
+        return false
+    }
+   
+    public function execute() {
+        println ("Delegate.execute")
+    }
+
+}
+
+
+System.setParserDelegate (new Delegate())
+
+eval ("function x() { show foobar}")
+
+}
+
+
+
+// test long strings
+{
+var p = 123
+
+var s2 = """
+the value is ###{p}.  The square is #{p*p}
+
+<%
+foreach i 2 {
+    println ("hello")
+}
+%>
+
+"""
+
+var expected = "\nthe value is #123.  The square is 15129\n\nhello\nhello\n\n\n"
+assert s2 == expected
+
+// test the 'expand' function for a file
+var ins = openin ("string.txt")
+var s3 = expand (ins)
+ins.close()
+assert s3 == expected
+
+// expand a string
+var s4 = expand("value: #{p+1}")
+assert s4 == "value: 124"
+}
+
+
+
+
+// test annotations
+{
+@interface Override {
+    function value() default 2
+    function test() default "hello"
+}
+
+@Override(value=1,test="foo")
+function foo() {
+}
+
+var x = @foo
+var override = x.Override
+assert typeof(override) == "map"
+assert override.value == 1
+assert override.test == "foo"
+
+var y = @foo.Override
+assert typeof(y) == "map"
+
+
+class Bar {
+    @Property(set=true, boolean=false) var barname = "foobar"
+}
+
+var bar = new Bar()
+assert bar.getBarname() == "foobar"
+
+bar.setBarname("bar")
+assert bar.getBarname() == "bar"
+
+@AllowOverride function getit() {
+}
+
+function getit() {
+}
+
+}
+
+
+System.println ("ALL TESTS PASSED")

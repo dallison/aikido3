@@ -1,0 +1,12 @@
+<web-app>
+    <servlet>
+        <servlet-name>Expansion Test Servlet</servlet-name>
+        <servlet-file>expandtest.aikido</servlet-file>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>Expansion Test Servlet</servlet-name>
+        <url-pattern>/expand/*.txt</url-pattern>
+    </servlet-mapping>
+
+</web-app>

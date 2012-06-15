@@ -1,0 +1,30 @@
+function x(a,b) {
+    println ("a: "+ a + ", b: " + b)
+}
+
+x( b:2, 
+   a:1)
+
+//x( c:2, d:3)
+
+class Test (para1, para2) {
+    println (para1)
+    println (para2)
+    public function foo (p1=3, p2=4, p3=6) {
+        println (p1)
+        println (p2)
+        println (p3)
+    }
+}
+
+var test = new Test (para2:"foo")
+test.foo (p3:5,p1:'bar')
+ 
+var v = [1,2,3,4]
+foreach i v.reverse() {
+    println (i)
+}
+
+var y = (int)("1234")
+println (y+1)
+

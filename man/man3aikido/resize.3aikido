@@ -1,0 +1,28 @@
+.\" Aikido manual
+.\" David Allison
+.TH resize 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+resize \- Change the size of a value
+.SH SYNOPSIS
+\fBSystem.resize(value, newsize)
+.SH DESCRIPTION
+The System.resize() function changes the size of the value passed as its parameter.
+It works on values of type vector, bytevector and string.
+.SH RETURN VALUES
+There is no return value
+.SH EXAMPLE
+.IP "" 10
+var v = [1,2,3]
+.br
+v.resize (5)
+.br
+v[4] = 10
+.br
+
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

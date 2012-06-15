@@ -1,0 +1,71 @@
+%define _topdir %%root%%
+%define _rpmdir	%%root%%/rpms
+%define _sourcedir      %%root%%
+%define _builddir       %{_tmppath}
+%define version %%version%%
+%define buildno %%build%%
+%define lib lib64
+
+Name: aikido
+Summary: The Aikido language system
+BuildArch: %%arch%%
+Version: %{version}
+Release: %{buildno}.%%distro%%
+Group: Development/Languages
+License: Sun Public License
+BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
+Prefix: /usr
+Packager: David Allison <dallison@xsigo.com>
+Source: /dev/null
+
+%description
+The %{name} package contains the Aikido Language System
+
+%prep 
+mkdir -p %{buildroot} %{_rpmdir}
+
+%build
+if [ "%{no_build}" != 1 ]; then
+    make -C %{_topdir}
+fi
+
+%install
+rm -fr %{buildroot}
+dest=%{buildroot}/%{prefix}
+mkdir -p $dest
+make  -C %{_topdir} install dest=$dest
+
+%clean
+rm -fr %{buildroot}
+
+%pre 
+
+%post 
+
+%preun 
+
+%files 
+%defattr(-,root,root,-)
+%{prefix}/bin/aikido
+%{prefix}/bin/aikido_g
+%{prefix}/bin/aikido_o
+%{prefix}/bin/aikido.zip
+%{prefix}/bin/mkelf
+%{prefix}/bin/mkstandalone
+%{prefix}/lib/libaikido_g.a
+%{prefix}/lib/libaikido_o.a
+%{prefix}/lib/libddk.so
+%{prefix}/lib/libdtk.so
+%{prefix}/include/aikido.h
+%{prefix}/include/aikidotoken.h
+%{prefix}/include/aikidozip.h
+%{prefix}/include/aikidopcreposix.h
+%{prefix}/include/aikidointerpret.h
+%{prefix}/include/aikidocodegen.h
+%{prefix}/include/aikidodebug.h
+%{prefix}/include/unix/os.h
+%{prefix}/bin/aikido-config
+
+
+
+

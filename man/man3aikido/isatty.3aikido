@@ -1,0 +1,36 @@
+.\" Aikido manual
+.\" David Allison
+.TH isatty 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+isatty \- Is a stream connected to a tty (old name for a terminal)
+.SH SYNOPSIS
+\fBSystem.isatty(stream)
+.SH DESCRIPTION
+The System.isatty() function checks if the given stream is connected to
+an interactive terminal.  Typically this will be connected to a
+keyboard and screen.
+.P
+This function can be used to determine whether a program is running
+interactively or not.
+.SH RETURN VALUES
+Returns 1 if the stream is connected to a terminal, 0 otherwise
+.SH EXAMPLE
+.br
+
+.br
+if (System.isatty (stdin)) {
+.br
+    print ("> ")
+.br
+    flush (stdout)
+.br
+}
+.br
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+isatty(2), ttyname(3aikido)

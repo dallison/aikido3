@@ -1,0 +1,28 @@
+.\" Aikido manual
+.\" David Allison
+.TH readline 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+readline \- Read a line from a stream into a string
+.SH SYNOPSIS
+\fBSystem.readline(instream)
+.SH DESCRIPTION
+The System.readline() function reads a line from a stream into a
+string.  The linefeed character is discarded.
+.SH RETURN VALUES
+A string is returned
+.SH EXAMPLE
+.P
+var s = openin ("t.x")
+.br
+var line = System.readline (s)
+.br
+println (line)
+.br
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+readfile(3aikido), openin(3aikido)

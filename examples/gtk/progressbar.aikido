@@ -1,0 +1,109 @@
+import gtk
+
+
+class ProgressData {
+public:
+    var window = null
+    var pbar = null
+    var timer = 0
+}
+
+function progress_timeout (progress) {
+    var newval = progress.get_value() + 1
+    var adj = progress.get_adjustment()
+    if (newval > adj.get_upper()) {
+        newval = adj.get_lower()
+    }
+
+    progress.set_value (newval)
+    return true
+}
+
+function toggle_show_text (widget, pdata) {
+    pdata.pbar.set_show_text (widget.get_active())
+}
+
+function toggle_activity_mode (widget, pdata) {
+    pdata.pbar.set_activity_mode (widget.get_active())
+}
+
+function set_continuous_mode (widget, pdata) {
+    pdata.pbar.set_bar_style (GTK.PROGRESS_CONTINUOUS)
+}
+
+function set_discrete_mode (widget, pdata) {
+    pdata.pbar.set_bar_style (GTK.PROGRESS_DISCRETE)
+}
+
+
+
+var pdata = new ProgressData()
+pdata.window = new GTK.Window (GTK.WINDOW_TOPLEVEL)
+pdata.window.set_policy (false, false, true)
+
+pdata.window.signal_connect ("destroy", function (w, d) { System.exit(0) }, null)
+pdata.window.set_title ("GTK Progress bar")
+pdata.window.set_border_width (0)
+
+var vbox = new GTK.VBox (false, 5)
+vbox.set_border_width (10)
+pdata.window.add (vbox)
+vbox.show()
+
+var align = new GTK.Alignment (0.5, 0.5, 0, 0)
+vbox.pack_start (align, false, false, 5)
+align.show()
+
+var adj = new GTK.Adjustment (0, 1, 150, 0, 0, 0)
+
+pdata.pbar = new GTK.ProgressBar (adj)
+pdata.pbar.set_format_string ("%v from [%l-%u] (=%p%%)")
+align.add (pdata.pbar)
+pdata.pbar.show()
+
+pdata.timer = GTK.timeout_add (50, progress_timeout, pdata.pbar)
+
+var separator = new GTK.HSeparator()
+vbox.pack_start (separator, false, false, 0)
+separator.show()
+
+var table = new GTK.Table (2, 3, false)
+vbox.pack_start (table, false, true, 0)
+table.show()
+
+var check = new GTK.CheckButton ("Show text")
+table.attach (check, 0, 1, 0, 1, GTK.EXPAND | GTK.FILL, GTK.EXPAND | GTK.FILL,
+                      5, 5)
+check.signal_connect ("clicked", toggle_show_text, pdata)
+check.show()
+
+check = new GTK.CheckButton ("Activity mode")
+table.attach (check, 0, 1, 1, 2, GTK.EXPAND | GTK.FILL, GTK.EXPAND | GTK.FILL,
+                      5, 5)
+check.signal_connect ("clicked", toggle_activity_mode, pdata)
+check.show()
+
+
+
+var button = new GTK.RadioButton (null, "Continuous")
+table.attach (button, 2, 3, 0, 1, GTK.EXPAND | GTK.FILL, GTK.EXPAND | GTK.FILL,
+                      5, 5)
+button.signal_connect ("clicked", set_continuous_mode, pdata)
+button.show()
+
+
+button = new GTK.RadioButton (button.group(), "Discrete")
+table.attach (button, 2, 3, 1, 2, GTK.EXPAND | GTK.FILL, GTK.EXPAND | GTK.FILL,
+                      5, 5)
+button.signal_connect ("clicked", set_discrete_mode, pdata)
+button.show()
+
+
+separator = new GTK.HSeparator()
+vbox.pack_start (separator, false, false, 0)
+separator.show()
+
+pdata.window.show()
+
+
+GTK.mainloop()

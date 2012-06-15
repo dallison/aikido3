@@ -1,0 +1,76 @@
+.\" Aikido manual
+.\" David Allison
+.TH ctype 3aikido 3/10/2003 aikido "Aikido packages"
+
+.SH NAME
+ctype \- Basic character typing package
+.SH SYNOPSIS
+\fBimport ctype
+.P
+\fBpackage ctype {
+.br
+   ...
+.br
+}
+.SH DESCRIPTION
+The 
+.I ctype
+package provides basic character classification functions.  The functions
+provided are very similar to those provided in the standard header file
+.I <ctype.h>
+..
+.P The list of functions provided is:
+.IP "isalpha(c)" 10
+true if the character is an alphabetic character
+.IP "isdigit(c)" 10
+true if the character is a digit
+.IP "isxdigit(c)" 10
+true if the character is a hexadecimal digit
+.IP "isspace(c)" 10
+true if the character is white space.  This includes spaces and tabs but not newline characters
+.IP "isalnum(c)" 10
+true if the character is an alphanumeric character
+.IP "iscntrl(c)" 10
+true if the character is a control character
+.IP "islower(c)" 10
+true if the character is a lower case alphabetic character
+.IP "isupper(c)" 10
+true if the character is an upper case alphabetic character
+.IP "ispunct(c)" 10
+true if the character is a punctuation character.  Punctuation characters are one
+of the set [.,:;!?]
+.IP "isprint(c)" 10
+true if the character is a printable character (one that is not a control code)
+.IP "toupper(c)" 10
+The upper case version of the character if the character is a lower case alphabetic 
+character
+.IP "tolower(c)" 10
+The lower case version of the character if the character is an upper case alphabetic 
+character
+.SH EXAMPLE
+import ctype
+.br
+var i = 0
+.br
+var line = ""
+.br
+stdin -> line
+.br
+function skipspaces {
+.br
+    while (i < line.size() && ctype.isspace (line[i])) {
+.br
+        i++
+.br
+    }
+.br
+}
+.br
+
+.br
+skipspaces()
+.br
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

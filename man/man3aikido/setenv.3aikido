@@ -1,0 +1,24 @@
+.\" Aikido manual
+.\" David Allison
+.TH setenv 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+setenv \- Set or define an environment variable
+.SH SYNOPSIS
+\fBSystem.setenv(varname, varvalue)
+.SH DESCRIPTION
+The System.setenv() function allows an environment variable to be defined or its
+value replaced by a new value.  The parameters to the function specify the variable
+name and value and both must be strings.
+
+.SH RETURN VALUES
+Nothing is returned
+.SH EXAMPLE
+System.setenv ("SERVER", "localhost")
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+getenv(2aikido), getenv(3c)

@@ -1,0 +1,351 @@
+import ctype
+
+public class Root {
+}
+
+public var apacheroot = new Root();
+
+public package HTTP {
+
+    // these match the M_* macros in apache
+    public const GET = 0
+    public const PUT = 1
+    public const POST = 2
+    public const DELETE = 3
+
+    // status codes
+    public const CONTINUE                      = 100
+    public const SWITCHING_PROTOCOLS           = 101
+    public const PROCESSING                    = 102
+    public const OK                            = 200
+    public const CREATED                       = 201
+    public const ACCEPTED                      = 202
+    public const NON_AUTHORITATIVE             = 203
+    public const NO_CONTENT                    = 204
+    public const RESET_CONTENT                 = 205
+    public const PARTIAL_CONTENT               = 206
+    public const MULTI_STATUS                  = 207
+    public const MULTIPLE_CHOICES              = 300
+    public const MOVED_PERMANENTLY             = 301
+    public const MOVED_TEMPORARILY             = 302
+    public const SEE_OTHER                     = 303
+    public const NOT_MODIFIED                  = 304
+    public const USE_PROXY                     = 305
+    public const TEMPORARY_REDIRECT            = 307
+    public const BAD_REQUEST                   = 400
+    public const UNAUTHORIZED                  = 401
+    public const PAYMENT_REQUIRED              = 402
+    public const FORBIDDEN                     = 403
+    public const NOT_FOUND                     = 404
+    public const METHOD_NOT_ALLOWED            = 405
+    public const NOT_ACCEPTABLE                = 406
+    public const PROXY_AUTHENTICATION_REQUIRED = 407
+    public const REQUEST_TIME_OUT              = 408
+    public const CONFLICT                      = 409
+    public const GONE                          = 410
+    public const LENGTH_REQUIRED               = 411
+    public const PRECONDITION_FAILED           = 412
+    public const REQUEST_ENTITY_TOO_LARGE      = 413
+    public const REQUEST_URI_TOO_LARGE         = 414
+    public const UNSUPPORTED_MEDIA_TYPE        = 415
+    public const RANGE_NOT_SATISFIABLE         = 416
+    public const EXPECTATION_FAILED            = 417
+    public const UNPROCESSABLE_ENTITY          = 422
+    public const LOCKED                        = 423
+    public const FAILED_DEPENDENCY             = 424
+    public const UPGRADE_REQUIRED              = 426
+    public const INTERNAL_SERVER_ERROR         = 500
+    public const NOT_IMPLEMENTED               = 501
+    public const BAD_GATEWAY                   = 502
+    public const SERVICE_UNAVAILABLE           = 503
+    public const GATEWAY_TIME_OUT              = 504
+    public const VERSION_NOT_SUPPORTED         = 505
+    public const VARIANT_ALSO_VARIES           = 506
+    public const INSUFFICIENT_STORAGE          = 507
+    public const NOT_EXTENDED                  = 510
+
+    public class Cookie (name="",value="") {
+        public var domain = ""
+        public var path = ""
+        public var expires = null
+        public var secure = false
+        public var httponly = false
+        public var comment = ""
+        public var version = ""
+
+        public function parse_in (line) {
+            var f = line.split ('=')
+            if (f.size() == 2) {
+               name = trim(f[0])
+               value = trim (f[1])
+            } elif (f.size() == 1) {
+               name = trim(f[0])
+            }
+        }
+
+        public function parse (line) {
+            var bits = line.split (";")
+            foreach bit bits {
+                var f = bit.split ("=")
+                if (f.size() == 2) {
+                    var v = transform (trim(f[0]), ctype.toupper)
+                    try {
+                        switch (v) {
+                        case "PATH":
+                            path = trim(f[1])
+                            break
+                        case "DOMAIN":
+                            domain = trim(f[1])
+                            break
+                        case "EXPIRES":
+                            expires = new Date (trim(f[1]))
+                            break
+                        case "MAX-AGE":
+                            var now = System.date()
+                            now += cast<int>(f[1])
+                            break
+                        case "COMMENT":
+                            comment = trim(f[1])
+                            break
+                        case "VERSION":
+                            version = trim(f[1])
+                            break
+                        default:
+                            // name and value
+                            name = trim(f[0])
+                            value = trim(f[1])
+                            break
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                } elif (f.size() == 1) {
+                    var v = transform (trim(f[0]), ctype.toupper)
+                    switch (v) {
+                    case "SECURE":
+                        secure = true;
+                        break
+                    case "HTTPONLY":
+                        httponly = true;
+                        break
+                    }
+                }
+            }
+        }
+
+        public function toString() {
+             var s = name + "=" + value
+             function appendString (name, v) {
+                 if (v != "") {
+                     s.append (" ;")
+                     s.append (name + "=" + v)
+                 }
+             }
+             function appendBoolean (name, v) {
+                 if (v != 0) {
+                     s.append (" ;")
+                     s.append (name)
+                 }
+             }
+
+             appendString ("Path", path)
+             appendString ("Comment", comment)
+             appendString ("Domain", domain)
+             appendString ("Expires", expires == null ? "" : expires.toString())
+             appendBoolean ("Secure", secure)
+             appendBoolean ("HttpOnly", httponly)
+             return s
+        }
+    }
+
+    private native function internal_encodeURI (uri)
+    private native function internal_decodeURI (s)
+    private native function internal_parseURI (uri, pattern, prefix)
+    private native function internal_matchURI (uri, pattern, prefix)
+
+    public function encodeURI (uri:string): string {
+        return internal_encodeURI (uri)
+    }
+
+    public function decodeURI (s:string): string {
+        return internal_decodeURI (s)
+    }
+
+    public function parseURI (uri:string, pattern:string, prefix:string="") : map {
+        return internal_parseURI (uri, pattern, prefix)
+    }
+
+    public function matchURI (uri:string, pattern:string, prefix:string="") : integer {
+        return internal_matchURI (uri, pattern, prefix)
+    }
+
+    public class Request {
+        var req = 0
+        var args = {}
+        var argsset = false
+
+        private native function internal_getMethod(req);
+        private native function internal_getMethodString(req);
+        private native function internal_getArgsString(req);
+        private native function internal_getArgs(req);
+        private native function internal_getHeadersIn(req);
+        private native function internal_getHeader(req, name, all);
+        private native function internal_getRemoteAddr(req);
+        private native function internal_getURI(req);
+        private native function internal_getFilename(req);
+        private native function internal_getCanonicalFilename(req);
+        private native function internal_getVars(req);
+        private native function internal_getVar(req, name);
+
+
+        public function getVars(): map {
+            return internal_getVars (req)
+        }
+
+        public function getVar(name:string):string {
+            return internal_getVar (req, name)
+        }
+
+        public function getContentType():string {
+            return internal_getHeader (req, "Content-type", false)
+        }
+
+        public function getMethod():integer {
+            return internal_getMethod (req)
+        }
+
+        public function getMethodString():string {
+            return internal_getMethodString (req)
+        }
+
+        public function getQueryString(): string {
+            return internal_getArgsString (req)
+        }
+
+        public function getArgs(): map {
+            if (!argsset) {
+                args =  internal_getArgs (req)
+                argsset = true
+            }
+            return args           
+        }
+
+        public function getArg (name:string): string {
+            var a = getArgs()
+            var v = args[name]
+            if (typeof (v) == "none") {
+                return ""
+            }
+            return v
+        }
+
+        public function getRemoteAddr(): string {
+            return internal_getRemoteAddr (req)
+        }
+
+        public function getURI(): string {
+            return internal_getURI (req)
+        }
+
+        public function getFilename(): string {
+            return internal_getFilename (req)
+        }
+
+        public function getCanonicalFilename(): string {
+            return internal_getCanonicalFilename (req)
+        }
+
+        public function getAllHeaders() {
+            return internal_getHeadersIn (req)
+        }
+
+        public function getHeader(name:string) {
+            return internal_getHeader (req, name, false)
+        }
+
+        public function getHeaders(name:string) {
+            return internal_getHeader (req, name, true)
+        }
+
+        public function getCookies(): vector {
+            var cookies = []
+            var val = getHeader ("cookie")
+            if (typeof(val) == "none") {
+                return cookies
+            }
+            foreach v val.split (';') {
+                var cookie = new Cookie()
+                cookie.parse_in (trim(v))
+                cookies.append (cookie)
+            }
+            return cookies
+        }
+
+        public function getAccept(): vector {
+            class Type (public type, public q) {
+                public operator< (t) {
+                    return q > t.q
+                }
+            }
+
+            var tmpresult = []             
+
+            var accepts = getHeaders ("accept")
+            foreach accept accepts {
+                var types = accept.split (",")
+                foreach type types {
+                    var q = 1.0;
+                    var fields = type.split (";")
+                    if (fields.size() == 2) { 
+                        var field = fields[1]
+                        var values = field.split ('=')
+                        if (values.size() == 2) {
+                            if (values[0] == "q") {
+                                q = (real)values[1]
+                            }
+                        }
+                    }
+                    tmpresult.append (new Type (fields[0], q))
+                }
+            }
+            var sorted = sort (tmpresult)
+            var result = []
+            foreach s sorted {
+                result.append (s.type)
+            }
+            return result;
+        }
+    }
+
+    public class Response {
+        var req = 0
+        private native function internal_setContentType (req,type);
+        private native function internal_setHeader (req,name, value);
+        private native function internal_addHeader (req,name, value);
+        private native function internal_setStatus (req,status);
+
+        public function setContentType (type:string) {
+            internal_setContentType (req, type)
+        }
+
+        public function setHeader (name:string, value:string) {
+            internal_setHeader (req, name, value)
+        }
+
+        public function addHeader (name:string, value:string) {
+            internal_addHeader (req, name, value)
+        }
+
+        public function addCookie (cookie:Cookie) {
+            internal_addHeader (req, "Set-Cookie", cookie.toString())
+        }
+        
+        public function setStatus (status:integer) {
+            internal_setStatus (req, status)
+        }
+    }
+}
+
+// initialize the module
+apache-init
+

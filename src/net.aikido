@@ -1,0 +1,165 @@
+/*
+ * net.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.12
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+//
+// network support package for darwin
+//
+// Author: David Allison
+// Version: 1.12 07/29/03
+//
+
+package Network {
+    //import libaikidonetwork		// network C++ code
+
+    // TCP streams
+    private native opennet (addr, port)		// open a TCP connection
+    private native openserver (addr,port, type)	// open a TCP or UDP server
+    public native accept (stream)		// accept a TCP connection
+
+    // UDP datagrams
+    public native openSocket() 			// open a UDP socket
+
+    private native sendto (socket, addr, port, buffer)
+    private native recvfrom (socket, var addrptr, var portptr, peek, maxb)	// returns string
+
+    public native lookupName (name)		// name -> address
+    public native lookupAddress (address)	// address -> name
+
+    // given either an integer or a string, work out the IP address.  If the
+    // argument is a string, then it is either a name or an address.  
+
+    function getaddr (addr) {
+        var ipaddr = 0
+        if (typeof (addr) == "integer") {
+            ipaddr = addr 
+        } elif (typeof (addr) == "string") {
+            var ipregex = addr["([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)"]
+            if (sizeof (ipregex) > 0) {			// match for IP address format?
+                function extractnum (addr, start, end) {
+                   var partstr = addr[start:end]
+                   return cast<int>(partstr)
+                }
+    
+                var a1 = extractnum (addr, ipregex[1].start, ipregex[1].end)
+                var a2 = extractnum (addr, ipregex[2].start, ipregex[2].end)
+                var a3 = extractnum (addr, ipregex[3].start, ipregex[3].end)
+                var a4 = extractnum (addr, ipregex[4].start, ipregex[4].end)
+                ipaddr = (a1 << 24) | (a2 << 16) | (a3 << 8) | a4
+            } else {
+                ipaddr = lookupName (addr)
+            }
+        } else {
+            throw "Invalid type for address argument: " + typeof (addr)
+        }
+        return ipaddr
+    }
+
+public:
+    const TCP = 2
+    const UDP = 1
+
+    // open an outgoing network connection (TCP)
+    function open (addr, port, unused = 0) {
+        var ipaddr = getaddr (addr)
+        return opennet (ipaddr, port)
+    }
+
+    // open a server port (TCP or UDP)
+    function openServer (addr, port, type) {
+        var ipaddr = getaddr (addr)
+        return openserver (ipaddr, port, type)
+    }
+
+    // send a datagram to the given address and port
+    function send(socket, addr, port, buffer) {
+        var ipaddr = getaddr (addr)
+        sendto (socket, ipaddr, port, buffer) 
+    }
+
+    // receive a datagram - sets address and port and returns buffer
+    function receive (socket, var addr, var port, maxbuffer = 4096) {
+       var ipaddr = getaddr (addr)
+       return recvfrom (socket, addr, port, false, maxbuffer)
+    }
+
+    // peek at a datagram - sets address and port and returns buffer
+    function peek (socket, var addr, var port, maxbuffer = 4096) {
+       var ipaddr = getaddr (addr)
+       return recvfrom (socket, addr, port, true, maxbuffer)
+    }
+
+    // formats an IP address from an integer to a n.n.n.n string
+    function formatIPAddress (addr) {
+        return System.format ("%d.%d.%d.%d", addr[31:24], addr[23:16], addr[15:8], addr[7:0])
+    }
+
+
+    // a stream filter for targetting a series of datagrams to a given
+    // address and port.  Only supports writes to the stream.
+
+    class DatagramStream (address, port) {
+        var socket = openSocket ()
+        public var numDatagrams = 0 
+
+        public function retarget (addr, p) {
+            address = addr
+            port = p
+        }
+
+        public function getAddress (var addr, var p) {
+            addr = address
+            p = port
+        }
+
+        public operator -> (data, isout) {
+           if (isout) {
+               ++numDatagrams
+               switch (typeof (data)) {
+               case "string":
+               case "bytevector":
+                   send (socket, address, port, data)
+                   break ;
+               case "vector":
+                   var s = ""
+                   foreach elem data {
+                       s += elem ;
+                   }
+                   send (socket, address, port, s)
+                   break
+               default:
+                   send (socket, address, port, cast<string>(data))
+                   break
+  
+               }
+           } else {
+              throw "Illegal use of DatagramStream"
+           }
+        }
+   }
+
+
+
+
+}

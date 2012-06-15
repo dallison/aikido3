@@ -1,0 +1,37 @@
+import crypto
+
+function test (base64) {
+    srand (2218)                // seed random number generator
+
+    var key = []
+    foreach i 32 {
+        key.append (rand() % 255)
+    }
+
+    var iv = []
+    foreach i 16 {
+        iv.append (rand() % 255)
+    }
+
+    var s = "this is a test to test the encryption and decryption functions"
+    var enc = Crypto.aes_encrypt (s, key, iv, base64)
+    var dec = Crypto.aes_decrypt (enc, key, iv, base64)
+    assert s == dec
+
+    // make a key and IV from a password
+    (key,iv) = Crypto.makekey ("password")
+    enc = Crypto.aes_encrypt (s, key, iv, base64)
+    dec = Crypto.aes_decrypt (enc, key, iv, base64)
+    assert s == dec
+
+   
+}
+
+test(false)
+test(true)
+
+var hash = Crypto.sha1("hello world")
+assert hash == "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+
+
+

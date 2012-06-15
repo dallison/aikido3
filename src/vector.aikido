@@ -1,0 +1,102 @@
+/*
+ * vector.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.11
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+//
+// wrapper class for the builtin vectors in darwin.  This is an object
+// so can be used in a traditional object sense.  It behaves like the
+// vectors of Java in that it can hold objects of any type, rather than
+// the C++ definition.
+//
+
+monitor Vector (initsize = 0) {
+    private var value = new [initsize]
+
+public:
+    // append to vector
+    function push_back (v) {
+        System.append (value, v)
+    }
+
+    function append (v) {
+        System.append (value, v)
+    }
+
+    operator+ (v) {
+        return value + v
+    }
+
+    function getElements() {
+        return value
+    }
+
+    // insert at any location
+    function insert (v, index = 0) {
+        System.insert (value, v, index)
+    }
+
+    // erase a given value
+    function erase (v) {
+       for (var i = 0 ; i < sizeof (value) ; i++) {
+           if (v == value[i]) {
+               delete value[i]
+               return
+           }
+       }
+       throw "No such element"
+    }
+    
+    operator[] (i, j = -1) {
+        if (j == -1) {
+            return value[i]
+        } else {
+            return value[i:j]
+        }
+    }
+    
+    function size() {
+        return sizeof (value)
+    }
+
+    operator sizeof() {
+        return sizeof (value)
+    }
+
+    operator-> (stream, read) {
+	if (read) {
+            stream -> value
+	} else {
+            value -> stream
+	}
+    }
+
+    operator foreach {
+        return value
+    }
+
+    operator in (v) {
+        return v in value
+    }
+}
+

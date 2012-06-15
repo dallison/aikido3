@@ -1,0 +1,16 @@
+#!/bin/sh
+
+bin/aikido <<!
+    var lines = system ("grep 'define VERSION' src/aikido.h")
+    var v = cast<string>(cast<real>(split(lines[0], ' ')[2])/100.0)
+    switch (v.size()) {
+    case 1:
+        println (v + ".00")
+        break
+    case 3:
+        println (v + "0")
+        break
+    default:
+        println (v)
+    }
+!

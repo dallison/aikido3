@@ -1,0 +1,17 @@
+.\" Aikido manual
+.\" David Allison
+.TH printStackTrace 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+printStackTrace \- 
+.SH SYNOPSIS
+\fBSystem.printStackTrace()
+.SH DESCRIPTION
+The System.printStackTrace() function
+.SH RETURN VALUES
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

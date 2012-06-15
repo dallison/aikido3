@@ -1,0 +1,110 @@
+include Makefile.common
+
+MSUFFIX = macosx
+CC = $(CCCMD) $(OSDEFINES)
+CXX =$(CC)
+
+MAKEFILE = Makefile.$(MSUFFIX)
+
+LIBTOOL = libtool
+
+OSDEFINES = -D_OS_MACOSX -D_CC_GCC 
+
+SUPPORTLIBS = lib/libaikidonetwork.so lib/libaikidomath.so lib/libaikidosecurity.so 
+
+LDLIBS += $(LIB) -lpthread -lstdc++
+CPPFLAGS += -Isrc -I/sw/include -Isrc/pcre $(OSDEFINES) $(DEBUG) -dynamic
+LDFLAGS += -L. 
+LIBFLAGS = -bundle -undefined suppress -flat_namespace
+BUNDLEFLAGS = -fno-common
+
+xdebug:
+	$(MAKE) -f $(MAKEFILE) DEBUG="-g -DDEBUGON" LIB=$(GLIB) BIN=$(GBIN) $(GBIN)
+
+xopt:
+	$(MAKE) -f $(MAKEFILE) DEBUG="-O -g" LIB=$(OLIB) BIN=$(OBIN) $(OBIN)
+
+xgtk:
+	$(MAKE) -f $(MAKEFILE) DEBUG=-g gtk
+
+driver: driver.o
+	$(CC) -o $(DRIVER) driver.o -lstdc++
+
+build:  xdebug midclean xopt 
+
+$(LIB) : $(OBJS)
+	#$(LD) -r -o $(LIB) $(OBJS) 
+	ar ruv $(LIB) $(OBJS)
+	ranlib $(LIB)
+
+#$(BIN): $(LIB) $(EOBJS) $(ZIPFILE)
+$(BIN): $(LIB) $(EOBJS) $(ZIPFILE) $(SUPPORTLIBS)
+	$(LINK.cc) -o $(BIN) $(PROFILE) $(EOBJS) $(LDLIBS) 
+
+
+$(ZIPFILE):
+	cd src ; $(ZIPCMD)  ../$(ZIPFILE) $(ZIPFILES)
+	cd src/gtk ; $(ZIPCMD) ../../$(ZIPFILE) $(GTKFILES)
+
+
+bin/mkelf: src/mkelf.cc
+	$(CC) -o bin/mkelf src/mkelf.cc -lstdc++
+                                                                                                                                                                    
+                                                                                                                                                                    
+
+
+
+lib/libaikidonetwork.so : network.o 
+	$(CC) $(CPPFLAGS) $(LIBFLAGS) -o lib/libaikidonetwork.so network.o -lstdc++
+
+network.o : src/network.cc
+	$(CC) $(CPPFLAGS) $(BUNDLEFLAGS) -c -Isrc -o network.o -c src/network.cc
+
+lib/libaikidomath.so : math.o 
+	$(CC) $(CPPFLAGS) $(LIBFLAGS) -o lib/libaikidomath.so math.o -lstdc++ -lm
+
+math.o : src/math.cc
+	$(CC) $(CPPFLAGS) $(BUNDLEFLAGS) -c -Isrc -o math.o -c src/math.cc
+
+lib/libaikidosecurity.so : security.o 
+	$(CC) $(CPPFLAGS) $(LIBFLAGS) -o lib/libaikidosecurity.so security.o  -lstdc++ 
+
+security.o : src/security.cc
+	$(CC) $(CPPFLAGS) $(BUNDLEFLAGS) -Isrc -c -o security.o -c src/security.cc
+
+
+#
+# GTK+ support
+#
+
+gtk: lib/libdtk.so lib/libddk.so
+
+lib/libdtk.so : dtk.o
+	$(CC) $(LIBFLAGS) -o lib/libdtk.so dtk.o -lstdc++ 
+
+dtk.o : src/gtk/dtk.cc
+	$(CC) $(CPPFLAGS) $(BUNDLEFLAGS) -Isrc $(GTKINC) $(GLIBINC) -o dtk.o -c src/gtk/dtk.cc
+
+ddk.o : src/gtk/ddk.cc
+	$(CC) $(CPPFLAGS) $(BUNDLEFLAGS) -Isrc $(GTKINC) $(GLIBINC) -o ddk.o -c src/gtk/ddk.cc
+
+
+lib/libddk.so : ddk.o
+	$(CC) $(LIBFLAGS) -o lib/libddk.so ddk.o -lstdc++ 
+
+
+
+
+
+clean:
+	rm -f *.o lib/* bin/* $(LIB) $(BIN) $(ZIPFILE) $(SUPPORTLIBS)
+	find . -name \*.obj -exec rm {} \;
+
+#
+# clean for swap from debug to optimize build
+#
+
+midclean: 
+	rm -f *.o 
+
+.WAIT:

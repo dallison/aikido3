@@ -1,0 +1,19 @@
+.\" Aikido manual
+.\" David Allison
+.TH tmpnam 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+tmpnam \- Generate a name for a temporary file
+.SH SYNOPSIS
+\fBSystem.tmpnam()
+.SH DESCRIPTION
+The System.tmpnam() function generates a name for a temporary file
+that is guaranteed not to clash with an existing file.  On a UNIX
+system, this will typically be in the '/tmp' filesystem.
+.SH RETURN VALUES
+A string containing the name of the file.
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

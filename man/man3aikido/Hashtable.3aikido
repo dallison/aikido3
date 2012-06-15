@@ -1,0 +1,119 @@
+.\" Aikido manual
+.\" David Allison
+.TH Hashtable 3aikido 3/10/2003 aikido "Aikido classes"
+
+.SH NAME
+Hashtable \- Mutex-locked hash table container
+.SH SYNOPSIS
+\fBimport hashtable
+.P
+\fBmonitor Hashtable (sz = 1009) implements Container {
+.br
+    public function put (key,v)
+.br
+    public function get (key)
+.br
+    public function isPresent (key)
+.br
+    public function find (key)
+.br
+    public function size()
+.br
+    public function empty()
+.br
+    public function clear()
+.br
+    public operator in (key)
+.br
+    public function erase (key)
+.br
+    public operator sizeof()
+.br
+    public function keys()
+.br
+    public operator foreach()
+.br
+    public operator [] (i, j=-1)
+.br
+}
+.SH DESCRIPTION
+The Hashtable monitor is a mutex-locked container that provides a fast
+insert/lookup of key/value pairs.  A hash table uses a 
+.I hash
+value for each of the keys in the table.  The table is implemented
+as a vector of maps, and the size of the vector is fixed at
+creation time.
+.P
+The following functions are provided for the monitor:
+.IP "put (key, v)" 10
+Insert the key/value pair into the hash table.  The key is hashed using
+the
+.I System.hash
+function.  If the key is already present in the table, the value is overwritten.
+.IP "get (key)" 10
+Search the table for the key and return the value if found.  If the key is
+not present, the value
+.I none
+is returned.
+.IP "isPresent (key)" 10
+Search the table for the key and return true if the key is present, false otherwise.
+.IP "find (key)" 10
+Search the table for the key and return its value.  If the key is not present
+then an exception is thrown.  The exception is a string containing the text 
+"Key not present"
+.IP "size()" 10
+Return the number of keys in the table.
+.IP "empty()" 10
+Return true if the table contains no keys.
+.IP "clear()" 10
+Clear out the table of all keys.
+.IP "operator in (key)" 10
+Return true is the key is present in the table.
+.IP "operator sizeof()" 10
+The number of keys in the table.
+.IP "erase (key)" 10
+Erase the given key from the table.
+.IP "keys()" 10
+Return a vector containing one element of each key in the table.
+.IP "operator foreach (key)" 10
+Return a
+.I map
+value containing all the key/value pairs in the table.
+.IP "operator [] (i, j = -1)" 10
+Lookup the table by use of the
+.I get
+function.  An exception is thrown if the 2-operand form of subscripting
+is used.
+
+
+.SH EXAMPLE
+.P
+import hashtable
+.br
+
+.br
+var cities = new Hashtable()
+.br
+cities.put ("San Ramon", 15000)
+.br
+cities.put ("Danville", 10000)
+.br
+cities.put ("Walnut Creek", 60000)
+.br
+
+.br
+if ("Dublin" in cities) {        // in operator
+.br
+}
+.br
+
+.br
+var pop = cities["San Ramon"]
+.br
+cities.erase ("Danville")
+.br
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+hash(3aikido)

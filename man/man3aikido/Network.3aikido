@@ -1,0 +1,125 @@
+.\" Aikido manual
+.\" David Allison
+.TH Network 3aikido 3/10/2003 aikido "Aikido packages"
+
+.SH NAME
+Network \- Networking package
+.SH SYNOPSIS
+\fBimport net
+.P
+\fBpackage Network {
+.br
+    public function lookupName (name: string)
+.br
+    public function lookupAddress (address: integer)
+.br
+    public function formatIPAddress (addr: integer)
+.br
+    public function open (addr, port)
+.br
+    public function openServer (addr, por, type)
+.br
+    public function accept (socket)
+.br
+    public function openSocket()
+.br
+    public function send (socket, addr, port, maxbuffer)
+.br
+    public function receive (socket, var addr, var port, max)
+.br
+    public function peek (socket, var addr, var port, max)
+.br
+}
+.br
+.SH DESCRIPTION
+The Network package provides a simple interface to the network.  The package
+supports the TCP and UDP protocols and interfaces gracefully with the
+streams in the Aikido language.
+.P
+The Network package provides 2 constants representing the protocols:
+.IP "Network.TCP" 10
+The TCP protocol
+.IP "Network.UDP" 10
+The UDP protocol.
+.P
+A network address can either be a hostname or an IP address represented
+by either an integer or a string.  Network names are translated
+to IP addresses using a name lookup service.
+.P
+Names can be manipulate using the following functions:
+.IP "lookupName (name: string)" 10
+Given a hostname, determine its integral IP address.  An exception is thrown
+if the name does not exist.
+.IP "lookupAddress (address: integer)" 10
+Given an integral IP address, determine the hostname corresponding to it.
+An exception is thrown if the determination cannot be made.
+.IP "formatIPAddress (address: integer)" 10
+Given an integral IP address, convert it to the normal string representation
+of n.n.n.n.
+.P
+
+When using TCP, the network operates a set of streams connected to the
+sockets of the operating system's network interface.  The following
+functions are provided for creating these streams:
+
+.IP "open (address, port)" 10
+Open an active connection to the given address and port.  Return the
+stream connected to it.
+.IP "openServer (address, port, type)" 10
+Open a passive listener on the given address and port.  The listener is
+passed the socket type in the
+.I type
+parameter.  This can be
+.I Network.TCP
+or
+.I Network.UDP
+..  The return value is an integer called a 
+.I socket
+that is suitable for passing to the UDP functions or the
+.I accept
+function.
+.IP "accept (socket)" 10
+Given an open socket, wait for an incoming TCP connection.  When the
+connection is made, create and attach a stream to it and return the
+stream.
+.P
+
+When using the UDP protocol, the package uses sockets.  Sockets are
+integers that represent an open channel to the operating system's
+network layer.  A socket is opened using the 
+.I openSocket
+function.  It can then be used in any of the UDP functions.
+.P
+The UDP functions are:
+.IP "openSocket()" 10
+Open a socket for communication using the UDP protcol.  An integer is
+returned.
+.IP "send (socket, address, port, buffer)" 10
+Send a buffer of data to the given address and port through an
+open socket.  The buffer is a bytevector of data or a string.
+
+.IP "receive (socket, var addr, var port, maxbuffer = 4096)" 10
+Wait for an incoming packet of data on the socket.  When
+the data arrives, the reference parameters
+.I addr
+and
+.I port
+are set to the address and port of the sender of the message.  The
+.I maxbuffer
+parameter specifies the maximum number of bytes that can be
+received by this one call.  The data receive from the
+socket is returned as a byte vector.
+.IP "peek (socket, var addr, var port, maxbuffer = 4096)" 10
+Wait for incoming data on the socket and set the 
+.I addr
+and
+.I port
+reference parameters when the data arrives.  But, do not 
+read the data from the socket.  Another call to 
+.I receive
+will read the same data.  The data present in the socket is
+returned by the peek call.
+.SH EXAMPLE
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

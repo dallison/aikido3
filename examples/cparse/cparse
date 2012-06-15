@@ -1,0 +1,5 @@
+#!/bin/sh
+
+dir=`dirname $0`
+
+aikido $dir/cparse.aikido $dir/types.aikido $dir/expr.aikido $dir/stmt.aikido $dir/depend.aikido $*

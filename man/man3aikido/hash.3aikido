@@ -1,0 +1,34 @@
+.\" Aikido manual
+.\" David Allison
+.TH hash 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+hash \- generate a hash code for a value
+.SH SYNOPSIS
+\fBSystem.hash(value)
+.SH DESCRIPTION
+The System.hash() function generates a hash code for its argument.  The
+argument can be any type.  The has hcode is a 64 bit integer that is
+guaranteed to be the same when the System.hash() function is applied
+to the same argument more than once.
+.P
+If the System.hash() function is applied to an instance of
+a class, the function 
+.I hash()
+of the class is called if it exists.   If the function does
+not exist, the address of the object is used as the hash value.
+
+.SH RETURN VALUES
+Returns a 64 bit integer that is the hash code for the value
+
+.SH EXAMPLE
+var v = "hello world"
+.br
+var h = System.hash(v)
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+Hashtable(3aikido)

@@ -1,0 +1,94 @@
+Aikido example web server
+-------------------------
+
+This example shows a simple but functional HTTP server.
+It serves up the usual mix of file types to a
+browser and adds a feature called 'Aikido Server
+Pages'.  This is different from the usual
+idea of server pages where the server processes
+special comments in the html source to get
+different effects.
+
+Aikido Server Pages are like a light-weight
+CGI program - it produces HTML as output.  When 
+the server is asked to serve up a page with
+the extension '.aikidosp' it loads the page
+into the server and executes it as an aikido
+script.  The script has to provide a function
+called 'send' taking 2 arguments as follows:
+
+public function send (url, httpstream) {
+}
+
+The first argument is the URL object representing
+the sender of the request.  This contains a
+number of facilities, such as the arguments
+supplied to the URL.  See the file url.aikido
+for full details of the URL object.
+
+The second argument is a stream through which
+the script may send data.  This is a stream
+that formats the data using the HTTP protocol.
+
+Typically, the script will create an instance
+if the class HTML.Page.  This object understands
+how to format html data.  See the file htmlpage.aikido
+for information on what is avialable.
+
+Running the server
+------------------
+
+The server runs on port 8000 of the local machine.
+To test it, run the server by:
+
+% aikido webserver
+
+The go to a browser and type the url of the local
+machine specifying port 8000.  Something like this
+will probably work:
+
+http://localhost:8000
+
+
+User directories
+----------------
+
+If the file portion of the incoming URL starts with
+a tilde (~) then the following name is taken as
+the name of a user of the system.  The server will
+look for a file called 'index.html' (and others)
+in the public_html sub-directory of the user's
+home directory.
+
+If the file index.html doesn't exist then the following
+files are searched for, in the order given:
+
+index.shtml
+index.htm
+index.aikidosp
+
+Threading
+---------
+
+The server runs in a multithreaded mode.  When the program
+starts, it spawns a set of threads whose sole purpose
+in life is to process incoming HTTP requests.  When a
+request is received, a thread is woken up and assigned
+to the request.  There is a maximum of 10 requests that
+can be processed at once (the constant MAX_REQUESTS in
+the webserver.aikido file).
+
+If too many requests arrive at the same time, the threads
+will get around to processing them in the order in which
+they were received.
+
+
+Limitations
+-----------
+
+This is an example program and is not meant to be a full
+web server.  It does not support authentication of the
+user in any way.  It probably has some bugs too...
+
+
+

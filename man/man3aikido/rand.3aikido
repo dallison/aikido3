@@ -1,0 +1,22 @@
+.\" Aikido manual
+.\" David Allison
+.TH rand 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+rand \- Generate a random 32 bit number
+.SH SYNOPSIS
+\fBSystem.rand()
+.SH DESCRIPTION
+The System.rand() function generates a pseudo-random integer.  The upper
+32 bits are guaranteed to be 0.  The lower 32 bits will contain the
+integer.
+
+.SH RETURN VALUES
+The random integer is returned.
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+srand(3aikido)

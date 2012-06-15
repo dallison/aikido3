@@ -1,0 +1,127 @@
+/*
+ * filename.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.10
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+
+package Filename {
+    private var sep = System.fileSeparator
+    private var sepsep = System.fileSeparator + System.fileSeparator
+    private var ext = System.extensionSeparator
+public:
+
+    // explode a filename into a vector of parts.  If the filename is
+    // rooted (starts with / on unix), then the first element of the vector
+    // will be ""
+  
+    function explode (fn : string) {
+        // remove double slashes
+        var ss = System.find (fn, sepsep)
+        while (ss >= 0) {
+            fn = System.replace (fn, sepsep, sep, true)
+            ss = System.find (fn, sepsep)
+        }
+        return System.split (fn, sep)
+    }
+
+
+    //
+    // put a filename back together from a vector of its parts
+    //
+    function implode (v : vector) {
+        if (sizeof (v) == 0) {
+           throw "Invalid filename parts" 
+        }
+        var fn = ""
+        var i = 0
+        if (v[0] == "") {
+            fn = sep 
+            ++i
+        }
+        while (i < sizeof (v)) {
+            fn += v[i]
+            if (i < (sizeof (v) - 1)) {
+                fn += sep
+            }
+            ++i
+        }
+        return fn
+    }
+
+    // extract the directory name component from a pathname
+
+    function dirname (fn : string) {
+        var i = System.rfind (fn, sep)
+        if (i < 0) {
+            return fn
+        }
+        return fn[0:i-1]
+    }
+
+    // extract the filename component from a pathname
+    function filename (fn : string) {
+        var i = System.rfind (fn, sep)
+        if (i < 0) {
+            return fn
+        }
+        return fn[i+1:sizeof (fn) - 1]
+    }
+
+    // extract the suffix from a filename (starts with a .)
+    // the suffix returned does not have the .
+    function suffix (fn : string) {
+        var i = System.rfind (fn, ext)
+        if (i < 0) {
+            return ""
+        }
+        return fn[i+1:sizeof (fn) - 1]
+    }
+
+    // extract the base component of a filename (the part before the suffix)
+    function basename (fn : string) {
+        var i = System.rfind (fn, ext)
+        if (i < 0) {
+            return fn
+        }
+        return fn[0:i-1]
+    }
+
+    // convert the filename into an exported form (automounter format)
+    function export (fn) {
+        if (System.operatingsystem == "Windows") {
+            var rooted = sizeof (fn) > 3 && fn[1:2] == ":\\" 
+            fn = "\\\\" + System.hostname + "\\" + (rooted ? (fn[0] + (fn << 2)) : fn) 
+        } else {
+            var rooted = sizeof (fn) > 0 && fn[0] == '/'
+
+            if (sizeof (fn) < 5 || fn[0:4] != "/net/") {
+                fn = "/net/" + System.hostname + (rooted ? "" : "/") + fn
+            }
+        }
+        return fn
+    }
+
+    function build (dir, file) {
+        return dir + System.fileSeparator + file
+    }
+}

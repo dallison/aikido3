@@ -1,0 +1,21 @@
+.\" Aikido manual
+.\" David Allison
+.TH whereami 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+whereami \- Print current stack trace
+.SH SYNOPSIS
+\fBSystem.whereami() 
+.SH DESCRIPTION
+The System.whereami() function prints the current stack trace to 
+the current output stream.  Useful for debugging where you need
+to know how you got to a certain point in a program without
+having to run the debugger.
+.SH RETURN VALUES
+No value is returned
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+getStackTrace(3aikido), printStackTrace(3aikido)

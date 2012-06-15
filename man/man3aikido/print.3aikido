@@ -1,0 +1,30 @@
+.\" Aikido manual
+.\" David Allison
+.TH print 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+print \- print to the output stream
+.SH SYNPOSIS
+\fBSystem.println (value, out=output)\fR
+
+.SH DESCRIPTION
+System.print prints a value to the output stream. 
+The first parameter is the value to print
+and can be any supported type.  The second parameter, which is
+optional, is the stream to which the value is sent.
+
+.SH RETURN VALUES
+The print function does not return a meaningful value
+
+.SH EXAMPLE
+System.print ("hello world", s)
+System.print (x)
+
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+println(3aikido), System(3aikido)
+

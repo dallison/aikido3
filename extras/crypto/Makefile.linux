@@ -1,0 +1,11 @@
+OBJS = crypto.o 
+
+AIKIDO = ../..
+
+CPPFLAGS = -g -I$(AIKIDO)/include  -D_OS_MACOSX -D_CC_GCC -fPIC
+
+libaikidocrypto.so : $(OBJS) 
+	$(CXX) -bundle -undefined suppress -flat_namespace -o libaikidocrypto.so $(OBJS) -lcrypto
+
+clean:
+	-rm *.o lib*.so

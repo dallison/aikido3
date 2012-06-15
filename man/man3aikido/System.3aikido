@@ -1,0 +1,48 @@
+.\" Aikido manual
+.\" David Allison
+.TH system 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+system \- Execute a system call and return the result
+.SH SYNOPSIS
+\fBSystem.system(command, env = [], dir = "")
+.SH DESCRIPTION
+The System.system() function executes an operating system command and
+returns any output in a vector of strings.  The output from the command
+consists of all data written to standard output.  Text written to standard
+error is not redirected and appears on the controlling terminal.
+.P
+The optional
+.I env
+parameter allows the command to be passed additional evironment variables
+to be added to the set of environment variables already defined for the
+process.  The parameter consists of a vector of strings of the form:
+.I varname=value
+..
+.P
+The optional
+.I dir
+parameter allows the command to be run with a different working
+directory than the current one.
+.P
+The command is executed by the system shell (/bin/sh on UNIX).  The
+standard output of the shell is redirected and collected by the
+system() function.  Linefeeds are preserved in the output.
+.SH RETURN VALUES
+The function returns a vector of strings.  Each element of the vector
+is one line of output printed by the command.  Linefeed characters are
+preserved
+.SH EXAMPLE
+system ("ls") -> stdout
+.br
+var out = System.system ("plot", ["X=1","Y=2"])
+.br
+var out = system ("mv " + a + ' ' + b, [], "..")
+.br
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+exec(3aikido), pipe(3aikido)
+

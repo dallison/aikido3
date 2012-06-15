@@ -1,0 +1,18 @@
+.\" Aikido manual
+.\" David Allison
+.TH get 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+get \- Get a set of characters from an input stream as a bytevector
+.SH SYNOPSIS
+\fBSystem.get(stream, nchars)
+.SH DESCRIPTION
+The System.get() function reads a set of characters from an open input
+stream into a bytevector and returns the bytevector.
+.SH RETURN VALUES
+A bytevector containing the characters read.
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

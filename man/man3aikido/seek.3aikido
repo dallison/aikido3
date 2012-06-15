@@ -1,0 +1,34 @@
+.\" Aikido manual
+.\" David Allison
+.TH seek 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+seek \- Move current location in a stream
+.SH SYNOPSIS
+\fBSystem.seek(stream, offset, whence)
+.SH DESCRIPTION
+The System.seek() function moves the current location of a stream
+to the given position.  The position is given by the 
+.I offset
+parameter and is relative to the position specified by the
+.I whence
+parameter.  The values that the
+.I whence
+parameter can take are:
+.br
+    System.SEEK_SET \- Relative to the start of the stream
+.br
+    System.SEEK_CUR \- Relative to the current location
+.br
+    System.SEEK_END \- Relative to the end of the stream
+.br
+The System.seek() function can only be applied to streams attached
+to seekable devices (such as files).
+
+.SH RETURN VALUES
+The seek function returns the new position of the current location
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

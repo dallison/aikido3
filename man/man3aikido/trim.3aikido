@@ -1,0 +1,35 @@
+.\" Aikido manual
+.\" David Allison
+.TH trim 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+trim \- trim "white space" of the ends of a value
+.SH SYNOPSIS
+\fBSystem.trim(value)
+.SH DESCRIPTION
+This function is very useful.  It can be used with strings, vectors and
+bytevectors.  Its purpose is to trim the space off both ends of the value.
+For a string, this means that 'white space' is removed from both ends.  
+White space consists of the characters ' ', '\\n', '\\r', '\\t'.
+.P
+For a vector, white space consists of values of type 
+.I none
+..
+For bytevectors, white space is a byte of value 0.
+.P
+The System.trim() function copies the original input value
+and trims the copy.  The copy is returned.
+
+.SH RETURN VALUES
+The trimmed copy of the input value.
+.SH EXAMPLE
+var s = "   hello "
+.br
+println (trim (s))      // "hello"
+
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

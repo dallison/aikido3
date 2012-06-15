@@ -1,0 +1,172 @@
+/*
+ * %M%
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  %I%
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on %E%
+ */
+
+import container
+
+monitor Hashtable (sz = 1009) implements Container {
+    var table = new [sz]
+
+public:
+    //
+    // put a key/value pair to the hashtable
+    //
+    function put (key, v) {
+        var h = System.hash (key) % sz
+        if (h < 0) {
+            h = -h
+        }
+        if (typeof (table[h]) == "none") {
+            table[h] = {key = v}
+        } else {
+           table[h][key] = v
+        }
+    }
+
+    //
+    // find the value corresponding to a key in the table.
+    // return none if not found
+    //
+    function get (key) {
+        var h = System.hash (key) % sz
+        if (h < 0) {
+            h = -h
+        }
+        if (typeof (table[h]) == "none") {
+            return none
+        }
+        return table[h][key]
+    }
+
+    function isPresent (key) {
+        var h = System.hash (key) % sz
+        if (h < 0) {
+            h = -h
+        }
+        if (typeof (table[h]) == "none") {
+            return false
+        }
+        var v = table[h][key]
+        return typeof (v) != "none" 
+    }
+
+    function find (key) {
+        var h = System.hash (key) % sz
+        if (h < 0) {
+            h = -h
+        }
+        if (typeof (table[h]) == "none") {
+            throw "Key not present"
+        }
+        var v = table[h][key]
+        if (typeof (v) == "none") {
+            throw "Key not present"
+        }
+        return v
+    }
+
+
+    // get size of table (number of entries)
+    function size {
+        return sizeof (this)
+    }
+
+    function empty {
+        return size() == 0
+    }
+
+    // clear the table
+    function clear {
+        table = new [sz]
+    }
+
+    // membership testing
+    operator in (key) {
+        var h = System.hash (key) % sz
+        if (h < 0) {
+            h = -h
+        }
+        if (typeof (table[h]) == "none") {
+            return false
+        }
+        return key in table[h]
+    
+    }
+
+    // erase the key/value pair
+    function erase (key) {
+        var h = System.hash (key) % sz
+        if (h < 0) {
+            h = -h
+        }
+        if (typeof (table[h]) != "none") {
+            delete table[h][key]
+        }
+    }
+
+    // size of table
+    operator sizeof() {
+        var size = 0
+        foreach t table {
+            if (typeof (t) != "none") {
+                size += sizeof (t)
+            }
+        }
+        return size
+    }
+
+
+    // get all the keys in the table as a vector
+    function keys {
+        var v = []
+        foreach t table {
+            if (typeof (t) != "none") {
+                foreach i t {
+                    v.append (i.first)
+                }
+            }
+        }
+        return v
+    }
+
+    // no easy way to do this, lets just make a big map
+    operator foreach {
+        var m = {}
+        foreach t table {
+            if (typeof (t) != "none") {
+                m += t
+            }
+        }
+        return m
+    }
+
+    operator [] (i, j = -1) {
+        if (j != -1) {
+            throw "Illegal hashtable subscript"
+        }
+        return get(i)
+    }
+
+
+}

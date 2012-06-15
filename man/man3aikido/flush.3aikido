@@ -1,0 +1,27 @@
+.\" Aikido manual
+.\" David Allison
+.TH flush 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+flush \- Flush all data in a stream
+.SH SYNOPSIS
+\fBSystem.flush(stream)
+.SH DESCRIPTION
+The System.flush() function causes all data in the stream to be
+sent to the destination of the stream.  If the stream is an output
+stream, the data will be written to the device.  If the data is
+an input stream, the data will be discarded.
+.SH RETURN VALUES
+No value is returned
+.SH EXAMPLE
+
+System.print ("prompt> ")
+.br
+System.flush (stdout)
+.br
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

@@ -1,0 +1,41 @@
+.\" Aikido manual
+.\" David Allison
+.TH getenv 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+getenv \- Get the value of an environment variable
+.SH SYNOPSIS
+\fBSystem.getenv(varname)
+.SH DESCRIPTION
+The System.getenv() function gets the value of an environment variable.  If the
+variable is not defined, the function returns the value
+.I null
+, otherwise it returns a string containing the value.
+
+.SH RETURN VALUES
+Either null or a string containing the value of the named variable
+.SH EXAMPLE
+.br
+
+.br
+var val = getenv ("SERVER")
+.br
+if (typeof (i) == "string")) {
+.br
+    println ("server is " + i)
+.br
+} else {
+.br
+    println ("no server defined")
+.br
+}
+.br
+.SH NOTE
+The getenv function can return 2 different types.  You have to be careful comparing
+the result to 'null' as it is an error to compare a string to a pointer.  
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+setenv(3aikido), getenv(3c)

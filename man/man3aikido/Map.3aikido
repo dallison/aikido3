@@ -1,0 +1,37 @@
+.\" Aikido manual
+.\" David Allison
+.TH Map 3aikido 3/10/2003 aikido "Aikido classes"
+
+.SH NAME
+Map \- mutex-locked key/value map object
+.SH SYNOPSIS
+\fBimport map
+.P
+\fBmonitor Map implements Container {
+.br
+    ...
+.br
+}
+.SH DESCRIPTION
+The Map monitor provides a mutex-locked map of key and value pairs.  It is
+similar to the builtin map type but provides more of an object oriented
+interface as well as the mutex locking.
+.P
+The functions provided are:
+.IP "insert (key, data)" 10
+.IP "isPresent (key)" 10
+.IP "find (key)" 10
+.IP "put (key, data)" 10
+.IP "get (key)" 10
+.IP "erase (key)" 10
+.IP "keys()" 10
+.IP "size()" 10
+.IP "empty()" 10
+.IP "operator sizeof()" 10
+.IP "operator foreach()" 10
+.IP "clear()" 10
+.IP "operator [](i, j = -1)" 10
+.SH EXAMPLE
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

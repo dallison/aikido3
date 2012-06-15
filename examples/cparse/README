@@ -1,0 +1,44 @@
+This is an example program showing the power of Aikido
+for prototyping.  The example is a full C parser.  It
+is supposed to handle the whole C language with some
+C99 extensions.
+
+There are probably some bugs in it but is only
+an example.
+
+The one part of it that is missing the the C
+preprocessor.  It uses the command 'gcc -E' to
+run the preprocessor.  This means that you
+will need a C compiler on your system in order
+to use it.
+
+The program makes extensive use of packages
+and block extension.
+
+The files are:
+
+clex.aikido             - modified lex.aikido for C
+cparse.aikido           - main program
+depend.aikido           - dependency checker
+expr.aikido             - expression handler
+stmt.aikido             - statement handler
+types.aikido            - type system handler
+test.c                  - little test program
+
+
+It is written using a recursive descent algorithm.
+The output is a list of all the global variables
+defined in the program.  If the variable is a
+function then the function's dependencies are
+printed along with the contents of the function
+body.
+
+I would not suggest that anyone use an interpreted
+language like Aikido to write a real C compiler as
+it is much too slow.  But by examining to code it
+is easy to see how this code could be converted
+to C++ or Java to make it into a real program.
+This is the power of prototyping...
+
+
+

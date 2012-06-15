@@ -1,0 +1,81 @@
+package PostgreSQL {
+
+    public class Table (rows) {
+        public function getNumRows {
+            return rows.size()
+        }
+
+        public function getRow (i: integer) {
+            return rows[i]
+        }
+
+        public operator sizeof {
+            return sizeof (rows)
+        }
+
+        public function size {
+            return sizeof (rows)
+        }
+
+        // simple mode iterator
+        public operator foreach {
+            return rows
+        }
+
+        public operator[] (i, j=-1) {
+            if (j == -1) {
+                return rows[i]
+            } else {
+                return rows[i:j]
+            }
+        }
+    }
+
+
+    public class Database (host:string, database:string, username:string, password:string="") {
+        import libpgclient
+
+        native function pginit()
+        native function pgopen (host, database, username, password)
+        native function pgclose (conn)
+        native function pgexec (conn, query)
+        native function pgquery (conn, query)
+
+        // initialize the interface
+        pginit()
+
+        // open a connection to the database
+        var native_conn = pgopen (host, database, username, password)
+
+        public function close() {
+            pgclose (native_conn)
+        }
+
+        public function exec (query:string) {
+            pgexec (native_conn, query)
+        }
+
+        public function query (query:string) {
+            return pgquery (native_conn, query)             // returns a Table object
+        }
+
+        public function describe (table) {
+            var q = "SELECT " +
+                    "a.attname AS Field," +		// NOTE: upper case to match mysql
+                    "t.typname AS Type " +
+                    "FROM" +
+                    "pg_class c," +
+                    "pg_attribute a," +
+                    "pg_type t" +
+                    "WHERE" +
+                    "c.relname = '" + table + "'" +
+                    "and a.attnum > 0" +
+                    "and a.attrelid = c.oid" +
+                    "and a.atttypid = t.oid" +
+                    "ORDER BY a.attnum;" 
+            return query (q)
+        }
+    }
+
+}
+

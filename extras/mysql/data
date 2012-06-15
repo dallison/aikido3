@@ -1,0 +1,28 @@
+[students]
+Dave Alba, 2218 Tahiti Drive, Jul 13 1995
+Fred Blogget, 246 Las Lomas Drive, Mar 22 1995
+Joe Caruso, 101 Heidi Way, Apr 5 1994
+Pete Donnatella, 4325 Oakland Park, May 4 1994
+Anna Escalanes, 1274 San Juan, July 4 1996
+
+
+[teachers]
+Mr Smith, 1000
+Mrs Jones, 1001
+Miss Benson, 1002
+
+[rooms]
+100, west wing
+101, west wing
+102, new wing
+103, main building
+
+
+[classes]
+Math, 101, 3, 1, Mr Smith, 100
+Math, 102, 4, 1, Mr Smith, 100
+Biology, 101, 1, 1, Mr Smith, 102
+English, 101, 2, 1, Miss Benson, 103
+PE, all, 3, 1, Mrs Jones, 100
+
+

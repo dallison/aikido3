@@ -1,0 +1,27 @@
+import crypto
+
+function test (base64) {
+    srand (2218)                // seed random number generator
+
+    var key = []
+    foreach i 32 {
+        key.append (rand() % 255)
+    }
+
+    var iv = []
+    foreach i 16 {
+        iv.append (rand() % 255)
+    }
+
+    //var key = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+
+    var enc = Crypto.aes_encrypt ("lightchain1234@gmail.com", key, iv, base64)
+    var dec = Crypto.aes_decrypt (enc, key, iv, base64)
+    println (dec)
+}
+
+test(false)
+test(true)
+
+println (Crypto.sha1("hello world"))
+

@@ -1,0 +1,182 @@
+#!/bin/csh
+
+set release = aikido-`./getversion`
+
+# make a source release 
+
+set sourcefiles= (\
+	src/codegen.cc \
+	src/debug.cc \
+	src/interpret.cc \
+	src/math.cc \
+	src/native.cc \
+	src/network.cc \
+	src/parser.cc \
+	src/security.cc \
+	src/value.cc \
+        src/gtk/ddk.cc\
+        src/gtk/dtk.cc\
+        src/gtk/dtkevents.cc\
+        src/gtk/dtkfields.cc\
+        src/pcre/chartables.c\
+        src/pcre/config.h\
+        src/pcre/get.c\
+        src/pcre/internal.h\
+        src/pcre/maketables.c\
+        src/pcre/pcre.c\
+        src/pcre/pcre.h\
+        src/pcre/pcregrep.c\
+        src/pcre/pcreposix.c\
+        src/pcre/pcreposix.h\
+        src/pcre/aikidopcreposix.h\
+        src/pcre/study.c\
+    src/mkelf.cc\
+    src/terminal.cc\
+    src/terminal.h\
+    src/xml.cc\
+	src/zip.cc)
+
+set headerfiles= (\
+	src/aikidocodegen.h \
+	src/aikido.h \
+	src/aikidodebug.h \
+	src/aikidointerpret.h \
+	src/aikidotoken.h \
+	src/aikidozip.h )
+
+set aikidofiles= (\
+ 	src/ctype.aikido\
+  	src/database.aikido\
+  	src/filename.aikido \
+ 	src/lex.aikido \
+ 	src/map.aikido \
+ 	src/math.aikido\
+  	src/net.aikido\
+  	src/properties.aikido\
+  	src/security.aikido \
+ 	src/streambuffer.aikido \
+ 	src/string.aikido \
+ 	src/system.aikido \
+ 	src/terminal.aikido \
+  	src/registry.aikido\
+	src/list.aikido\
+	src/stack.aikido\
+	src/queue.aikido\
+	src/hashtable.aikido\
+	src/container.aikido\
+	src/xml.aikido\
+        src/gtk/gdk.aikido\
+        src/gtk/gtk.aikido\
+        src/gtk/gtkevents.aikido\
+        src/gtk/gtkfields.aikido\
+    src/vista.aikido\
+ 	src/vector.aikido)
+
+set osfiles= (\
+	src/unix/connect.cc \
+	src/unix/main.cc\
+	src/unix/os.cc\
+	src/unix/os.h\
+	src/unix/osnative.cc\
+	src/unix/driver.cc\
+	src/unix/monitor.cc\
+
+    src/win32/connect.cc\
+    src/win32/driver.cc\
+    src/win32/main.cc\
+    src/win32/monitor.cc\
+    src/win32/os.cc\
+    src/win32/os.h\
+    src/win32/osnative.cc\
+    src/win32/registry.cc\
+    )
+
+set makefiles= (\
+	Makefile.common \
+	Makefile.gcc \
+	Makefile.linux \
+	Makefile.solaris \
+	Makefile.macosx)
+
+set testfiles=(tests/test.aikido tests/load.aikido tests/sieve.aikido\
+	tests/cat.aikido tests/echo.aikido tests/pwd.aikido testcrypto.aikido\
+	)
+
+set examplefiles= (\
+ 	examples/mapex.aikido \
+	examples/regex.aikido \
+	examples/webserver/404.html \
+	examples/webserver/base64.aikido \
+	examples/webserver/cgi.aikido \
+	examples/webserver/htmlfilter.aikido \
+	examples/webserver/htmlpage.aikido \
+	examples/webserver/httpfilter.aikido \
+	examples/webserver/index.html \
+	examples/webserver/index.aikidosp \
+	examples/webserver/mime.types \
+	examples/webserver/mimefilter.aikido \
+	examples/webserver/rawfilter.aikido \
+	examples/webserver/url.aikido \
+	examples/webserver/webserver.aikido \
+        examples/webserver/README\
+        examples/gtk/clist.aikido\
+        examples/gtk/eventbox.aikido\
+        examples/gtk/filesel.aikido\
+        examples/gtk/notebook.aikido\
+        examples/gtk/progressbar.aikido\
+        examples/gtk/rulers.aikido\
+        examples/gtk/scrolledwin.aikido\
+        examples/gtk/scribble.aikido\
+        examples/gtk/README\
+        examples/gtk/text.aikido\
+        examples/email/README\
+        examples/email/emailsender.aikido\
+        examples/cparse/README \
+        examples/cparse/clex.aikido \
+        examples/cparse/cparse \
+        examples/cparse/cparse.aikido \
+        examples/cparse/depend.aikido \
+        examples/cparse/expr.aikido \
+        examples/cparse/stmt.aikido \
+        examples/cparse/test.c \
+        examples/cparse/types.aikido \
+        examples/calculator/calculator.aikido \
+        examples/calculator/README \
+        examples/calculator/ac \
+	)
+
+set manpages = ( man/man3aikido/*.3aikido )
+
+set tmpdir = /tmp/$$
+set dir = $tmpdir/$release
+
+echo Temp directory is $dir
+
+mkdir -p $dir
+
+set allfiles = ( $sourcefiles $headerfiles $aikidofiles $osfiles \
+                $makefiles $testfiles $examplefiles $manpages configure aikido-install mkbin license.terms README COPYRIGHT\
+                CHANGES mkstandalone aikido.spec.in getdistro getversion newbuild mksrc mkbin)
+
+echo Copying files
+tar cf - $allfiles | (cd $dir ; tar xf -)
+
+set currdir = `pwd`
+cd $tmpdir
+
+echo Creating tar image ${release}_src.tar
+
+tar cvf ${release}_src.tar $release
+
+echo Copying tar image
+cp ${release}_src.tar $currdir
+
+echo Creating ZIP image ${release}_src.zip
+zip -rv ${release}_src.zip ${release}
+
+echo Copying ZIP image
+cp ${release}_src.zip $currdir
+
+cd $currdir
+rm -fr $tmpdir
+

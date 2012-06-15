@@ -1,0 +1,29 @@
+.\" Aikido manual
+.\" David Allison
+.TH clone 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+clone \- generate a copy of a value
+.SH SYNOPSIS
+\fBSystem.clone(value, recurse)
+.SH DESCRIPTION
+This function is used to copy a value.  If the value is an object instance,
+the
+.I recurse
+argument specifies whether objects within the object are themselves
+cloned or not.  When 
+.I recurse
+is true, a deep copy is performed.  If the objects form a cyclic graph
+the clone function will correctly copy the graph.
+.SH RETURN VALUES
+The System.clone() function returns the newly copied value.  If a deep
+copy was requested, all objects pointed to by an object are also cloned.
+
+.SH EXAMPLE
+
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

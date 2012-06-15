@@ -1,0 +1,19 @@
+.\" Aikido manual
+.\" David Allison
+.TH getbuffer 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+getbuffer \- Read all available characters from an input stream
+.SH SYNOPSIS
+\fBSystem.getbuffer(stream)
+.SH DESCRIPTION
+The System.getbuffer() function reads all available characters from the
+stream.  This is most useful if the stream is connected to a network.  This will
+read the whole packet from the network socket.
+.SH RETURN VALUES
+A bytevector containing the characters.
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

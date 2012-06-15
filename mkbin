@@ -1,0 +1,143 @@
+#!/bin/sh
+
+#set -x
+
+if [ $# -ne 1 ]
+then
+   echo "Supply a platform name (eg solaris8)"
+   exit 1
+fi
+
+platform=$1
+release=aikido-`./getversion`
+file=${release}-${platform}
+
+tmpdir=/tmp/$$
+dir=$tmpdir/$release
+
+echo Making temp dirs in $tmpdir
+mkdir $tmpdir
+mkdir $dir
+
+mkdir $dir/bin
+mkdir $dir/lib
+mkdir $dir/include
+mkdir $dir/include/unix
+mkdir $dir/examples
+mkdir $dir/tests
+mkdir -p $dir/man/man3aikido
+
+echo Copying files to $dir
+
+cp README $dir
+cp COPYRIGHT $dir
+
+cp aikido-install      $dir
+chmod +x $dir/aikido-install
+
+# binaries
+cp bin/aikido       $dir/bin
+cp bin/aikido_g     $dir/bin
+cp bin/aikido_o     $dir/bin
+cp bin/aikido.zip   $dir/bin
+
+#libraries
+cp lib/libaikido_o.a        $dir/lib
+cp lib/libaikido_g.a        $dir/lib
+cp lib/libaikidonetwork.so        $dir/lib
+cp lib/libaikidosecurity.so       $dir/lib
+cp lib/libaikidomath.so   $dir/lib
+cp lib/libdtk.so    $dir/lib
+cp lib/libddk.so    $dir/lib
+
+#header files
+cp src/aikido.h         $dir/include
+cp src/aikidozip.h            $dir/include
+cp src/aikidotoken.h          $dir/include
+cp src/unix/os.h                $dir/include/unix
+cp src/pcre/*.h         $dir/include
+
+#tests
+cp tests/test.aikido $dir/tests
+cp tests/sieve.aikido $dir/tests
+cp tests/load.aikido $dir/tests
+cp tests/cat.aikido $dir/tests
+cp tests/echo.aikido $dir/tests
+cp tests/pwd.aikido $dir/tests
+
+#man pages
+cp man/man3aikido/*.3aikido $dir/man/man3aikido
+
+# examples
+examplefiles="\
+        examples/mapex.aikido \
+        examples/regex.aikido \
+        examples/webserver/404.html \
+        examples/webserver/base64.aikido \
+        examples/webserver/cgi.aikido \
+        examples/webserver/htmlfilter.aikido \
+        examples/webserver/htmlpage.aikido \
+        examples/webserver/httpfilter.aikido \
+        examples/webserver/index.html \
+        examples/webserver/index.aikidosp \
+        examples/webserver/mime.types \
+        examples/webserver/mimefilter.aikido \
+        examples/webserver/rawfilter.aikido \
+        examples/webserver/url.aikido \
+        examples/webserver/README \
+        examples/webserver/webserver.aikido \
+        examples/gtk/clist.aikido\
+        examples/gtk/eventbox.aikido\
+        examples/gtk/filesel.aikido\
+        examples/gtk/notebook.aikido\
+        examples/gtk/pchatx.aikido\
+        examples/gtk/progressbar.aikido\
+        examples/gtk/rulers.aikido\
+        examples/gtk/scrolledwin.aikido\
+        examples/gtk/scribble.aikido\
+        examples/gtk/README\
+        examples/gtk/text.aikido\
+        examples/email/README \
+        examples/email/emailsender.aikido \
+        examples/cparse/README \
+        examples/cparse/clex.aikido \
+        examples/cparse/cparse \
+        examples/cparse/cparse.aikido \
+        examples/cparse/depend.aikido \
+        examples/cparse/expr.aikido \
+        examples/cparse/stmt.aikido \
+        examples/cparse/test.c \
+        examples/cparse/types.aikido \
+        examples/calculator/calculator.aikido \
+        examples/calculator/README \
+        examples/calculator/ac \
+        "
+for f in $examplefiles
+do
+    d=`dirname $f`
+    if [ ! -d $dir/$d ]
+    then
+        mkdir -p $dir/$d
+    fi
+    cp $f $dir/$f
+done
+
+cp license.terms $dir
+
+if [ -f README ]
+then
+    cp README $dir
+fi
+
+currdir=`pwd`
+
+cd $tmpdir
+tar cvf $file.tar $release
+echo Compressing...
+gzip $file.tar
+
+cd $currdir
+cp $tmpdir/$file.tar.gz .
+rm -fr $tmpdir
+
+echo Result is $file.tar.gz

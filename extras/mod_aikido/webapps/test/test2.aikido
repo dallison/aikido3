@@ -1,0 +1,6 @@
+public function service (request, response) {
+    println ("This is a different servlet");
+}
+
+
+

@@ -1,0 +1,1195 @@
+/*
+ * expr.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.2
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+
+// expressions
+package CParser {
+
+    extend Parser {
+
+        class CompoundStatement...
+        class ExpressionStatement...
+
+        class Node extends ParseNode {
+            protected var type = null
+
+        public:
+            function getType {
+                return type
+            }
+
+            function hasAddress {
+                return false
+            }
+
+            public function isConst0 {
+                return false
+            }
+
+            function evaluate {
+                throw "Bad expression"
+            }
+
+            public function dump (stream) {
+                if (type.id == 0) {
+                    type.dump (stream)
+                }
+                ParseNode.dump (stream)
+                [type.id, ' '] -> stream
+            }
+        }
+
+        class Constant (protected value) extends Node {
+            public function getValue {
+                return value
+            }
+
+            public function evaluate {
+                 return value
+            }
+
+            public function dump (stream) extends dump (stream) {
+                value -> stream
+            }
+        }
+
+        class IntConst (value) extends Constant (value) {
+            switch (lex.postfix) {
+            case "L":
+                type = new ScalarTypeRecord (CLONG)
+                break
+            case "U":
+                type = new ScalarTypeRecord (CUNSIGNED | CINT)
+            case "UL":
+                type = new ScalarTypeRecord (CUNSIGNED | CLONG)
+                break
+            default:
+                type = new ScalarTypeRecord (CINT)
+            }
+
+            public function print (s, indent) {
+                value -> s
+            }
+
+            public function isConst0 {
+                return value == 0
+            }
+
+            public function evaluate {
+                 return value
+            }
+
+        }
+
+        class CharConst (value) extends Constant (value) {
+            type = new ScalarTypeRecord (CCHAR)
+
+            public function print (s, indent) {
+                ['\'', value, '\''] -> s
+            }
+
+            public function evaluate {
+                 return cast<int>(value)
+            }
+        }
+
+        class StringConst (value, islong) extends Constant (value) {
+            if (islong) {
+                type = new PointerTypeRecord (new ScalarTypeRecord (CINT))
+            } else {
+                type = new PointerTypeRecord (new ScalarTypeRecord (CCHAR))
+            }
+
+            public function print (s, indent) {
+                if (islong) {
+                    'L' -> s
+                }
+                ['\"', value, '\"'] -> s
+            }
+
+            public function evaluate {
+                 return value
+            }
+
+            public function dump (stream) {
+                Node.dump (stream)
+                foreach ch value {
+                    format ("%02x", cast<int>(ch)) -> stream
+                }
+            }
+        }
+
+        class RealConst (value) extends Constant (value) {
+            type = new ScalarTypeRecord (CDOUBLE)            // deal with float constants
+
+            public function print (s, indent) {
+                value -> s
+            }
+
+            public function evaluate {
+                 return value
+            }
+        }
+
+
+        class Identifier (symbol) extends Node {
+            type = symbol.getType()
+
+            public function hasAddress {
+                return true
+            }
+
+            public function getSymbol {
+                return symbol
+            }
+
+            public function print (s, indent) {
+                symbol.getName() -> s
+            }
+ 
+            public function evaluate {
+                if (symbol.getStorage() == sENUMCONST) {
+                    return symbol.getDetails()
+                } else {
+                    throw "Non-constant identifier"
+                }
+            }
+
+            public function dump (stream) {
+                if (symbol.id == 0) {
+                    symbol.dump (stream)
+                }
+                Node.dump (stream)
+                symbol.id -> stream
+            }
+        }
+
+        class StructConst (t) extends Node {
+            type = t
+
+            public function print (s, indent) {
+                '{' -> s
+                var comma = false
+                var n = type.numMembers()
+                foreach i n {
+                    if (comma) {
+                        ',' -> s
+                    }
+                    comma = true
+                    var mem = type.getMember(i)
+                    var initval = mem.getDetails()
+                    if (initval != null) {
+                        ['.', mem.getName(), " = "] -> s
+                        initval.print (s,0)
+                    }
+                }
+                '}' -> s
+            }
+        }
+
+        class ArrayConst (t, vals) extends Node {
+            type = t
+
+            public function print (s, indent) {
+                if (typeof (vals) == "string") {
+                    ['"', vals, '"'] -> s
+                } else {
+                    '{' -> s
+                    var comma = false
+                    foreach v vals {
+                        if (comma) {
+                            ',' -> s
+                        }
+                        comma = true
+                        v.print (s,0)
+                    }
+                    '}' -> s
+                }
+            }
+        }
+
+        class Expression (public opcode, public left = null, public right = null) extends Node {
+
+            public function hasAddress {
+                 return opcode in [T_DOT, T_ARROW, T_LSQUARE, T_CONTENTS]
+            }
+
+            var lefttype = left.getType()
+            var righttype = right != null ? right.getType() : null
+
+            // convert the left or right to real if necessary
+            function coercereal {
+                if (lefttype.isReal() && !righttype.isReal()) {
+                    right = new Expression (T_FLT, right)
+                    type = lefttype
+                    return true
+                } elif (righttype.isReal() && !lefttype.isReal()) {
+                    left = new Expression (T_FLT, left)
+                    type = righttype
+                    return true
+                }
+                return false
+            }
+
+            function checkScalar {
+                if (lefttype.isScalar() || lefttype.isIntegral()) {
+                    if (righttype != null) {
+                        if (righttype.isScalar() || righttype.isIntegral()) {
+                            return
+                        }
+                    } else {
+                        return
+                    }
+                }
+                error ("Invalid use of non-scalar type")
+            }
+
+            switch (opcode) {
+            case T_CONTENTS:
+                if (lefttype.isPointer()) {
+                    type = lefttype.dereference()
+                } else {
+                    error ("Cannot take contents of this type")
+                }
+                break
+            case T_ADDRESS:             
+                if (!left.hasAddress()) {
+                    error ("Cannot take address of this type")
+                }
+                type = new PointerTypeRecord (lefttype)
+                break
+            case T_LSQUARE:
+                if (lefttype.isPointer()) {
+                    type = lefttype.dereference()
+                } elif (righttype.isPointer()) {
+                    type = righttype.dereference()
+                } else {
+                    error ("Cannot take contents of this type")
+                }
+                break
+            case T_DOT:
+            case T_ARROW:
+                type = righttype
+                break
+            case T_LOGAND:
+            case T_LOGOR:
+            case T_LESS:
+            case T_LESSEQ:
+            case T_GREATER:
+            case T_GREATEREQ:
+            case T_EQUAL:
+            case T_NOTEQ:
+                coercereal()
+                type = new ScalarTypeRecord (CINT)
+                break
+            case T_LSHIFT:
+            case T_RSHIFT:
+                if (!lefttype.isIntegral() || !righttype.isIntegral()) {
+                    error ("Invalid shift")
+                } else {
+                    type = new ScalarTypeRecord (CINT)
+                }
+                break
+            case T_PLUS:
+            case T_MINUS:
+                if (lefttype.isPointer() && righttype.isScalar()) {
+                    if (righttype.isReal()) {
+                        error ("Illegal pointer arithmetic")
+                    } else {
+                        var size = new IntConst (lefttype.dereference().getSize())
+                        right = new Expression (T_STAR, right, size)
+                    }
+                    type = lefttype
+                } elif (righttype.isPointer() && lefttype.isScalar()) {
+                    if (lefttype.isReal()) {
+                        error ("Illegal pointer arithmetic")
+                    } else {
+                        var size = new IntConst (righttype.dereference().getSize())
+                        left = new Expression (T_STAR, left, size)
+                    }
+                    type = righttype
+                } elif (opcode == T_MINUS && lefttype.isPointer() && righttype.isPointer()) {
+                    if (lefttype != righttype) {
+                        warning ("Illegal pointer arithmetic")
+                    }
+                    type = new ScalarTypeRecord (CINT)
+                } else {
+                    checkScalar()
+                    if (!coercereal()) {
+                        type = new ScalarTypeRecord (lefttype.getPrimitiveType() | righttype.getPrimitiveType())
+                    }
+                }
+                break
+
+            case T_PLUSPLUS:            // XXX: todo, type checking and scaling
+            case T_MINUSMINUS:
+            case T_POSTINC:
+            case T_POSTDEC:
+                type = lefttype
+                break
+            case T_STAR:
+            case T_SLASH:
+                checkScalar()
+                if (!coercereal()) {
+                    type = new ScalarTypeRecord (lefttype.getPrimitiveType() | righttype.getPrimitiveType())
+                }
+                break
+            case T_PERCENT:
+                checkScalar()
+                if (lefttype.isReal() || righttype.isReal()) {
+                    error ("Invalid % operands")
+                } else {
+                    type = new ScalarTypeRecord (lefttype.getPrimitiveType() | righttype.getPrimitiveType())
+                }
+                break
+            case T_UMINUS:
+            case T_UPLUS:
+                checkScalar()
+                type = lefttype
+                break
+            case T_TILDE:
+                if (!lefttype.isIntegral()) {
+                    error ("Integer type expected")
+                }
+                type = lefttype
+                break
+            case T_BANG:
+                if (!lefttype.isPointer()) {            // pointers are sort of OK
+                    checkScalar()
+                }
+                type = new ScalarTypeRecord (CINT)
+                break
+            case T_AMPERSAND:
+            case T_CARET:
+            case T_BITOR:
+                if (!lefttype.isIntegral() || !righttype.isIntegral()) {
+                    error ("Integer type expected")
+                }
+                type = lefttype
+                break
+            case T_ASSIGN:
+                if (!left.hasAddress()) {
+                    error ("Invalid destination for assignment")
+                }
+                if (lefttype.isIntegral() && righttype.isReal()) {
+                    right = new Expression (T_FIX, right)
+                } elif (lefttype.isReal() && righttype.isIntegral()) {
+                    right = new Expression (T_FLT, right)
+                } elif (lefttype.isPointer()) {
+                    if (!righttype.isPointer()) {
+                        if (righttype.isScalar()) {
+                            warning ("Illegal pointer assignment")
+                        } else {
+                            error ("Illegal pointer assignment")
+                        }
+                    } else {
+                        var ptrto = lefttype.dereference()
+                        if (ptrto.isScalar() &&  ptrto.type != CVOID) {
+                            if (lefttype != righttype) {
+                                warning ("Illegal pointer assignment")
+                            }
+                        }
+                    }
+                } else {
+                    if (lefttype != righttype) {
+                        warning ("Illegal assignment types")
+                    }
+                }
+                type = lefttype
+
+                break
+            case T_QUESTION:
+                type = righttype
+                break
+            case T_COLON:
+                if (lefttype != righttype) {
+                    warning ("Mismatched types for ?: operator")
+                }
+                type = lefttype
+                break
+            case T_COMMA:
+                type = righttype
+                break
+            // XXX: todo
+            case T_PLUSEQ:
+            case T_MINUSEQ:
+            case T_STAREQ:
+            case T_SLASHEQ:
+            case T_PERCENTEQ:
+            case T_ANDEQ:
+            case T_OREQ:
+            case T_XOREQ:
+            case T_LSHIFTEQ:
+            case T_RSHIFTEQ:
+                type = lefttype
+                break
+            }
+
+            public function evaluate {
+                switch (opcode) {
+                case T_CONTENTS:
+                case T_ADDRESS:             
+                case T_LSQUARE:
+                case T_DOT:
+                case T_ARROW:
+                    throw "Bad operator"
+                    break
+                case T_LOGAND:
+                    var v = left.evaluate()
+                    if (v != 0) {
+                        return right.evaluate()
+                    }
+                    return v
+                case T_LOGOR:
+                    var v = left.evaluate()
+                    if (v == 0) {
+                        return right.evaluate()
+                    }
+                    return v
+                case T_LESS:
+                    return left.evaluate() < right.evaluate()
+                case T_LESSEQ:
+                    return left.evaluate() <= right.evaluate()
+                case T_GREATER:
+                    return left.evaluate() > right.evaluate()
+                case T_GREATEREQ:
+                    return left.evaluate() >= right.evaluate()
+                case T_EQUAL:
+                    return left.evaluate() == right.evaluate()
+                case T_NOTEQ:
+                    return left.evaluate() != right.evaluate()
+                case T_LSHIFT:
+                    return left.evaluate() << right.evaluate()
+                case T_RSHIFT:
+                    return left.evaluate() >> right.evaluate()
+                case T_PLUS:
+                    return left.evaluate() + right.evaluate()
+                case T_MINUS:
+                    return left.evaluate() - right.evaluate()
+                case T_STAR:
+                    return left.evaluate() * right.evaluate()
+                case T_SLASH:
+                    return left.evaluate() / right.evaluate()
+                case T_PERCENT:
+                    return left.evaluate() % right.evaluate()
+                case T_UMINUS:
+                    return -left.evaluate() 
+                case T_UPLUS:
+                    return left.evaluate() 
+                case T_TILDE:
+                    return ~left.evaluate() 
+                case T_BANG:
+                    return !left.evaluate() 
+                case T_AMPERSAND:
+                    return left.evaluate() & right.evaluate()
+                case T_CARET:
+                    return left.evaluate() ^ right.evaluate()
+                case T_BITOR:
+                    return left.evaluate() | right.evaluate()
+                    break
+                case T_ASSIGN:
+                    throw "Bad operator"
+                case T_QUESTION:
+                    var v = left.evaluate()
+                    if (v != 0) {
+                        return right.left.evaluate()
+                    } else {
+                        return right.left.evaluate()
+                    }
+                   
+                case T_FIX:
+                    return cast<int>(left.evaluate())
+                case T_FLT:
+                    return cast<int>(left.evaluate())
+                case T_PLUSEQ:
+                case T_MINUSEQ:
+                case T_STAREQ:
+                case T_SLASHEQ:
+                case T_PERCENTEQ:
+                case T_ANDEQ:
+                case T_OREQ:
+                case T_XOREQ:
+                case T_LSHIFTEQ:
+                case T_RSHIFTEQ:
+                    throw "Bad operator"
+                }
+            }
+
+
+            public function print (s, indent) {
+                switch (opcode) {
+                case T_POSTINC:
+                case T_POSTDEC:
+                    left.print (s,indent)
+                    printToken (opcode, s)
+                    break
+                case T_LSQUARE:
+                    left.print (s,indent)
+                    '[' -> s
+                    right.print (s,indent)
+                    ']' -> s
+                    break
+                default:
+                    if (right == null) {
+                        printToken (opcode, s)
+                        left.print (s,indent)
+                    } else {
+                        left.print (s,indent)
+                        printToken (opcode, s)
+                        right.print (s,indent)
+                    }
+                }
+            }
+
+            public function dump (stream) {
+                left.dump (stream)
+                if (right != null) {
+                   right.dump (stream)
+                }
+                Node.dump (stream)
+                [opcode, ' ', left.id] -> stream
+                if (right != null) {
+                    [' ', right.id] -> stream
+                }
+            }
+        }
+
+        class CastExpression (public left, public casttype) extends Node {
+            type = casttype
+            
+            var lefttype = left.getType()
+            if (casttype.isIntegral() && lefttype.isReal()) {
+                left = new Expression (T_FIX, left)
+            } elif (casttype.isReal() && lefttype.isIntegral()) {
+                left = new Expression (T_FLT, left)
+            } else {
+                if (lefttype.isStruct() && !casttype.isStruct()) {
+                    error ("Cannot cast from a struct/union to this type")
+                } elif (!lefttype.isStruct() && casttype.isStruct()) {
+                    error ("Cannot cast to a struct/union from this type")
+                } elif (lefttype.isStruct() && casttype.isStruct()) {
+                    if (lefttype != casttype) {
+                        error ("Mismatched struct/union cast")
+                    }
+                }
+            }
+
+            public function print (s, indent) {
+                '(' -> s
+                casttype.print (s, indent)
+                ')' -> s
+                left.print (s,indent)
+            }
+
+            public function evaluate {
+                return left.evaluate()
+            }
+
+            public function dump (stream) {
+                left.dump (stream)
+                Node.dump (stream)
+                left.id -> stream
+            }
+        }
+
+        class CallExpression (public left, public arglist) extends Node {
+            var argassignments = null           // assignments to arguments
+            var value = null                    // return value
+
+            if (left instanceof Identifier) {
+                currentFunction.addDependency (left.getSymbol())
+            }
+
+            var lefttype = left.getType()
+
+            if (lefttype.isFunction()) {
+                type = lefttype.dereference()
+            } elif (lefttype.isPointer()) {
+                var f = lefttype.dereference()
+                if (f.isFunction()) {
+                    type = f.dereference()
+                } else {
+                    error ("Cannot call this type")
+                }
+            } else {
+                error ("Cannot call this type")
+            }
+            if (type != null) {
+                var proto = lefttype.getPrototype()
+                var n = sizeof (proto)
+
+                // varargs functions have an extra __builtin_va_alist argument that doesn't
+                // count
+
+                if (lefttype.isVarArgs()) {
+                    n--
+                }
+
+                if (sizeof (arglist) != n) {
+                    if (!lefttype.isVarArgs() || sizeof (arglist) < n) {
+                        error ("Incorrect number of arguments for call")
+                        if (sizeof (arglist) < n) {
+                            n = sizeof (arglist)
+                        }
+                    }
+                }
+                for (var i = 0 ; i < n ; i++) {
+                    arglist[i] = new CastExpression (arglist[i], proto[i].getType())
+                }
+            }
+
+            public function print (s, indent) {
+                left.print (s, indent)
+                '(' -> s
+                var comma = false
+                foreach arg arglist {
+                   if (comma) {
+                       ',' -> s
+                   }
+                   comma = true
+                   arg.print (s, 0)
+                }
+                ')' -> s
+            }
+
+            public function dump (stream) {
+                Node.dump (stream)
+            }
+        }
+
+
+        const FLAG_LPAREN_FOUND = 0b1
+
+        function assignmentExpression...
+        function expression...
+
+        function singleExpression {
+            return assignmentExpression()
+        }
+
+        function primaryExpression {
+            if (flags & FLAG_LPAREN_FOUND || lex.match (T_LPAREN)) {
+                flags &= ~FLAG_LPAREN_FOUND
+                var result = expression()
+                needbrack (T_RPAREN)
+                return result
+            } elif (lex.currentToken == IDENTIFIER) {
+                var name = lex.spelling
+                lex.nextToken()
+                var symbol = findSymbol (name)
+                if (symbol == null) {
+                    if (lex.currentToken == T_LPAREN) {         // function call
+                        var builtinvalist = new Symbol ("__builtin_va_alist")
+                        builtinvalist.setType (new ArrayTypeRecord (0, new PointerTypeRecord (new ScalarTypeRecord (CVOID))))
+                        var frec = new FunctionTypeRecord ([builtinvalist], true, new ScalarTypeRecord (CINT))
+                        symbol = new Symbol (name)
+                        symbol.setType (frec)
+                        symbol.predefine()
+                        insertGlobalSymbol (symbol)
+                    } else {
+                        error ("Undefined symbol " + name)
+                        symbol = new Symbol (name)
+                        symbol.setType (new ScalarTypeRecord (CINT))
+                        insertSymbol (symbol)
+                    }
+                }
+                return new Identifier (symbol)
+            } elif (lex.currentToken == NUMBER) {
+                var val = lex.number
+                lex.nextToken()
+                return new IntConst (val)
+            } elif (lex.currentToken == CHAR) {
+                var val = lex.number
+                lex.nextToken()
+                return new CharConst (val)
+            } elif (lex.currentToken == STRING) {
+                var val = lex.spelling
+                lex.nextToken()
+                while (lex.currentToken == STRING) {
+                   val += lex.spelling
+                   lex.nextToken()
+                }
+                return new StringConst (val, false)            
+            } elif (lex.currentToken == LONGSTRING) {
+                var val = lex.spelling
+                lex.nextToken()
+                while (lex.currentToken == LONGSTRING) {
+                   val += lex.spelling
+                   lex.nextToken()
+                }
+                return new StringConst (val, true)            
+            } elif (lex.currentToken == FNUMBER) {
+                var val = lex.number
+                lex.nextToken()
+                return new RealConst (val)
+            } else {                                    // XXX: real numbers
+                error ("Expression expected")
+            }
+        }
+
+        function postfixExpression {
+            var result = primaryExpression()
+            for (;;) {
+                if (lex.match (T_LPAREN)) {
+                    var arglist = []
+                    while (lex.currentToken != T_RPAREN) {
+                        var arg = singleExpression()
+                        append (arglist, arg)
+                        if (!lex.match (T_COMMA)) {
+                            break
+                        }
+                    }
+                    needbrack (T_RPAREN)
+                    result = new CallExpression (result, arglist)
+                } elif (lex.match (T_LSQUARE)) {
+                    var index = expression()
+                    needbrack (T_RSQUARE)
+                    result = new Expression (T_LSQUARE, result, index)
+                } elif (lex.match (T_DOT)) {
+                    if (!result.getType().isStruct()) {
+                        error ("struct/union required for . operator")
+                    } else {
+                        if (lex.currentToken != IDENTIFIER) {
+                            error ("struct/union member name expected")
+                        } else {
+                            var membername = lex.spelling
+                            lex.nextToken()
+                            var s = result.getType() 
+                            var member = s.findMember (membername)
+                            if (member == null) {
+                                error (membername + " is not a member of struct/union")
+                            } else {
+                                result = new Expression (T_DOT, result, new Identifier (member))
+                            }
+                        }
+                    }
+                } elif (lex.match (T_ARROW)) {
+                    var s = result.getType() 
+                    if (!s.isPointer() || !s.dereference().isStruct()) {
+                        error ("struct/union pointer required for -> operator")
+                    } else {
+                        if (lex.currentToken != IDENTIFIER) {
+                            error ("struct/union member name expected")
+                        } else {
+                            var membername = lex.spelling
+                            lex.nextToken()
+                            s = s.dereference()
+                            var member = s.findMember (membername)
+                            if (member == null) {
+                                error (membername + " is not a member of struct/union")
+                            } else {
+                                result = new Expression (T_ARROW, result, new Identifier (member))
+                            }
+                        }
+                    }
+                } elif (lex.match (T_PLUSPLUS)) {
+                    result = new Expression (T_POSTINC, result)
+                } elif (lex.match (T_MINUSMINUS)) {
+                    result = new Expression (T_POSTDEC, result)
+                } else {
+                    return result
+                }
+            }
+        }
+
+        function castExpression...
+
+        function unaryExpression {
+            if (flags & FLAG_LPAREN_FOUND) {            // open paren found
+                return postfixExpression()
+            }
+            if (lex.match (T_PLUSPLUS)) {
+                var left = unaryExpression()
+                return new Expression (T_PLUSPLUS, left)
+            } elif (lex.match (T_MINUSMINUS)) {
+                var left = unaryExpression()
+                return new Expression (T_MINUSMINUS, left)
+            } elif (lex.match (T_MINUS)) {
+                var left = castExpression()
+                return new Expression (T_UMINUS, left)
+            } elif (lex.match (T_PLUS)) {
+                var left = castExpression()
+                return new Expression (T_UPLUS, left)
+            } elif (lex.match (T_STAR)) {
+                var left = castExpression()
+                return new Expression (T_CONTENTS, left)
+            } elif (lex.match (T_AMPERSAND)) {
+                var left = castExpression()
+                return new Expression (T_ADDRESS, left)
+            } elif (lex.match (T_BANG)) {
+                var left = castExpression()
+                return new Expression (T_BANG, left)
+            } elif (lex.match (T_TILDE)) {
+                var left = castExpression()
+                return new Expression (T_TILDE, left)
+            } elif (lex.match (T_SIZEOF)) {
+                if (lex.match (T_LPAREN)) {
+                    var decl = declaration(0, type())
+                    if (decl != null) {
+                        needbrack (T_RPAREN)
+                        return new IntConst (decl.getType().getSize())
+                    } else {
+                        flags |= FLAG_LPAREN_FOUND
+                        left = unaryExpression()
+                        return new IntConst (left.getType().getSize())
+                    }
+                } else {
+                    left = unaryExpression()
+                    return new IntConst (left.getType().getSize())
+                }
+            } else {                                  
+                return postfixExpression()
+            }
+             
+        }
+
+        function castExpression {
+            if (lex.match (T_LPAREN)) {
+                var decl = declaration(0, type())
+                if (decl != null) {
+                    needbrack (T_RPAREN)
+                    var left = unaryExpression()
+                    return new CastExpression (left, decl.getType()) 
+                } else {
+                    flags |= FLAG_LPAREN_FOUND
+                    return unaryExpression()
+                }
+            } else {
+                return unaryExpression()
+            }
+        }
+
+        function multiplicationExpression {
+            var result = castExpression()
+            for (;;) {
+                if (lex.match (T_STAR)) {
+                    var right = castExpression()
+                    result = new Expression (T_STAR, result, right)
+                } elif (lex.match (T_SLASH)) {
+                    var right = castExpression()
+                    result = new Expression (T_SLASH, result, right)
+                } elif (lex.match (T_PERCENT)) {
+                    var right = castExpression()
+                    result = new Expression (T_PERCENT, result, right)
+                } else {
+                    return result
+                }
+            }
+        }
+
+        function additionExpression {
+            var result = multiplicationExpression()
+            for (;;) {
+                if (lex.match (T_PLUS)) {
+                    var right = multiplicationExpression()
+                    result = new Expression (T_PLUS, result, right)
+                } elif (lex.match (T_MINUS)) {
+                    var right = multiplicationExpression()
+                    result = new Expression (T_MINUS, result, right)
+                } else {
+                    return result
+                }
+            }
+        }
+
+        function shiftExpression {
+            var result = additionExpression()
+            for (;;) {
+                if (lex.match (T_LSHIFT)) {
+                    var right = additionExpression()
+                    result = new Expression (T_LSHIFT, result, right)
+                } elif (lex.match (T_RSHIFT)) {
+                    var right = additionExpression()
+                    result = new Expression (T_RSHIFT, result, right)
+                } else {
+                    return result
+                }
+            }
+        }
+
+        function comparisonExpression {
+            var result = shiftExpression()
+            for (;;) {
+                if (lex.match (T_LESS)) {
+                    var right = shiftExpression()
+                    result = new Expression (T_LESS, result, right)
+                } elif (lex.match (T_GREATER)) {
+                    var right = shiftExpression()
+                    result = new Expression (T_GREATER, result, right)
+                } elif (lex.match (T_LESSEQ)) {
+                    var right = shiftExpression()
+                    result = new Expression (T_LESSEQ, result, right)
+                } elif (lex.match (T_GREATEREQ)) {
+                    var right = shiftExpression()
+                    result = new Expression (T_GREATEREQ, result, right)
+                } else {
+                    return result
+                }
+            }
+        }
+
+        function equalityExpression {
+            var result = comparisonExpression()
+            for (;;) {
+                if (lex.match (T_EQUAL)) {
+                    var right = comparisonExpression()
+                    result = new Expression (T_EQUAL, result, right)
+                } elif (lex.match (T_NOTEQ)) {
+                    var right = comparisonExpression()
+                    result = new Expression (T_NOTEQ, result, right)
+                } else {
+                    return result
+                }
+            }
+        }
+
+        function bitwiseAndExpression {
+            var result = equalityExpression()
+            while (lex.match (T_AMPERSAND)) {
+                var right = equalityExpression()
+                result = new Expression (T_AMPERSAND, result, right)
+            }
+            return result
+        }
+
+        function bitwiseXorExpression {
+            var result = bitwiseAndExpression()
+            while (lex.match (T_CARET)) {
+                var right = bitwiseAndExpression()
+                result = new Expression (T_CARET, result, right)
+            }
+            return result
+        }
+
+        function bitwiseOrExpression {
+            var result = bitwiseXorExpression()
+            while (lex.match (T_BITOR)) {
+                var right = bitwiseXorExpression()
+                result = new Expression (T_BITOR, result, right)
+            }
+            return result
+        }
+
+ 
+        function logicalAndExpression {
+            var result = bitwiseOrExpression()
+            while (lex.match (T_LOGAND)) {
+                var right = bitwiseOrExpression()
+                result = new Expression (T_LOGAND, result, right)
+            }
+            return result
+        }
+
+        function logicalOrExpression {
+            var result = logicalAndExpression()
+            while (lex.match (T_LOGOR)) {
+                var right = logicalAndExpression()
+                result = new Expression (T_LOGOR, result, right)
+            }
+            return result
+        }
+
+        function conditionalExpression {
+            var result = logicalOrExpression()
+            if (lex.match (T_QUESTION)) {
+                var right = singleExpression()
+                result = new Expression (T_QUESTION, result, right)
+                if (lex.match (T_COLON)) {
+                    var right = conditionalExpression()
+                    result = new Expression (T_COLON, result, right)
+                } else {
+                    error ("Missing : for conditional expression")
+                }
+            }
+            return result
+        }
+
+        function assignmentExpression {
+            var right = null
+            var result = conditionalExpression()
+            switch (lex.currentToken) {
+            case T_ASSIGN:
+            case T_PLUSEQ:
+            case T_MINUSEQ:
+            case T_STAREQ:
+            case T_SLASHEQ:
+            case T_PERCENTEQ:
+            case T_LSHIFTEQ:
+            case T_RSHIFTEQ:
+            case T_ANDEQ:
+            case T_OREQ:
+            case T_XOREQ: 
+                var tok = lex.currentToken
+                lex.nextToken()
+                right = assignmentExpression()
+                result = new Expression (tok, result, right)
+            }
+            return result
+        }
+    
+        function expression {
+            var result = assignmentExpression()
+            while (lex.match (T_COMMA)) {
+                var right = assignmentExpression()
+                result = new Expression (T_COMMA, result, right)
+            }
+            return result
+        }
+
+        function constantExpression {
+            try {
+                var tree = conditionalExpression()
+                return tree.evaluate()
+            } catch (e) {
+                error ("Unable to evaluate constant expression: " + e)
+                return 0
+            }
+        }
+
+        //
+        // initialization expressions
+        //
+
+        function staticInitializer (type, needbraces = true) {
+            if (type.isStruct()) {
+                var braces = false
+                if (lex.match (T_LBRACE)) {
+                    braces = true
+                } elif (needbraces) {
+                    error ("'{' expected for struct/union initializer")
+                }
+                var n = type.numMembers()
+                var numinits = 0
+                var i = 0
+                while (numinits < n) {
+                    if (lex.currentToken == T_RBRACE) {
+                        break
+                    }
+                    var mem = null
+                    if (lex.match (T_DOT)) {
+                        var name = lex.getIdentifier()
+                        if (!lex.match (T_ASSIGN)) {
+                            error ("Missing = in initialization designator")
+                        }
+                        var num = type.getMemberNumber(name)
+                        if (num < 0) {
+                            error ("No such struct/union member " + name)
+                            num = 0
+                        } 
+                        mem = type.getMember (num)
+                        i = num + 1
+                    } else {
+                        mem = type.getMember (i)        // symbol
+                        i++
+                    }
+                    if (mem.getDetails() != null) {
+                        error ("struct/union member " + mem.getName() + " has already been initialized")
+                    }
+                    var memtype = mem.getType()
+                    var v = staticInitializer (memtype, false)
+                    mem.setDetails (v)
+                    numinits++
+                    if (numinits == n) {                // want to keep the comma if we have reached the end
+                        break
+                    }
+                    if (!lex.match (T_COMMA)) {
+                        break
+                    }
+                }
+                if (braces) {
+                    needbrack (T_RBRACE)
+                }
+                return new StructConst (type)
+            } elif (type.isArray()) {
+                if (lex.currentToken == STRING) {
+                    var str = lex.spelling
+                    lex.nextToken()
+                    if (type.dereference().getPrimitiveType() & CCHAR) {
+                        var size = type.arraysize
+                        if (size == 0) {
+                           type.arraysize = sizeof (str)
+                        } elif (sizeof (str) > size) {
+                            error ("String literal contains too many chars for array")
+                        }
+                    } else {
+                        error ("Cannot use a string literal to initialize this array")
+                    }
+                    return new ArrayConst (type, str)
+                } else {
+                    var braces = false
+                    if (lex.match (T_LBRACE)) {
+                        braces = true
+                    } elif (needbraces) {
+                        error ("'{' expected for array initializer")
+                    }
+                    var vals = []
+                    var subtype = type.dereference()
+                    var n = type.arraysize
+                    if (n == 0) {
+                        n = 0x7fffffff                  // something pretty large
+                    }
+                    int numinits = 0
+                    while (numinits < n) {
+                        if (lex.currentToken == T_RBRACE) {
+                            break
+                        }
+                        var v = staticInitializer (clone (subtype, true), false)
+                        append (vals, v)
+                        numinits++
+                        if (numinits == n) {                // want to keep the comma if we have reached the end
+                            break
+                        }
+                        if (!lex.match (T_COMMA)) {
+                            break
+                        }
+                    }
+                    var size = type.arraysize
+                    if (size == 0) {
+                       type.arraysize = sizeof (vals)
+                    }
+                    if (braces) {
+                        needbrack (T_RBRACE)
+                    }
+                    return new ArrayConst (type, vals)
+                }
+            } elif (type.isPointer()) {
+                var v = singleExpression()
+                if (typeof (v) == "none") {
+                    error ("bad expression")
+                }
+                var vt = v.getType()
+                if (!vt.isPointer()) {
+                    if (!v.isConst0()) {
+                        error ("Illegal pointer initialization")
+                    }
+                }
+                return v
+            } else {                            // scalar type
+                return singleExpression()
+            }
+        }
+    }
+
+}

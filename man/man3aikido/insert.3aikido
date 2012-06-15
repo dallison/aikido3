@@ -1,0 +1,50 @@
+.\" Aikido manual
+.\" David Allison
+.TH insert 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+insert \- insert a value into another value
+.SH SYNOPSIS
+\fBSystem.insert(value, insertval, index)
+.SH DESCRIPTION
+This function inserts the value
+.I insertval
+into the value
+.I value
+at the location given by the 
+.I index
+parameter.
+.P
+The type of the 
+.I value
+parameter may be string, vector, bytevector or map.  For a map, the
+value of 
+.I index
+is ignored.  For string, vector and bytevector, the
+.I index
+parameter specifies a location.  The value 0 is the first location and
+the value corresponding to the size of the value is the last location.
+The insertion is done 
+.I before
+the location specified by the 
+.I index
+parameter value.
+.P
+Unlike some other functions, the System.insert() function modifies the
+original value by doing the insertion directly into it.
+
+.SH RETURN VALUES
+The function does not return a value.
+.SH EXAMPLE
+var s = "hello "
+.br
+System.insert (s, "world", 6)   // s = "hello world"
+.br
+insert (s, "big ", 0)           // s = "big hello world"
+
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

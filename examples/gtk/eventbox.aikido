@@ -1,0 +1,26 @@
+import gtk
+
+var window = new GTK.Window (GTK.WINDOW_TOPLEVEL)
+window.set_title ("Event Box")
+window.signal_connect ("destroy", function (a,b) { System.exit(0)}, null)
+window.set_border_width (10)
+
+var event_box = new GTK.EventBox()
+window.add (event_box)
+event_box.show()
+
+var label = new GTK.Label ("Click here to quit, quit, quit, quit, quit")
+event_box.add (label)
+label.show()
+
+label.set_usize (110, 20)
+
+event_box.set_events (GDK.BUTTON_PRESS_MASK)
+event_box.signal_connect ("button_press_event", function (a,b, c) { System.exit(0)}, null)
+
+event_box.realize()
+
+GDK.window_set_cursor (event_box.get_window(), GDK.cursor_new (GDK.HAND1))
+
+window.show()
+GTK.mainloop()

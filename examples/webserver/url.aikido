@@ -1,0 +1,155 @@
+/*
+ * url.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.4
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+
+class URLError (public errnum) extends System.Exception ("URL Error") {
+}
+
+class Redirect (public location) extends URLError (301) {
+    public var type = "redirect"
+}
+
+class BadUser (public username) extends URLError (404) {
+    public var type = "baduser"
+}
+
+class URL (serverroot, public filename, postdata) {
+    import properties
+
+    public var file = ""
+    public var args = new Properties()
+    public var specifiedFile = ""
+
+    function addArg (arg) {		// of the form xxx[=yyy]
+       var ex = arg["="]
+ 
+       if (sizeof (ex) == 0) {		// no = sign
+           args.put (arg, "")
+       } else {
+           ex = arg["([^=]+)=(.*)"]
+           var argname = arg[ex[1].start:ex[1].end]
+           var argval = ""
+           if (arg[sizeof(arg) - 1] != '=') {		// any value?
+               argval = arg[ex[2].start:ex[2].end]
+           }
+           args.put (argname, argval)
+       }
+    }
+
+    public function getArg (name) {
+        return args[name]
+    }
+
+    if (postdata != "") {
+        filename += "?" + postdata
+    }
+    //System.println ("incoming file = " + filename, stderr)
+    var ex = filename["\\?"]
+    if (sizeof (ex) == 0) {		// no args?
+        file = filename
+    } else {
+        var argpos = ex[0].start - 1		// position of arguments
+        ex = filename["([^?]*)\\?(.*)"]
+        if (sizeof (ex) == 3) {
+            file = filename[ex[1].start:ex[1].end]
+            var argstring = filename[ex[2].start:ex[2].end]
+            var arg= ""
+            for (var i = 0 ; i < sizeof (argstring) ; i++) {
+                if (argstring[i] == '&') {
+                    addArg (arg)
+                    arg = ""
+                    continue
+                } elif (argstring[i] == '+') {
+                    arg += ' '
+                } elif (argstring[i] == '%') {
+                    var hi = argstring[i+1]
+                    var lo = argstring[i+2]
+                    i += 2
+
+                    var v = cast<int>("0x" + hi + lo)
+                    arg += cast<char>(v)
+                } else {
+                    arg += argstring[i]
+                }
+            }
+            if (arg != "") {
+               addArg (arg)
+            }
+        }
+        file = filename[0:argpos]
+    }
+    specifiedFile = file
+    if (sizeof (file) > 1 && file[0:1] == "/~") {
+        var slash = 1
+        while (slash < sizeof (file) && file[slash] != '/') {
+            slash++
+        }
+        if (slash == sizeof (file)) {
+            System.println ("redirect needed")
+            throw Redirect (file + "/")
+        }
+        var username = ""
+        var suffix = 2
+        while (suffix < sizeof (file)) {
+            if (file[suffix] == '/') {
+                break
+            }
+            username += file[suffix]
+            suffix++
+        }
+        var user = System.getUser (username)
+        if (user == null) {
+            throw BadUser (username)
+        }
+        var userdir = user.dir
+        userdir += "/public_html"
+        if (suffix < sizeof (file)) {
+            file = userdir + file[suffix:sizeof (file) - 1]
+        } else {
+            file = userdir
+        }
+    } else {
+        file = serverroot + file
+    }
+    
+    // for windows, we need to convert to a local DOS filename
+
+    if (System.operatingsystem == "Windows") {
+	file = System.replace (file, "/", "\\", true)
+    }
+
+    var stat = System.stat (file)
+    if (stat != null) {
+       if (stat.mode & 0x4000) {		// directory
+           if (file[sizeof (file) - 1] != System.fileSeparator) {
+               throw Redirect (specifiedFile + "/")
+           }
+       }
+    }
+    //System.println ("file = " + file)
+    //args -> stdout
+
+}
+

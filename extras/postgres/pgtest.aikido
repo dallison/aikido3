@@ -1,0 +1,22 @@
+import postgres
+
+var db = new PostgreSQL.Database ("localhost", "test", "test", "test")
+
+try {
+    db.exec ("drop table foobar")
+} catch (e) {
+}
+
+db.exec ("create table foobar (name varchar, value integer)")
+foreach i 100 {
+   db.exec ("insert into foobar values ('dave" + i + "', " + i + ")")
+}
+
+var tables = db.query ("select * from foobar");
+foreach row tables {
+    println (row.name + ": " + row.value)
+}
+
+db.close()
+
+

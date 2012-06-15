@@ -1,0 +1,391 @@
+/*
+ * lex.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.22
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+// lexical analyser
+
+// @(#)lex.aikido	1.22 03/07/29
+
+import ctype
+
+// list of tokens recognized
+enum Tokens {
+    BAD, EOL,
+    NUMBER, IDENTIFIER, STRING, CHAR
+}
+
+// parameter is vector of lines
+class Lex (generic lines) {
+    if (typeof (lines) != "vector") {
+        lines = [lines]		// make into a vector
+    }
+
+    // must have a vector of strings
+    foreach line lines {
+       if (typeof (line) != "string") {
+           throw "Only works with strings"
+       }
+    }
+
+    private enum Mode {
+        C, VERILOG
+    }
+
+    private var mode = C
+
+    public function setVerilog {
+        mode = VERILOG
+    }
+
+    public var line = ""				// current line
+    public var currentToken = BAD			// current token
+    public var spelling = ""				// current identifier or string spelling
+    public generic number = 0				// current number or character
+
+    using System
+
+    private var reservedWords = {}			// empty map of reserved words
+    private var tokens = []				// top level tokens
+    public var ch = 0					// current position
+    public var lineno = 0
+    
+    public function addReservedWord (word, tok) {
+        //println ("adding reserved word " + word + " as " + tok) ;
+        reservedWords += {word = tok}
+    }
+    
+    private class TokenNode (c, val, par) {
+        var parent = par
+        var char = c
+        var value = val
+
+        var children = []
+
+    public:
+
+        // 
+        // add a child node to the tree
+        //
+        function add (s, index, tok) {
+            if (s[index] != char) {
+                return false ;
+            }
+            if (index == sizeof (s) - 1) {
+                if (value == BAD) {
+                    value = tok
+                    return true ;
+                } else {
+                    throw "duplicate token" 
+                }
+            }
+
+            index++
+            foreach child children {
+                if (child.add (s, index, tok)) {
+                    return true 
+                }
+            }
+
+            var node = new TokenNode (s[index], BAD, this) ;
+            children += node 
+            return node.add (s, index, tok)
+        }
+
+        //
+        // find the token whose first character is in line[ch].  Advance ch
+        //
+        function find {
+            if (line[ch] != char) {
+                return BAD
+            }
+            ch++
+            foreach child children {
+                var tok = BAD
+                if ((tok = child.find()) != BAD) {
+                    return tok 
+                }
+            }
+            return value 
+        }
+    }
+
+public:
+
+    function addToken (s, tok) {
+        //println ("adding token " + s + " as " + tok) 
+        foreach token tokens {
+            if (token.add (s, 0, tok)) {
+                return
+            }
+        }
+        var node = new TokenNode (s[0], BAD, null)
+        tokens += node
+        node.add (s, 0, tok)
+    }
+
+    function skipSpaces {
+        while (ch < sizeof (line) && ctype.isspace (line[ch])) {
+            ch++
+        }
+    }
+
+    public function reset {
+        lineno = 0
+        ch = 0
+    }
+
+    //
+    // read the next line
+    //
+    
+    public function readLine (skipblank = true) {
+         while (lineno < sizeof (lines)) {
+            line = lines[lineno++]
+            //println ("read line: " + line)
+            if (sizeof (line) == 0) {
+                continue
+            }
+            ch = 0
+            if (skipblank) {
+                skipSpaces()
+                if (ch == sizeof (line) - 1) {
+                    continue
+                }
+                if (line[ch] == '/' && line[ch+1] == '/') {
+                    continue
+                } else {
+                    break
+                }
+            } else {
+                break
+            }
+        }
+    }
+
+    public function eof {
+        return lineno == sizeof (lines) 
+    }
+
+
+    var charmap = {'n'='\n', 'r'='\r', 't'='\t', 'a'='\a', 'b'='\b','v'='\v'}
+    function nextToken {
+        var tok = BAD
+
+        spelling = ""
+        for (;;) {
+            skipSpaces()
+            if (ch == (sizeof (line) - 1) || line[ch] == '#' || (line[ch] == '/' && ch < (sizeof (line) - 1) && line[ch+1] == '/')) {
+                if (eof()) {
+                    //System.println ("end of file")
+                    currentToken = EOL
+                    return
+                }
+                //System.println ("end of line, reading another")
+                readLine()
+            } else {
+                break
+            }
+        }
+        var c = line[ch++]
+        //println ("c = " + c)
+        if (ctype.isalpha (c) || c == '_') {
+            //println ("identifer or resword")
+            spelling += c
+            while (ctype.isalnum (line[ch]) || line[ch] == "_") {
+                spelling += line[ch++]
+            }
+            generic result = reservedWords[spelling]
+            if (typeof (result) != "none") {
+                tok = result 
+            } else {
+                tok = IDENTIFIER
+            }   
+        } elif (c == '\"') {
+            //println ("string")
+            while (ch < sizeof (line) && line[ch] != '\"') {
+                if (line[ch] == '\\') {
+                    var char = charmap[line[ch+1]]
+                    if (typeof char != "none") {
+                        spelling += char
+                    } else {
+                        spelling += line[ch+1]
+                    }
+                    ch += 2
+                } else {
+                    spelling += line[ch++]
+                }
+            }
+            if (ch != sizeof (line)) {
+                ch++ 
+            }
+            tok = STRING
+        } elif (mode == C && c == '\'') {
+            //println ("char")
+            if (line[ch] == '\\') {
+                var char = charmap[line[ch+1]]
+                if (typeof char != "none") {
+                    number = char
+                } else {
+                    number = line[ch+1]
+                }
+                ch += 2
+            } else {
+                number = line[ch++]
+            }
+            tok = CHAR
+        } elif (ctype.isdigit (c) || (mode == VERILOG && c == '\'')) {
+            //println ("found number")
+            enum Base {
+                DECIMAL, HEX, BINARY, OCTAL
+            }
+            var base = DECIMAL
+            if (c == '\'') {
+                if (line[ch] == 'b' || line[ch] == 'B') {
+                    base = BINARY
+                } elif (line[ch] == 'd' || line[ch] == 'D') {
+                    base = DECIMAL
+                    ch++
+                    c = line[ch++]
+                } elif (line[ch] == 'h' || line[ch] == 'H') {
+                    base = HEX
+                } elif (line[ch] == 'o' || line[ch] == 'O') {
+                    base = OCTAL
+                }
+            } elif (c == '0') {
+                if (line[ch] == 'x' || line[ch] == 'X') {
+                    base = HEX
+                } elif (line[ch] == 'b' || line[ch] == 'B') {
+                    base = BINARY
+                } else {
+                    base = OCTAL
+                }
+            } 
+            switch (base) {
+            case DECIMAL:
+                number = c - '0'
+                //println ("getting number") 
+                while (ch < sizeof (line) && ctype.isdigit (line[ch])) {
+                    number = number * 10 + line[ch] - '0'
+                    //println ("number = " + number)
+                    ch++
+                }
+                //println ("number = " + number)
+                break ;
+            case HEX:
+                ch += 1
+                number = 0
+                while (ch < sizeof (line) && (line[ch] == '_' || ctype.isxdigit (line[ch]))) {
+                    if (line[ch] == '_') {
+                        // ignore
+                    } elif (line[ch] >= 'a') {
+                        number = (number << 4) + (line[ch] - 'a' + 10)
+                    } elif (line[ch] >= 'A') {
+                        number = (number << 4) + (line[ch] - 'A' + 10)
+                    } else {
+                        number = (number << 4) + (line[ch] - '0')
+                    }
+                    ch++
+                }
+                break ;
+                
+            case OCTAL:
+                if (mode == VERILOG && (line[ch] == 'o' || line[ch] == 'O')) {
+                    ch += 1
+                }
+                number = 0
+                while (ch < sizeof (line) && (line[ch] == '_' || (line[ch] >= '0' && line[ch] <= '7'))) {
+                    if (line[ch] != '_') {
+                        number = (number << 3) + line[ch] - '0'
+                    }
+                    ch++
+                }
+                break ;
+            case BINARY:
+                ch += 1
+                number = 0
+                while (ch < sizeof (line) && (line[ch] == '_' || (line[ch] == '0' || line[ch] == '1'))) {
+                    if (line[ch] != '_') {
+                        number = (number << 1) + line[ch] - '0'
+                    }
+                    ch++
+                }
+                break ;
+            }
+            tok = NUMBER
+        } else {
+            ch--
+            foreach token tokens {
+                if ((tok = token.find()) != BAD) {
+                    break
+                }
+            }
+        }
+    currentToken = tok
+    }
+
+    public function match (token) {
+        //println ("matching " + token + " with " + currentToken) 
+        if (currentToken == token) {
+            //println ("matched!")
+            nextToken()
+            return true
+        }
+        //println ("not matched")
+        return false
+    }    
+    
+    public function getIdentifier {
+        if (currentToken == IDENTIFIER) {
+            var id = spelling
+            nextToken()
+            return id
+        } else {
+            throw "Identifier expected"
+        }
+    }
+
+    public function getString {
+        if (currentToken == STRING) {
+            var id = spelling
+            nextToken()
+            return id
+        } else {
+            throw "String literal expected"
+        }
+    }
+
+    public function getNumber {
+        //println ("looking for number, currentToken is " + currentToken) 
+        if (currentToken == NUMBER) {
+            var n = number
+            nextToken()
+            return n
+        } else {
+            throw "Number expected"
+        }
+    }
+
+    
+}
+

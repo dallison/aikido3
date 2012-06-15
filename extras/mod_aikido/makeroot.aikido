@@ -1,0 +1,28 @@
+var s = openout ("rootscript.cc")
+
+function escape(line) {
+    return line.replace ("\\", "\\\\", true).replace ("\"", "\\\"", true).replace ("\n", "", true)
+}
+
+function getRootScript() {
+    var lines = readfile ("apachemod.aikido")
+    foreach line lines {
+        println ("\"" + escape (line) + "\\n\"")
+    }
+}
+
+
+println ("""
+
+namespace aikido {
+namespace apache {
+
+const char *getRootScript() {
+    return <% getRootScript() %>;
+}
+
+}
+}
+""", s)
+s.close();
+

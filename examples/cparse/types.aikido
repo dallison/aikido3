@@ -1,0 +1,848 @@
+/*
+ * types.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.2
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+
+
+package CParser {
+    extend Parser {
+        class TypeRecord extends ParseNode {
+            protected var size = 0          // size of this type
+            var qualifiers = 0
+
+        public:
+            function addQualifiers (q) {
+                qualifiers |= q
+            }
+
+
+            function getSize() {
+                return size
+            }
+
+
+            function isPointer() {
+                return false
+            }
+
+            function isArray() {
+                return false
+            }
+
+            function isFunction() {
+                return false
+            }
+
+            function isScalar() {
+                return false
+            }
+
+            function isReal() {
+                return false
+            }
+
+            function isIntegral() {
+                return false
+            }
+
+            function isStruct() {
+                return false
+            }
+
+            function print (s, indent) {
+            }
+
+            function getPrimitiveType {
+                return 0
+            }
+
+            function dump (stream) extends dump (stream) {
+                [size, ' '] -> stream
+            }
+        }
+
+        class ScalarTypeRecord (public type) extends TypeRecord {
+            if (type & CLONGLONG) {
+               size = 8
+            } elif (type & CSHORT) {
+               size = 2
+            } elif (type & CINT) {
+                if (type & CLONGLONG) {
+                    size = 8
+                } elif (type & CSHORT) {
+                    size = 2
+                } else {
+                    size = 4
+                }
+            } elif (type & CCHAR) {
+                size = 1
+            }
+
+        public:
+            function isScalar() {
+                return true
+            }
+
+            function isReal() {
+                return (type & (CFLOAT|CDOUBLE)) != 0
+            }
+
+            function isIntegral() {
+                return !isReal()
+            }
+
+            function getPrimitiveType {
+                return type
+            }
+
+            operator== (t) {
+                return t.isScalar() && type == t.type
+            }
+
+            operator!= (t) {
+                return !(this == t)
+            }
+
+            function print (s, indent) {
+                if (type & CUNSIGNED) {
+                    "unsigned " -> s
+                } 
+                if (type & CSIGNED) {
+                    "signed " -> s
+                } 
+                if (type & CLONGLONG) {
+                    "long long " -> s
+                }
+                if (type & CLONG) {
+                    "long " -> s
+                }
+                if (type & CSHORT) {
+                    "short " -> s
+                }
+                if (type & CCONST) {
+                    "const " -> s
+                }
+                if (type & CVOLATILE) {
+                    "volatile " -> s
+                }
+                if (type & CCHAR) {
+                    "char " -> s
+                }
+                if (type & CINT) {
+                    "int " -> s
+                }
+                if (type & CFLOAT) {
+                    "float " -> s
+                }
+                if (type & CDOUBLE) {
+                    "double " -> s
+                }
+                if (type & CVOID) {
+                    "void " -> s
+                }
+            }
+
+            public function dump (stream) extends dump (stream) {
+                format ("%08x", type) -> stream
+            }
+        }
+
+        class StructTypeRecord (public tag) extends TypeRecord {
+            protected var members = []
+            var bit = 0
+
+         public:
+            function numMembers {
+                return sizeof (members)
+            }
+
+            function getMember (i) {
+                return members[i]
+            }
+
+            function getMemberNumber (name) : int {
+               var i = 0
+               foreach m members {
+                   if (m.getName() == name) {
+                       return i
+                   }
+                   i++
+               }
+               return -1
+            }
+
+            function findMember (name) : Symbol {
+               foreach m members {
+                   if (m.getName() == name) {
+                       return m
+                   }
+               }
+               return null
+            }
+
+            function addMember (member) {
+                bit = 0                         // reset bitfield offset
+                if (findMember (member.getName()) != null) {
+                    error ("Duplicate definition of struct member " + member.getName())
+                } else {
+                    var offset = size
+                    var msize = member.getSize()
+                    var mtype = member.getType()
+                    if (mtype.isScalar()) {
+                        offset = (offset + (msize - 1)) & ~(msize - 1)
+                    } elif (mtype.isArray()) {
+                        var arrayof = mtype.dereference()
+                        if (arrayof.isScalar() && arrayof.type & CCHAR) {
+                        } else {
+                            offset = (offset + 3) & ~3
+                        }
+                    } else {
+                        offset = (offset + 3) & ~3
+                    }
+                    member.setOffset (offset) 
+                    size += member.getSize()
+                    append (members, member)
+                }
+            }
+
+            function addBitfield (member, width) {
+                if (findMember (member.getName()) != null) {
+                    error ("Duplicate definition of struct member " + member.getName())
+                } else {
+                    var topbit = bit + width
+                    if (topbit > 31) {
+                        size++
+                        bit = 0
+                    }
+                    member.setOffset (topbit << 32 | size) 
+                    bit += width
+                    append (members, member)
+                }
+            
+            }
+
+            function isStruct() {
+                return true
+            }
+
+            operator== (t) {
+                return t instanceof StructTypeRecord && tag == t.tag
+            }
+
+            operator!= (t) {
+                return !(this == t)
+            }
+
+            function print (s, indent) {
+                ["struct ", tag.getName(), ' '] -> s
+            }
+
+            function dump (stream) {
+               tag.dump (stream)
+               foreach mem members {
+                   mem.dump (stream)
+               }
+               ParseNode.dump (stream)
+               [tag.id, ' '] -> stream
+               foreach mem members {
+                   [mem.id, ' '] -> stream
+               }
+               
+            }
+        }
+
+        class UnionTypeRecord (public tag) extends StructTypeRecord (tag) {
+        public:
+            function addMember (member) {
+                if (findMember (member.getName()) != null) {
+                    error ("Duplicate definition of union member " + member.getName())
+                } else {
+                    var s = member.getSize()
+                    if (s > size) {
+                        size = s
+                    }
+                    append (members, member)
+                }
+            }
+
+            operator== (t) {
+                return t instanceof UnionTypeRecord && tag == t.tag
+            }
+
+            operator!= (t) {
+                return !(this == t)
+            }
+
+            function print (s, indent) {
+                ["union ", tag.getName(), ' '] -> s
+            }
+        }
+
+        class EnumTypeRecord (public tag) extends TypeRecord  {
+            size = 4
+            var initval = 0
+
+        public:
+            function addMember (member, generic val) {
+                if (typeof (val) == "none") {
+                    val = initval
+                }
+                member.setDetails (val)
+                insertSymbol (member)
+                initval = val + 1
+            }
+           
+            function isIntegral {
+                return true
+            }
+
+
+            operator== (t) {
+                return t instanceof EnumTypeRecord && tag == t.tag
+            }
+
+            operator!= (t) {
+                return !(this == t)
+            }
+
+            function print (s, indent) {
+                ["enum ", tag.getName(), ' '] -> s
+            }
+
+            function dump (stream) {
+               tag.dump (stream)
+               ParseNode.dump (stream)
+               tag.id -> stream
+            }
+        }
+
+        class ExtendedTypeRecord (protected type) extends TypeRecord {
+            public function setStorage (s) {
+                type.setStorage (s)
+            }
+
+            public function setsubtype (t) {
+                type = t
+            }
+
+            public function dump (stream) {
+               type.dump (stream)
+               ParseNode.dump (stream)
+               [type.id, ' '] -> stream
+            }
+        }
+
+        class PointerTypeRecord (t = null) extends ExtendedTypeRecord (t)  {
+            size = 4
+
+        public:
+            function isPointer {
+                return true
+            }
+
+            function dereference {
+                return type
+            }
+
+            operator== (t) {
+                if (!t.isPointer()) {
+                    return false
+                }
+                return type == t.dereference()
+            }
+
+            operator!= (t) {
+                return !(this == t) 
+            }
+
+            function print (s, indent) {
+                '*' -> s
+                type.print (s, indent)
+            }
+        }
+
+        class ArrayTypeRecord (public arraysize, t = null) extends ExtendedTypeRecord (t) {
+
+        public:
+            function setsubtype (t) extends setsubtype (t) {
+                size = arraysize * t.getSize()
+            }
+
+            function isPointer {
+                return true
+            }
+
+            function isArray() {
+                return true
+            }
+
+            function dereference {
+                return type
+            }
+            operator== (t) {
+                if (!t.isPointer()) {
+                    return false
+                }
+                return type == t.dereference()
+            }
+
+            operator!= (t) {
+                return !(this == t) 
+            }
+
+            function print (s, indent) {
+                type.print (s, indent)
+                ['[', arraysize, ']'] -> s
+            }
+
+            function dump (stream) extends dump (stream) {
+                arraysize -> stream
+            }
+        }
+
+        class FunctionTypeRecord (proto, varargs, t = null) extends ExtendedTypeRecord (t) {
+        public:
+            function isFunction {
+                return true
+            }
+
+            function dereference {
+                return type
+            }
+            operator== (t) {
+                if (!t.isFunction()) {
+                    return false
+                }
+                return type == t.dereference()
+            }
+
+            operator!= (t) {
+                return !(this == t) 
+            }
+
+            function getPrototype {
+                return proto
+            }
+
+            function isVarArgs {
+                return varargs
+            }
+
+            function print (s, indent) {
+                type.print (s, indent)
+                '(' -> s
+                var comma = false
+                foreach p proto {
+                    if (comma) {
+                        ',' -> s
+                    }
+                    comma = true
+                    p.getType().print (s, indent)
+                }
+                if (varargs) {
+                    if (comma) {
+                        ',' -> s
+                    }
+                    "..." -> s
+                }
+                ')' -> s
+            }
+        }
+
+
+        function constantExpression...
+        function expression...
+
+        function storage : int {
+            switch (lex.currentToken) {
+            case T_STATIC:
+                lex.nextToken()
+                return sSTATIC
+                break
+            case T_AUTO:
+                lex.nextToken()
+                return sAUTO
+                break
+            case T_EXTERN:
+                lex.nextToken()
+                return sEXTERN
+                break
+            case T_TYPEDEF:
+                lex.nextToken()
+                return sTYPEDEF
+                break
+            case T_AUTO:
+                lex.nextToken()
+                return sAUTO
+            case T_REGISTER:
+                lex.nextToken()
+                return sREGISTER
+            default:
+                return 0
+            }
+        }
+
+        function structunionType (isstruct) : TypeRecord {
+            var tagname = ""
+            if (lex.currentToken == IDENTIFIER) {
+                tagname = lex.spelling
+                lex.nextToken()
+            } else {
+                tagname = fakename()
+            }
+            if (lex.match (T_LBRACE)) {         // definition of a new struct?
+                var tag = findTopTag (tagname)             
+                if (tag != null) {
+                    if (tag.isPredefined()) {
+                        tag.define()
+                    } else {
+                        error ("Multiple definition of struct/union tag " + tagname)
+                    }
+                } else {
+                    tag = new Symbol (tagname)
+                    insertTag (tag)
+                    var t = isstruct ? new StructTypeRecord (tag) : new UnionTypeRecord (tag)
+                    tag.setType (t)
+                }
+                var t = tag.getType()
+                while (!lex.match (T_RBRACE)) {
+                    var tp = type()
+                    for (;;) {
+                        var decl = declaration (0, tp)
+                        if (decl == null) {
+                            error ("struct/union member expected")
+                            lex.nextToken()
+                        } else {
+                            if (lex.match (T_COLON)) {              // bitfield?
+                               var width = constantExpression()
+                               t.addBitfield (decl, width)
+                            } else {
+                                t.addMember (decl)
+                            }
+                        }
+                        if (!lex.match (T_COMMA)) {
+                            break
+                        }
+                    }
+                    needsemi()
+                }
+                return t
+            } else {
+                var tag = findTag (tagname)
+                var t = null
+                if (tag == null) {
+                    tag = new Symbol (tagname)
+                    tag.predefine()
+                    t = isstruct ? new StructTypeRecord (tag) : new UnionTypeRecord (tag)
+                    tag.setType (t)
+                    insertTag (tag)
+                } else {
+                    t = tag.getType()
+                }
+                return t
+            }
+        }
+
+        function enumType {
+            var tagname = ""
+            if (lex.currentToken == IDENTIFIER) {
+                tagname = lex.spelling
+                lex.nextToken()
+            } else {
+                tagname = fakename()
+            }
+            if (lex.match (T_LBRACE)) {         // definition of a new enum?
+                var tag = findTopTag (tagname)             
+                if (tag != null) {
+                    if (tag.isPredefined()) {
+                        tag.define()
+                    } else {
+                        error ("Multiple definition of enum tag " + tagname)
+                    }
+                } else {
+                    tag = new Symbol (tagname)
+                    insertTag (tag)
+                    var t = new EnumTypeRecord (tag)
+                    tag.setType (t)
+                }
+                var t = tag.getType()
+                while (lex.currentToken != T_RBRACE) {
+                    generic val = none
+                    var name = lex.getIdentifier()
+                    if (lex.match (T_ASSIGN)) {
+                        val = constantExpression()
+                    }
+                    var member = new Symbol (name, sENUMCONST)
+                    member.setType (new ScalarTypeRecord (CINT))
+                    t.addMember (member, val)
+                    if (!lex.match (T_COMMA)) {
+                        break
+                    }
+                }
+                needbrack (T_RBRACE)
+                return t
+            } else {
+                var tag = findTag (tagname)
+                var t = null
+                if (tag == null) {
+                    tag = new Symbol (tagname)
+                    tag.predefine()
+                    t = new EnumTypeRecord (tag)
+                    tag.setType (t)
+                    insertTag (tag)
+                } else {
+                    t = tag.getType()
+                }
+                return t
+            }
+        }
+
+        function type: TypeRecord {
+            var type = 0
+            var done = false
+            while (!done) {
+                switch (lex.currentToken) {
+                case IDENTIFIER:
+                    var sym = findSymbol (lex.spelling)
+                    if (sym == null) {
+                        done = true
+                    } else {
+                        if (sym.getStorage() == sTYPEDEF) {
+                            var copy = clone (sym.getType(), true)
+                            lex.nextToken()
+                            if ((type & ~(CCONST|CVOLATILE)) != 0) {
+                                error ("Invalid modifier for typedef")
+                            }
+                            copy.addQualifiers (type)         // add in modifiers
+                            return copy
+                        }
+                        done = true
+                    }
+                    break
+                case T_UNSIGNED:
+                    type |= CUNSIGNED
+                    lex.nextToken()
+                    break
+                case T_SIGNED:
+                    type |= CSIGNED
+                    lex.nextToken()
+                case T_INT:
+                    type |= CINT
+                    lex.nextToken()
+                    break
+                case T_CHAR:
+                    type |= CCHAR
+                    lex.nextToken()
+                    break
+                case T_LONG:
+                    if (type & CLONG) {
+                       type |= CLONGLONG
+                    }
+                    type |= CLONG | CINT
+                    lex.nextToken()
+                    break
+                case T_SHORT:
+                    type |= CSHORT | CINT
+                    lex.nextToken()
+                    break
+                case T_FLOAT:
+                    type |= CFLOAT
+                    lex.nextToken()
+                    break
+                case T_DOUBLE:
+                    type |= CDOUBLE
+                    lex.nextToken()
+                    break
+                case T_CONST:
+                    type |= CCONST
+                    lex.nextToken()
+                    break
+                case T_VOLATILE:
+                    type |= CVOLATILE
+                    lex.nextToken()
+                    break
+                case T_VOID:
+                    type |= CVOID
+                    lex.nextToken()
+                    break
+                case T_STRUCT:
+                    lex.nextToken()
+                    return structunionType (true)
+                case T_UNION:
+                    lex.nextToken()
+                    return structunionType (false)
+                case T_ENUM:
+                    lex.nextToken()
+                    return enumType()
+                    break
+                default:
+                   done = true
+                   break
+                }
+            }
+            if (type == 0) {
+                return null
+            }
+            return new ScalarTypeRecord (type)
+        }
+
+        function declaration (store, t): Symbol {
+            if (t == null) {
+                return null
+            }
+            if (store == 0) {
+                store = sEXTERN
+            }
+            var symbol = null
+            var stack = new Stack()
+
+            function pointer...
+
+            function base {
+                if (lex.match (T_LPAREN)) {
+                    pointer()
+                    needbrack (T_RPAREN)
+                } else {
+                    if (lex.currentToken == IDENTIFIER) {
+                        if (symbol != null) {
+                            error ("Multiple identifiers in declaration")
+                        }
+                        var name = lex.spelling
+                        lex.nextToken()
+                        symbol = new Symbol (name)
+                    }
+                }
+            }
+
+            function funcarray {
+                base()
+                if (lex.match (T_LPAREN)) {               // function
+                    var proto = []
+                    var varargs = false
+
+                    function declarevarargs {
+                        var builtinvalist = new Symbol ("__builtin_va_alist")
+
+                        // declared as void *__builtin_va_alist[]
+
+                        builtinvalist.setType (new ArrayTypeRecord (0, new PointerTypeRecord (new ScalarTypeRecord (CVOID))))
+                        append (proto, builtinvalist)
+                    }
+
+                    if (lex.currentToken == T_RPAREN) {                 // empty?
+                        declarevarargs()
+                        varargs = true
+                    } else {
+                        while (lex.currentToken != T_RPAREN) {
+                            if (lex.match (T_ELLIPSIS)) {
+                                declarevarargs()
+                                varargs = true
+                                break
+                            }
+                            var st = storage()
+                            var tp = type()
+                            var decl = declaration (st == 0 ? sARGUMENT : st, tp)
+                            if (decl != null) {
+                                if (decl.getType() instanceof ScalarTypeRecord && decl.getType().type == CVOID) {   // (void)
+                                    if (lex.currentToken == T_RPAREN) {
+                                        break
+                                    } else {
+                                        error ("Illegal use of void in function prototype")
+                                    }
+                                }
+                                append (proto, decl)
+                            }
+                            if (!lex.match (T_COMMA)) {
+                                break
+                            }
+                        }
+                    }
+                    needbrack (T_RPAREN)
+                    stack.push (new FunctionTypeRecord (proto, varargs))
+                } else {
+                    while (lex.match (T_LSQUARE)) {
+                        var size = 0
+                        if (lex.currentToken != T_RSQUARE) {
+                            size = constantExpression()
+                            // check the expression
+                        }
+                        stack.push (new ArrayTypeRecord (size))
+                        needbrack (T_RSQUARE)
+                    }
+                }
+            }
+
+            function pointer {
+                if (lex.match (T_STAR)) {
+                    var qual = 0
+                    if (lex.match (T_CONST)) {
+                        qual |= CCONST
+                    }
+                    if (lex.match (T_VOLATILE)) {
+                        qual |= CVOLATILE
+                    }
+                    pointer()
+                    var p = new PointerTypeRecord()
+                    p.addQualifiers(qual)
+                    stack.push (p)
+                } else {
+                    funcarray()
+                }
+            }
+
+           pointer()
+           while (!stack.empty()) {
+               var decl = stack.top()
+               decl.setsubtype (t)
+               t = decl
+               stack.pop()
+           }
+           if (symbol != null) {
+               symbol.setType (t)
+               symbol.setStorage (store)
+           } else {
+               symbol = new Symbol (fakename())
+               symbol.setType (t)
+           }
+           return symbol
+           
+        }
+        
+        // for an external declaration, the implicit type is an int
+        function implicitType {
+            return new ScalarTypeRecord (CINT)
+        }
+
+        // declared as typedef void *__builtin_va_alist[]
+        public function declarevarargs {
+            var builtinvalist = new Symbol ("__builtin_va_list")
+            builtinvalist.setType (new ArrayTypeRecord (0, new PointerTypeRecord (new ScalarTypeRecord (CVOID))))
+            builtinvalist.setStorage (sTYPEDEF) 
+            insertGlobalSymbol (builtinvalist)
+        }
+
+    }
+
+
+}

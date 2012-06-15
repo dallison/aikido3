@@ -1,0 +1,3 @@
+#!/bin/bash
+
+AIKIDOPATH=/usr/lib64/mysql /usr/local/bin/aikido dbclient.aikido

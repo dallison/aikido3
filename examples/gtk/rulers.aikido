@@ -1,0 +1,41 @@
+import gtk
+
+const XSIZE = 600
+const YSIZE = 400
+
+var window = new GTK.Window (GTK.WINDOW_TOPLEVEL)
+window.signal_connect ("delete_event", function (a,b, c) { System.exit(0) }, null)
+window.set_border_width (10)
+
+var table = new GTK.Table (3, 2, false)
+window.add (table)
+
+var area = new GTK.DrawingArea()
+area.size (XSIZE, YSIZE)
+table.attach (area, 1, 2, 1, 2,
+                   GTK.EXPAND|GTK.FILL, GTK.FILL, 0, 0 );
+area.set_events (GDK.POINTER_MOTION_MASK | GDK.POINTER_MOTION_HINT_MASK )
+
+var hrule = new GTK.HRuler()
+hrule.set_metric (GTK.PIXELS)
+hrule.set_range (7, 13, 0, 20)
+area.signal_connect_object ("motion_notify_event", hrule.get_event_motion_notify_event(), hrule)
+table.attach (hrule, 1, 2, 0, 1,
+                      GTK.EXPAND|GTK.SHRINK|GTK.FILL, GTK.FILL, 0, 0 );
+
+var vrule = new GTK.VRuler()
+vrule.set_metric (GTK.PIXELS)
+vrule.set_range (0, YSIZE, 10, YSIZE)
+area.signal_connect_object ("motion_notify_event", vrule.get_event_motion_notify_event(), vrule)
+table.attach (vrule, 0, 1, 1, 2,
+                      GTK.EXPAND|GTK.SHRINK|GTK.FILL, GTK.FILL, 0, 0 );
+
+area.show()
+hrule.show()
+vrule.show()
+table.show()
+window.show()
+
+
+
+GTK.mainloop()

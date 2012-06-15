@@ -1,0 +1,390 @@
+/*
+ * webserver.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.6
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+
+class WebServer (port, serverroot) {
+    import net
+    import streambuffer
+    import properties
+    import httpfilter
+    import url
+    import htmlfilter
+    import rawfilter
+    import htmlpage
+    import filename
+    import queue
+
+    var errors = {}
+    errors[200] = "OK"
+    errors[404] = "Not found"
+    errors[301] = "Moved Permanently"
+    errors[500] = "Internal Server Error"
+    errors[401] = "Authorization required"
+
+    var logstream = System.openup ("logfile.log")
+
+    function log (s) {
+        var now = System.date()
+        [now.toString(), ": ", s, '\n'] -> logstream
+        System.flush (logstream)
+    }
+
+    function status (number, httpstream) {
+        httpstream.setResponse (number, errors[number])
+    }
+
+    var mimeMap = {}
+ 
+    function readMimeTypes() {
+        var lines = System.readfile (serverroot + System.fileSeparator + "mime.types")
+        foreach line lines {
+            if (line[0] == '#') {
+                continue
+            }
+            var ex = line["([^\t ]+)[\t ]+(.*)"]
+            if (sizeof (ex) == 3) {
+                var mime = line[ex[1].start:ex[1].end]
+                var exts = line[ex[2].start:ex[2].end - 1]
+                var xt = System.split (exts, ' ')
+                foreach x xt {
+                    mimeMap[x] = mime
+                }
+            }
+        }
+    }
+
+
+    // make an output stream based on the extension of the file
+    function newOutstream (filename, instream, outstream) {
+        var extension = Filename.suffix (filename)
+        log ("extension = " + extension)
+        if (extension == "htm" || extension == "html" || extension == "shtml") {
+            return new HTMLFilter (instream, outstream)
+        }
+        var mimetype = mimeMap[extension]
+        if (typeof (mimetype) == "none") {
+            return new RawFilter (instream, outstream, "text/plain")
+        }
+        return new RawFilter (instream, outstream, mimetype)
+    }
+
+    function respond (errnum, httpstream, file, str, length = -1) {
+        status (errnum, httpstream)
+        httpstream.putHeader ("Server", "Aikido/1.0")
+        //if (length > 0) {
+            //httpstream.setContentLength (length)
+        //}
+
+        var outstream = newOutstream (file, httpstream, httpstream)
+        str -> outstream
+    }
+
+    function redirect (location, httpstream) {
+        log ("redirecting to " + location)
+        status (301, httpstream)
+        httpstream.putHeader ("Server", "Aikido/1.0")
+        httpstream.putHeader ("Location", location)
+        var out = new HTMLFilter (httpstream, httpstream)
+        "Moved to location " + location + "\n" -> out
+    }
+
+    function notFound (httpstream) {
+        var str = System.openin (serverroot + System.fileSeparator + "404.html")
+        respond (404, httpstream, "404.html", str)
+        System.close (str)
+    }
+
+
+    function listDirectory (url, httpstream) {
+        log ("listing directory " + url.file)
+        try {
+            var dir = System.readdir (url.file)
+            status (200, httpstream)
+            httpstream.putHeader ("Server", "Aikido/1.0")
+
+            var title = "Index of " + url.specifiedFile
+            var page = new HTML.Page (title)
+
+            page.header (1, title)
+            var p = page.preformat()
+
+            p.rule()
+            foreach file dir {
+                p.link (file, file)
+            }
+            page.paragraph()
+            page.rule()
+            page.italics ("Aikido Server 1.0")
+            page -> httpstream
+
+        } catch (e) {
+            log ("caught error " + e)
+            notFound (httpstream)
+        }
+    }
+
+    function loadServerPage (url, httpstream) {
+        status (200, httpstream)
+        httpstream.putHeader ("Server", "Aikido/1.0")
+        var stream = System.openin (url.file)
+        var script = System.load (stream)
+        System.close (stream)
+        var oldoutput = output		// in case it is redirected
+        try {
+            script.send (url, httpstream)
+        } catch (e) {
+            var error = ""
+            if (e instanceof System.Exception) {
+                error = e.toString()
+            } else {
+                error = e
+            }
+            ["Internal server error", error, '\n'] -> httpstream
+        }
+        System.redirectStream (output, oldoutput)
+    }
+
+    function invokeScript (url, httpstream) {
+        // environment variables must be per system call, so we pass them
+        // down to the System.system() function in a vector
+        var env = []
+        "PATH_INFO=" -> env
+        "PATH_TRANSLATED=" -> env
+        "QUERY_STRING=" + url.filename -> env
+        "REMOTE_HOST=" -> env
+        "REMOTE_ADDR=" -> env
+        "REMOTE_USER=" -> env
+        "AUTH_TYPE=" -> env
+        "CONTENT_TYPE=" -> env
+        "CONTENT_LENGTH=" -> env
+        "REQUEST_METHOD=" + httpstream.getMethod() -> env
+
+        //log ("invoking script " + url.file)
+
+        var ext = Filename.suffix (url.file)
+        if (ext == "aikidosp") {				// aikido server page
+            loadServerPage (url, httpstream)
+        } else {					// other script
+            try {
+                var ex = url.file["/cgi-bin/"]
+                var filename = url.file[ex[0].end + 1:sizeof (url.file) - 1]
+                "SCRIPT_NAME=" + filename -> env
+                var command = "." + System.fileSeparator + filename
+                log ("command = " + command)
+                var outlines = System.system (command, env, serverroot + System.fileSeparator + "cgi-bin")
+                log ("command complete")
+                var rawstream = httpstream.getOutstream()
+                [httpstream.getProtocol, " 200 OK\r\n"] -> rawstream
+                "Server: Aikido/1.0\r\n" -> rawstream
+                //outlines -> stdout
+                outlines -> rawstream
+            } catch (e) {
+                if (e instanceof System.Exception) {
+                    log ("caught error " + e.toString())
+                } else {
+                    log ("caught error " + e)
+                }
+                notFound (httpstream)
+            }
+        }
+    }
+
+    function tryFile (root, file) {
+        var stat = System.stat (root + file)
+        if (stat != null) {
+            return file
+        }
+        return ""
+    }
+
+    function checkAccess (httpstream, filename) {
+        //respond (401, httpstream, filename, "Access required")
+        //return false
+        return true
+    }
+
+    function sendFile (url, httpstream) {
+        if (url.file[sizeof (url.file) - 1] == System.fileSeparator) {
+            var file = tryFile (url.file, "index.html")
+            if (file == "") {
+                file = tryFile (url.file, "index.shtml")
+            }
+            if (file == "") {
+                file = tryFile (url.file, "index.htm")
+            }
+            if (file == "") {
+                file = tryFile (url.file, "index.aikidosp")
+            }
+            if (file != "") {
+                url.file += file
+            } else {
+                url.file >>= 1
+            }
+        }
+        log ("sending file " + url.file)
+        if (!checkAccess (httpstream, url.file)) {
+            return
+        }
+        var stat = System.stat (url.file)
+        if (stat == null) {
+            notFound (httpstream)
+        } else {
+            if (stat.mode & 0x4000) {		// directory?
+                listDirectory (url, httpstream)
+            } elif (sizeof (url.file["cgi-bin"]) > 0) {
+                invokeScript (url, httpstream)
+            } else {
+                var ext = Filename.suffix (url.file)
+                if (ext == "aikidosp") {
+                     loadServerPage (url, httpstream)
+                } else {
+                    var str = System.openin (url.file)
+                    respond (200, httpstream, url.file, str, stat.size)
+                    System.close (str)
+                }
+            }
+        }
+    }
+
+
+    function service (httpstream) {
+        var url = null
+        try {
+            url = new URL (serverroot, httpstream.getFile(),httpstream.getPostData())
+        } catch (e) {
+            if (e instanceof URLError) {
+                if (e.type == "redirect") {
+                    redirect (e.location, httpstream)
+                } elif (e.type == "baduser") {
+                    notFound (httpstream)
+                } else {
+                    throw e
+                }
+                return
+            } else {
+                throw e
+            }
+
+        }
+
+        var method = httpstream.getMethod()
+        log ("method = " + method)
+        switch (httpstream.getMethod()) {
+        case "GET":
+        case "HEAD":
+        case "POST":
+            sendFile (url, httpstream)
+            break
+        }
+    }
+
+    // dispatcher for incoming requests
+    monitor RequestDispatcher {
+        var requests = new Queue()
+
+        public function get() {
+            while (requests.size() == 0) {
+                wait()
+            }
+            return requests.get()
+        }
+
+        public function put(req) {
+            requests.put (req)
+            notify()
+        }
+    }
+
+    var requests = new RequestDispatcher()
+
+    // request handler
+    thread request {
+        for (;;) {
+            var client = requests.get()                 // get a client
+            var httpstream = new HTTPFilter (client, client)
+            var data = ""
+
+            httpstream -> data                  // read all data from stream
+            try {
+                service (httpstream)
+            } catch (e) {
+                var error = ""
+                log ("typeof e = " + typeof (e))
+                if (e instanceof System.Exception) {
+                    error = e.toString()
+                } else {
+                    error = e
+                }
+                log (error)
+                status (500, httpstream)
+                httpstream.putHeader ("Server", "Aikido/1.0")
+                "Internal server error\n\n" -> httpstream
+                error -> httpstream
+            }
+            System.flush (client)
+            System.close (client)
+        }
+    }
+
+    // start the request threads
+    const MAX_REQUESTS = 10
+    foreach i 10 {
+        request()
+    }
+
+    // these environment variables are global to all subprocesses
+    System.setenv ("SERVER_SOFTWARE", "Aikido/1.0")
+    System.setenv ("SERVER_NAME", "Aikido/1.0")
+    System.setenv ("GATEWAY_INTERFACE", "Aikido")
+    System.setenv ("SERVER_PROTOCOL", "HTTP/1.1")
+    System.setenv ("SERVER_PORT", cast<string>(port))
+
+    readMimeTypes()
+
+    var s = Network.openServer (System.hostname, port, Network.TCP) 
+    for (;;) {
+        var str = Network.accept (s) 
+        requests.put (str)		// queue request
+    }
+}
+
+function main() {
+    if (version < 100) {
+        throw "This version of Aikido cannot be used to run the server"
+    }
+    var port = 8000
+    var root = System.getwd()
+    if (sizeof (args) >= 1) {
+        port = cast<int>(args[0])
+    }
+    if (sizeof (args) == 2) {
+        root = args[1]
+    }
+
+    // ignore pipe disconnects
+    System.sigset (System.Signals.SIGPIPE, System.SIG_IGN)
+
+    WebServer (port, root)
+}

@@ -1,0 +1,96 @@
+import libX11
+import libXext
+import gtk
+
+function rotate_book (notebook, p) {
+   notebook.set_tab_pos ((notebook.get_tab_pos() + 1) % 4)
+}
+
+function delete_event (widget, event, data) {
+    println ("delete event")
+    return false
+}
+
+function close (widget) {
+    println ("close event")
+    System.exit (0)
+}
+
+function destroy (obj, p) {
+    System.exit (0)
+}
+
+function next_page (notebook) {
+    notebook.next_page()
+}
+
+var window = new GTK.Window (GTK.WINDOW_TOPLEVEL)
+window.signal_connect ("delete_event", delete_event, null)
+
+window.set_border_width (10)
+
+var table = new GTK.Table (3, 6, false)
+window.add (table)
+
+var notebook = new GTK.Notebook()
+notebook.set_tab_pos (GTK.POS_TOP)
+table.attach_defaults (notebook, 0, 6, 0, 1)
+notebook.show()
+
+foreach i 5 {
+    var f = "Append Frame " + (i + 1)
+    var l = "Page " + (i+1)
+    var frame = new GTK.Frame (f)
+    frame.set_border_width (10)
+    frame.set_usize (100, 75)
+    frame.show()
+
+    var label = new GTK.Label (f)
+    frame.add (label)
+    label.show()
+
+    label = new GTK.Label (l)
+    notebook.append_page (frame, label)
+}
+
+var checkbutton = new GTK.CheckButton ("Check me please!")
+checkbutton.set_usize (100, 75)
+checkbutton.show()
+
+var label = new GTK.Label ("Add page")
+notebook.insert_page (checkbutton, label, 2)
+
+foreach i 5 {
+    var f = "Prepend Frame " + (i+1)
+    var l = "PPage " + (i+1)
+    var frame = new GTK.Frame (f)
+    frame.set_border_width (10)
+    frame.set_usize (100,75)
+    frame.show()
+
+    var label = new GTK.Label (f)
+    frame.add (label)
+    label.show()
+
+    label = new GTK.Label (l)
+    notebook.prepend_page (frame, label)
+}
+
+notebook.set_page (3)
+
+var button = new GTK.Button ("close")
+button.signal_connect_object ("clicked", close, null)
+
+table.attach_defaults (button, 0, 1, 1, 2)
+button.show()
+
+button = new GTK.Button ("next page")
+button.signal_connect_object ("clicked", next_page, notebook)
+table.attach_defaults (button, 1,2,1,2)
+button.show()
+
+table.show()
+window.show()
+
+
+GTK.mainloop()

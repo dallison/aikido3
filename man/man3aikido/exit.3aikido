@@ -1,0 +1,22 @@
+.\" Aikido manual
+.\" David Allison
+.TH exit 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+exit \- Exit the program normally
+.SH SYNOPSIS
+\fBSystem.exit(status)
+.SH DESCRIPTION
+The System.exit() function causes the program to exit with an exit status.  The
+convention is to exit with a status of 0 for normal completion, and other
+values for error completion.
+
+.SH RETURN VALUES
+This function does not return
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+abort(3aikido)

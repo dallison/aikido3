@@ -1,0 +1,73 @@
+.\" Aikido manual
+.\" David Allison
+.TH Filename 3aikido 3/10/2003 aikido "Aikido packages"
+
+.SH NAME
+Filename \- Filename manipulation package
+.SH SYNOPSIS
+\fBimport filename
+.P
+\fBpackage Filename {
+.br
+    ...
+.br
+}
+.SH DESCRIPTION
+The Filename package provides a set of functions for manipulating file names.  A
+file name is a string that corresponds to the name of a file or directory
+in the computer file system.  
+.P
+A filename (or pathname) consists of the following components:
+.IP "root" 10
+The start of the path (optional)
+.IP "separator" 10
+A character that separates the components
+.IP "suffix separator" 10
+A character that separates the extension from the basename
+.IP "dirname" 10
+The directory component
+.IP "basename" 10
+The name of the file without a suffix (extension)
+.IP "suffix" 10
+The extension suffix of the filename.
+.P
+Thus a filename can be thought of as:
+.P
+[root] dirname separator basename suffix-sep suffix
+.P
+.br
+
+.br
+
+.br
+The following functions are provided:
+.IP "explode(fn: string)" 10
+Convert the filename to a vector of strings, one for each element in the 
+path.  If the path is rooted (starts with / on UNIX), the first element
+of the vector will be an empty string ""
+.IP "implode(v: vector)" 10
+Given a vector of strings, make this into a pathname string by appending
+them all together with the system path separator.  Return the string.  If
+the first element of the vector is an empty string, the resultant
+filename will be rooted.
+.IP "dirname(fn: string)" 10
+Extract the directory component of the given pathname.  The separator between
+the directory and filename component is removed.  The function returns the
+string representing the directory.
+.IP "filename(fn: string)" 10
+Extract the filename component of a pathname.  The function returns the string.
+.IP "suffix(fn: string)" 10
+Extract the suffix component of the pathname.  The suffix separator is
+removed and is not part of the result
+.IP "basename(fn: string)" 10
+Extract the basename component of the pathname.  The suffix and the suffix
+separator are removed.
+.IP "export(fn: string)" 10
+Make an exported version of the given filename.  On UNIX this will result
+in the prefix
+.I /net/<hostname>
+being prepended. 
+.SH EXAMPLE
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

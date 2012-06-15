@@ -1,0 +1,164 @@
+This is a simple calculator written in Aikido.
+
+Type an expression and it will print the result.  The
+expression may contain function calls and even
+variable definitions.
+
+Simple Expressions
+------------------
+
+> 1+2
+3
+> 1.0 / 2
+0.5
+> sin(PI/3)
+0.866025
+> hex (10000)
+2710
+
+
+Defining variables and functions
+--------------------------------
+
+You can define variables by simply assigning them a value:
+
+> x = 4
+none
+> x * 2
+8
+
+The variable maintains its value until overwritten
+
+A function can be defined thus:
+
+> invert = function (x) { return 1.0 / x }
+none
+> invert (10)
+0.1
+
+
+This defines a function called 'invert' that can be called with
+one parameter.
+
+You can also use the Aikido 'inline block' feature to execute
+arbitrary code:
+
+> `x = 1 ; foreach i 10 { x += x } ; return x`
+1024
+
+Should you find this useful...
+
+
+.acinit file
+------------
+
+On startup, the calculator will read a file called .acinit in your
+home directory.  This file can contain function definitions that
+can be used in expressions in the calculator.
+
+For example, the .acinit file might contain
+
+
+//  print binary
+public function bin (n) {
+    return format ("%b", n)
+}
+
+This defines a function to print the argument in binary.
+
+All functions defined in the .acinit file are placed in a
+class called 'myfuncs', so to call them:
+
+> myfuncs.bin (4)
+100
+
+You can use this file for frequently used operations.
+
+
+Pipe operation
+--------------
+
+If the calculator is used in a pipeline instead of directly
+from the keyboard, it will read all the input and produce
+output until the end of file condition is detected.  This
+allows you to use the calculator in shell scripts.
+
+% echo 1+2 | ac
+
+
+Command operation
+-----------------
+
+By providing program arguments from the command line, the calculator
+will perform the given calculation and print the result.
+
+% ac 1.0 / 3
+0.333333
+
+be careful of parentheses and the shell:
+
+% ac 'hex (1234)'
+4d2
+
+
+
+Other strange and amusing things you can do
+-------------------------------------------
+
+Because you are running inside the interpreter you can
+call anything you like.  For example:
+
+> run()
+>
+
+This spawns a new interpreter.
+
+> system ("ls")
+
+Executes the 'ls' command on the current directory
+
+> fun = thread { system ("ls") -> stdout }
+
+Defines a thread called 'fun' that, when executed will
+run in the background doing an 'ls' command on the
+current directory.
+
+
+Here's a good one...
+
+> y = class { public function print(x) { println (x) } }
+none
+> q = new y 
+object 202ba0
+> q.print (1)
+1
+none
+
+This one opens the 'daytime' port on the local host, connects to it
+and reads the data
+
+> Network.open ("localhost", 13)
+Thu Mar  6 22:29:34 2003
+
+
+Another way to print the current time:
+
+> date()
+Thu Mar  6 22:31:38 PST 2003
+
+
+How about one to print the contents of a file
+
+> openin ("README")
+<contents of this file printed>
+
+
+
+I'm sure you can think of many other devious things to do.  If you
+are really evil you might be able to crash the interpreter or get
+it to produce some strange output
+
+Hope you find this useful.
+
+Dave Allison
+

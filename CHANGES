@@ -1,0 +1,47 @@
+The modifications made by Xsigo Systems Inc are derived, indirectly from
+the code provided by David Allison of Sun Microsystems Inc.
+
+Date of change: 6/13/2007
+
+All changes by David Allison working for Xsigo Systems Inc.
+
+1. Addition of coroutines - functions that yield values multiple times and can be
+   continued in a foreach loop or by use of the next() function
+2. Addition of 'case' clause comparison operators
+
+
+Date of change: 10/19/2006
+
+This contains numerous changes, too many to list individually.  Most files
+were changed in some way, either to introduce a new feature or to fix
+bugs.
+
+
+--------------------------------------------------------------------------------
+
+The modifications made by PathScale are derived, indirectly from the
+code provided by David Allison of Sun Microsystems Inc.
+
+Date of change: 1/21/2004
+
+    The following files were changed by David Allison at PathScale Inc. for
+    the purpose of binary bytecode and standalone generation:
+
+    src/parser.cc	
+    src/aikido.h
+    src/codegen.cc
+    src/unix/main.cc
+    
+    The following files were changed by David Allison of PathScale Inc for
+    bug fixes:
+    
+    src/network.cc
+    src/interpret.cc
+    src/aikido.h
+    
+    The changes were made to original code written by David Allison on behalf
+    of Sun Microsystems Inc.
+
+
+    
+

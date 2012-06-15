@@ -1,0 +1,18 @@
+.\" Aikido manual
+.\" David Allison
+.TH availableChars 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+availableChars \- Get number of buffered characters in a stream
+.SH SYNOPSIS
+\fBSystem.availableChars(stream)
+.SH DESCRIPTION
+The System.availableChars() function returns the number of characters that
+are buffered in the stream.  This is most useful for network streams.
+.SH RETURN VALUES
+The number of characters available.
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

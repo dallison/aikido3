@@ -1,0 +1,32 @@
+#!/bin/sh
+
+usage() {
+    echo "usage: aikido-config [--cflags] [--libs] [--version]"
+    exit 1
+}
+
+if [ $# -eq 0 ]
+then
+    usage
+fi
+
+while test $# -gt 0 ; do
+    case "$1" in
+        --cflags)
+            echo "-I/usr/include/aikido"
+            shift
+            ;;
+        --libs)
+            echo "-L/usr/lib"
+            shift
+            ;;
+        --version)
+            echo 1.00
+            shift
+            ;;
+        *)
+            usage
+    esac
+done
+
+

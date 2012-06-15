@@ -1,0 +1,23 @@
+.\" Aikido manual
+.\" David Allison
+.TH Container 3aikido 3/10/2003 aikido "Aikido classes"
+
+.SH NAME
+Container \- Interface for generic containers
+.SH SYNOPSIS
+\fBimport container
+.P
+\fBinterface Container {
+.br
+}
+.SH DESCRIPTION
+The Container interface provides a contract for any class that implements a
+container-type object.
+.SH EXAMPLE
+.P
+class Tree implements Container {
+.br
+}
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

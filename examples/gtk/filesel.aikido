@@ -1,0 +1,14 @@
+import gtk
+
+function file_ok_sel (widget, fs) {
+    System.println (fs.get_filename()) 
+}
+
+var filew = new GTK.FileSelection ("File Selection")
+filew.signal_connect ("destroy", function (a,b) { System.exit(0)}, null)
+filew.get_ok_button().signal_connect ("clicked", file_ok_sel, filew)
+filew.get_cancel_button().signal_connect_object ("clicked", function (a) { System.exit(0)}, null)
+filew.set_filename ("penguin.png")
+filew.show()
+
+GTK.mainloop()

@@ -1,0 +1,23 @@
+.\" Aikido manual
+.\" David Allison
+.TH error 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+error \- Generate a runtime error and continue program
+.SH SYNOPSIS
+\fBSystem.error(str)
+.SH DESCRIPTION
+The System.error() function causes a runtime error to be reported.  This is
+different from throwing an exception in that the program is not stopped
+on the generation of the error.  The error function also increments an
+internal error counter that is used for the exit status of the 
+Aikido program.
+
+.SH RETURN VALUES
+Nothing is returned
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

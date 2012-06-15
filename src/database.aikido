@@ -1,0 +1,201 @@
+/*
+ * database.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.10
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+//
+// Interface to native database engine
+// Author: David Allson
+// Version: 1.10 07/29/03
+//
+
+ // derive your application specific database class from the DB class
+
+class DB {
+public:
+    import libdb			// shared library for database itself
+    import libdbif			// shared library for interface to database
+
+    const BOOTSTRAP_ADDRESS = 16240
+
+    // functions to interface to the native database
+
+    private native dbif_init_db (file, name)
+    private native dbif_init_tx (engine) 
+    private native dbif_commit_tx (tx)
+    private native dbif_rollback_tx (tx)
+    private native dbif_close_db(eng)
+    private native dbif_insert_object (eng, tx, type)
+    private native dbif_delete_object (eng, tx, handle)
+    private native dbif_update_object (eng, tx, handle, size)
+    private native dbif_allocate_db (eng, tx, size)
+    private native dbif_free_db (eng, tx, addr)
+    private native dbif_locate_object (eng, handle)
+    private native dbif_get_object_type (eng, handle)
+    private native dbif_writeInt (eng, address, v)
+    private native dbif_writeShort (eng, address, v)
+    private native dbif_writeLong (eng, address, v)
+    private native dbif_writeFloat (eng, address, v)
+    private native dbif_writeDouble (eng, address, v)
+    private native dbif_writeString (eng, address, v)
+    private native dbif_writeArray (eng, address, data, length)
+    private native dbif_writeChar (eng, address, v)
+    private native dbif_readInt (eng, address)
+    private native dbif_readShort (eng, address)
+    private native dbif_readLong (eng, address)
+    private native dbif_readFloat (eng, address)
+    private native dbif_readDouble (eng, address)
+    private native dbif_readString (eng, address)
+    private native dbif_readArray (eng, address, data, length)
+    private native dbif_readChar (eng, address)
+
+
+    //
+    // a transaction
+    //
+    class Transaction (engine) {
+    public:
+        var nativetx = dbif_init_tx (engine.nativeengine)
+
+        function commit {
+            dbif_commit_tx (nativetx)
+        }
+
+        function rollback {
+            dbif_rollback_tx (nativetx)
+        }
+ 
+        function finalize {
+            rollback()
+        }
+    }
+
+    class Database (file, name = "") {
+    public:
+        var nativeengine = dbif_init_db (file, name)
+
+        // engine maintenance
+        function close {
+            dbif_close_db (nativeengine)
+        }
+
+        // object controls
+        function insertObject (tx, type) {
+            return dbif_insert_object (nativeengine, tx.nativetx, type)
+        }
+   
+        function deleteObject (tx, handle) {
+            dbif_delete_object (nativeengine, tx.nativetx, handle)
+        }
+
+        function updateObject (tx, handle, length) {
+            return dbif_update_object (nativeengine, tx.nativetx, handle, length)
+        }
+
+        function allocate (tx, size) {
+            return dbif_allocate_db (nativeengine, tx.nativetx, size)
+        }
+   
+        function free (tx, addr) {
+            return dbif_free_db (nativeengine, tx.nativetx, addr)
+        }
+   
+        function locateObject (handle) {
+            return dbif_locate_object (nativeengine, handle)
+        }
+   
+        function getType (handle) {
+            return dbif_get_object_type (nativeengine, handle)
+        }
+   
+        // data controls
+       
+        function writeInt (address, v) {
+            dbif_writeInt (nativeengine, address, v)
+        }
+
+        function writeShort (address, v) {
+            dbif_writeShort (nativeengine, address, v)
+        }
+
+        function writeLong (address, v) {
+            dbif_writeLong (nativeengine, address, v)
+        }
+
+        function writeFloat (address, v) {
+            dbif_writeFloat (nativeengine, address, v)
+        }
+
+        function writeDouble (address, v) {
+            dbif_writeDouble (nativeengine, address, v)
+        }
+
+        function writeString (address, v) {
+            dbif_writeString (nativeengine, address, v)
+        }
+
+        function writeArray (address, data, length) {
+            dbif_writeArray (nativeengine, address, data, length)
+        }
+
+        function writeChar (address, v) {
+            dbif_writeChar (nativeengine, address, v)
+        }
+
+        function readInt (address) {
+            return dbif_readInt (nativeengine, address)
+        }
+
+        function readShort (address) {
+            return dbif_readShort (nativeengine, address)
+        }
+
+        function readLong (address) {
+            return dbif_readLong (nativeengine, address)
+        }
+
+        function readFloat (address) {
+            return dbif_readFloat (nativeengine, address)
+        }
+
+        function readDouble (address) {
+            return dbif_readDouble (nativeengine, address)
+        }
+
+        function readString (address) {
+            return dbif_readString (nativeengine, address)
+        }
+
+        function readArray (address, data, length) {
+            return dbif_readArray (nativeengine, address, data, length)
+        }
+
+        function readChar (address) {
+            return dbif_readChar (nativeengine, address)
+        }
+
+
+    }
+
+}
+

@@ -1,0 +1,38 @@
+.\" Aikido manual
+.\" David Allison
+.TH setStreamAttribute 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+setStreamAttribute \- set the attributes of a stream
+.SH SYNOPSIS
+\fBSystem.setStreamAttribute(stream, attr, value)
+.SH DESCRIPTION
+The System.setStreamAttribute() function sets a stream attribute to a certain
+value.  A stream attribute is identified by a number.  The available
+stream attribute are:
+.IP "StreamAttributes.BUFFERSIZE" 10
+The value is in bytes.  This sets the internal buffer size for the stream.  The default is 512 bytes.
+.IP "StreamAttributes.MODE" 10
+The stream mode.  The value is one of:
+.I StreamAttributes.LINEMODE
+or
+.I StreamAttributes.CHARMODE
+..  The defauls value is LINEMODE.
+.IP "StreamAttributes.AUTOFLUSH" 10
+The value is true or false.  If the stream is set to auto flush, the
+stream buffers will be flushed on every write.  The default is off.
+
+.SH RETURN VALUES
+Nothing is returned
+.SH EXAMPLE
+System.setStreamAttribute (s, StreamAttributes.BUFFERSIZE, 1024*1024)
+.br
+System.setStreamAttribute (s, StreamAttributes.MODE, StreamAttributes.CHARMODE)
+.br
+System.setStreamAttribute (s, StreamAttributes.AUTOFLUSH, true)
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

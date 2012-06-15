@@ -1,0 +1,41 @@
+//
+// index.aikidosp
+//
+// This is an Aikido Server Page.  It is executed when loaded by the
+// web server
+//
+
+public function send (url, httpstream) {
+    // create a html page
+    var page = new HTML.Page ("Aikido Server Page")
+
+    page.header (1, "Aikido Server Page") 
+
+    // a horizontal rule
+    page.rule()
+
+    // show the arguments
+    "The arguments are:\n" -> page
+
+    page.paragraph()
+    foreach arg url.args {
+        [arg.first, " = ", arg.second, '\n'] -> page
+        page.paragraph()
+    }
+
+    page.rule()
+
+    // some text
+    "Here is the source for this page\n" -> page
+
+    page.paragraph()
+    
+    var pre = page.preformat()
+
+    var s = openin ("index.aikidosp")
+    s -> pre
+    close (s)
+
+    page -> httpstream
+
+}

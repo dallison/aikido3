@@ -1,0 +1,577 @@
+/*
+ * stmt.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.2
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+
+package CParser {
+
+    extend Parser {
+        class Statement extends ParseNode {
+            public function print (s, indent) {
+                foreach n indent {
+                    ' ' -> s
+                }
+            }
+
+        }
+
+        class NullStatement extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+               ";\n" -> s
+            }
+
+        }
+
+        class IfStatement (expr, iflimb, elselimb = null) extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                "if (" -> s
+                 expr.print (s, 0)
+                 ") " -> s
+                 if (elselimb != null) {
+                     iflimb.print (s, indent + 4)
+                     foreach i indent {
+                         ' ' -> s
+                     }
+                     " else " -> s
+                     elselimb.print (s, indent + 4)
+                     
+                 } else {
+                     iflimb.print (s, indent + 4)
+                 }
+                 "\n" -> s
+            }
+
+            public function dump (stream) {
+                expr.dump (stream)
+                iflimb.dump (stream)
+                if (elselimb != null) {
+                    elselimb.dump (stream)
+                }
+                ParseNode.dump (stream)
+                [expr.id, ' ', iflimb.id] -> stream
+                if (elselimb != null) {
+                    [' ', elselimb.id] -> stream
+                }
+            }
+
+        }
+
+        class WhileStatement (expr, stmt) extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                "while (" -> s
+                 expr.print (s, 0)
+                 ") " -> s
+                 stmt.print (s, indent + 4)
+                 ";\n" -> s
+            }
+
+            public function dump (stream) {
+                expr.dump (stream)
+                stmt.dump (stream)
+                ParseNode.dump (stream)
+                [expr.id, ' ', stmt.id] -> stream
+            }
+        }
+
+        class DoStatement (stmt, expr) extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                "do " -> s
+                 stmt.print (s, indent + 4)
+                 " while (" -> s
+                 expr.print (s, 0)
+                 ")\n" -> s
+            }
+            public function dump (stream) {
+                expr.dump (stream)
+                stmt.dump (stream)
+                ParseNode.dump (stream)
+                [stmt.id, ' ', expr.id] -> stream
+            }
+        }
+
+        class ForStatement (expr1, expr2, expr3, stmt) extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                "for (" -> s
+                 if (expr1 != null) {
+                     expr1.print (s, 0)
+                 }
+                 ';' -> s
+                 if (expr2 != null) {
+                     expr2.print (s, 0)
+                 }
+                 ';' -> s
+                 if (expr3 != null) {
+                     expr3.print (s, 0)
+                 }
+                 ") " -> s
+                 stmt.print (s, indent + 4)
+                 "\n" -> s
+            }
+
+            public function dump (stream) {
+                 foreach expr [expr1, expr2, expr3] {
+                     if (expr != null) {
+                         expr.dump (stream)
+                     }
+                 }
+                 stmt.dump (stream)
+                 ParseNode.dump (stream)
+                 foreach expr [expr1, expr2, expr3] {
+                     if (expr != null) {
+                         [expr.id, ' '] -> stream
+                     } else {
+                         "0 " -> stream
+                     }
+                 }
+                 stmt.id -> stream
+            }
+        }
+
+        class BreakStatement extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                "break;\n" -> s
+            }
+        }
+
+        class ContinueStatement extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                "continue;\n" -> s
+            }
+        }
+
+        class ExpressionStatement (expr) extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                expr.print (s,0)
+                ";\n" -> s
+            }
+
+            public function dump (stream) {
+                expr.dump (stream)
+                ParseNode.dump (stream)
+                expr.id -> stream
+            }
+        }
+
+        class ReturnStatement (expr) extends Statement {
+
+            public function print (s, indent) extends print (s, indent) {
+                "return " -> s
+                if (expr != null) {
+                    expr.print (s,0)
+                }
+                ";\n" -> s
+            }
+
+
+            public function dump (stream) {
+            }
+        }
+
+        class SwitchStatement (expr, stmt) extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                "switch (" -> s
+                 expr.print (s, 0)
+                 ")\n" -> s
+                 stmt.print (s, indent + 4)
+                 "\n" -> s
+            }
+            public function dump (stream) {
+                expr.dump (stream)
+                stmt.dump (stream)
+                ParseNode.dump (stream)
+                [expr.id, ' ', stmt.id] -> stream
+            }
+        }
+
+        class CaseStatement (expr) extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                "case " -> s
+                expr.print (s,0)
+                ":\n" -> s
+            }
+            public function dump (stream) {
+                expr.dump (stream)
+                expr.id -> stream
+            }
+        }
+
+        class DefaultStatement extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                "default:\n" -> s
+            }
+        }
+
+        class GotoStatement (label) extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                "goto " -> s
+                label -> s
+                "\n" -> s
+            }
+
+            public function dump (stream) extends dump (stream){
+                label -> stream
+            }
+        }
+
+        class LabelStatement (name) extends Statement {
+            public function print (s, indent) extends print (s, indent) {
+                name -> s
+                ":\n" -> s
+            }
+
+            public function dump (stream) extends dump (stream){
+                name -> stream
+            }
+        }
+
+        class CompoundStatement extends Statement {
+            var statements = []
+            public function addStatement (s) {
+                append (statements, s)
+            }
+
+            public function print (s, indent) extends print (s, indent) {
+                " {\n" -> s
+                foreach stmt statements {
+                    stmt.print (s, indent + 4)
+                }
+                foreach i indent {
+                    ' ' -> s
+                }
+                "}\n" -> s
+            }
+
+            public function dump (stream) {
+                foreach s statements {
+                    s.dump (stream)
+                }
+                ParseNode.dump (stream)
+                foreach s statements {
+                    [s.id, ' '] -> stream
+                }
+ 
+            }
+        }
+        function expression...
+        function statement...
+
+        var loopcount = 0
+        var switchcount = 0
+
+        function needsemi {
+            if (!lex.match (T_SEMICOLON)) {
+                error ("Semicolon expected")
+            }
+        }
+
+        function ifStatement {
+            needbrack (T_LPAREN)
+            var expr = expression()
+            needbrack (T_RPAREN)
+            var ifpart = statement()
+            if (lex.match (T_ELSE)) {
+                var elsepart = statement()
+                return new IfStatement (expr, ifpart, elsepart)
+            }
+            return new IfStatement (expr, ifpart)
+        }
+
+        function whileStatement {
+            needbrack (T_LPAREN)
+            var expr = expression()
+            needbrack (T_RPAREN)
+            loopcount++
+            var stmt = statement()
+            loopcount--
+            return new WhileStatement (expr, stmt)
+        }
+
+        function doStatement {
+            loopcount++
+            var stmt = statement()
+            loopcount--
+            if (lex.match (T_WHILE)) {
+                needbrack (T_LPAREN)
+                var expr = expression()
+                needbrack (T_RPAREN)
+                needsemi()
+                return new DoStatement (stmt, expr)
+            } else {
+                error ("Missing while in do statement")
+                return new NullStatement()
+            }
+        }
+
+        function forStatement {
+            needbrack (T_LPAREN)
+            var expr1 = null
+            var expr2 = null
+            var expr3 = null
+            if (lex.currentToken != T_SEMICOLON) {
+                expr1 = expression()
+            }
+            needsemi()
+            if (lex.currentToken != T_SEMICOLON) {
+                expr2 = expression()
+            }
+            needsemi()
+            if (lex.currentToken != T_RPAREN) {
+                expr3 = expression()
+            }
+            needbrack (T_RPAREN)
+            loopcount++
+            var stmt = statement()
+            loopcount--
+            return new ForStatement (expr1, expr2, expr3, stmt)
+        }
+
+        function breakStatement {
+            needsemi()
+            if (loopcount == 0 && switchcount == 0) {
+                error ("break outside loop or switch")
+            }
+            return new BreakStatement()
+        }
+
+        function continueStatement {
+            needsemi()
+            if (loopcount == 0) {
+                error ("continue outside loop")
+            }
+            return new ContinueStatement()
+        }
+
+        function returnStatement {
+            var expr = null
+            if (lex.currentToken != T_SEMICOLON) {
+                expr = expression()
+            }
+            needsemi()
+            return new ReturnStatement (expr)
+        }
+
+        function switchStatement {
+            needbrack (T_LPAREN)
+            var expr = expression()
+            needbrack (T_RPAREN)
+            needbrack (T_LBRACE)
+            var body = new CompoundStatement()
+            switchcount++
+            while (!lex.match (T_RBRACE)) {
+                var s = statement()
+                body.addStatement (s)
+            }
+            return new SwitchStatement (expr, body)
+        }
+
+        function caseStatement {
+            if (switchcount == 0) {
+                error ("case outside switch")
+            }
+            var expr = expression()
+            if (!lex.match (T_COLON)) {
+                error ("Missing colon for case")
+            }
+            return new CaseStatement (expr)
+        }
+
+        function defaultStatement {
+            if (switchcount == 0) {
+                error ("default outside switch")
+            }
+            if (!lex.match (T_COLON)) {
+                error ("Missing colon for default")
+            }
+            return new DefaultStatement()
+        }
+
+        function expressionStatement {
+            if (lex.currentToken == IDENTIFIER) {               // possible label?
+                if (lex.lookaheadChar() == ':') {
+                    var name = lex.spelling
+                    lex.nextToken()
+                    lex.nextToken()
+                    return new LabelStatement (name)
+                }
+            }
+            var expr = expression()
+            needsemi()
+            return new ExpressionStatement (expr)
+        }
+
+        function gotoStatement {
+            var label = ""
+            if (lex.currentToken != IDENTIFIER) {
+                error ("Missing label after goto")
+            } else {
+                label = lex.spelling
+                lex.nextToken()
+            }
+            needsemi()
+            return new GotoStatement (label)
+        }
+
+        function compoundStatement {
+            var stmt = new CompoundStatement()
+
+            pushScope()
+            while (!lex.match (T_RBRACE)) {
+                var s = statement()
+                stmt.addStatement (s)
+            }
+            popScope()
+            return stmt
+        }
+
+        function statement {
+            var tok = lex.currentToken
+            var result = null
+            var st = storage()
+            if (st != 0) {
+                gotdecl = true
+            }
+            var gotdecl = false
+            var initcomp = new CompoundStatement()     // compound for multiple initializers
+            var t = type()
+            if (t != null) {
+                for (;;) {
+                    var decl = declaration(st == 0 ? sAUTO : st, t)
+                    if (decl != null) {
+                        gotdecl = true
+                        if (findTopSymbol(decl.getName()) != null) {
+                            error ("Multiple declaration of local symbol " + decl.getName())
+                        } else {
+                            insertSymbol (decl)
+                        }
+                        if (lex.match (T_ASSIGN)) {
+                            var storage = decl.getStorage()
+                            if (lex.currentToken == T_LBRACE || storage == sEXTERN || storage == sSTATIC) {
+                                decl.setDetails (staticInitializer(decl.getType()))
+                            } else {
+                                var id = new Identifier (decl)
+                                var initval = singleExpression()
+                                var s = new ExpressionStatement (new Expression (T_ASSIGN, id, initval))
+                                initcomp.addStatement(s)
+                            }
+                        }
+                        if (!lex.match (T_COMMA)) {
+                            needsemi()
+                            return initcomp
+                        }
+                    } else {
+                        if (gotdecl) {
+                            error ("Declaration expected")
+                        }
+                        break
+                    }
+                }
+            }
+            if (st != 0) {              // storage without a decl
+                error ("Declaration expected")
+                return new NullStatement()
+            }
+
+            switch (tok) {
+            case T_LBRACE:
+                lex.nextToken()
+                result = compoundStatement()
+                break
+            case T_SEMICOLON:
+                lex.nextToken()
+                result = new NullStatement()
+                break
+            case T_IF:
+                lex.nextToken()
+                result = ifStatement()
+                break
+            case T_WHILE:
+                lex.nextToken()
+                result = whileStatement()
+                break
+            case T_DO:
+                lex.nextToken()
+                result = doStatement()
+                break
+            case T_FOR:
+                lex.nextToken()
+                result = forStatement()
+                break
+            case T_SWITCH:
+                lex.nextToken()
+                result = switchStatement()
+                break
+            case T_CASE:
+                lex.nextToken()
+                result = caseStatement()
+                break
+            case T_DEFAULT:
+                lex.nextToken()
+                result = defaultStatement()
+                break
+            case T_BREAK:
+                lex.nextToken()
+                result = breakStatement()
+                break
+            case T_CONTINUE:
+                lex.nextToken()
+                result = continueStatement()
+                break
+            case T_RETURN:
+                lex.nextToken()
+                result = returnStatement()
+                break
+            case T_GOTO:
+                lex.nextToken()
+                result = gotoStatement()
+                break
+        
+            default:
+                result = expressionStatement()
+                break
+            }
+            return result
+        }
+
+        function functionBody (symbol) {
+            var body = new CompoundStatement()
+            pushScope()
+            // insert all the argument symbols into the symbol table
+            var proto = symbol.getType().getPrototype()
+            foreach arg proto {
+                insertSymbol (arg)
+            }
+            while (lex.currentToken != T_RBRACE) {
+                var s = statement()
+                body.addStatement (s)
+            }
+            popScope()
+            //[symbol.getName(), ": "] -> stdout
+            //symbol.getType().print (stdout, 0)
+            //body.print (stdout, 0)
+            return body
+        }
+    }
+    
+
+}

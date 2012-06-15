@@ -1,0 +1,29 @@
+.\" Aikido manual
+.\" David Allison
+.TH eof 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+eof \- Check for End-of-file condition on stream
+.SH SYNOPSIS
+\fBSystem.eof(stream)
+.SH DESCRIPTION
+The System.eof() function checks for an end-of-file condition on the
+given stream.  An EOF condition can mean that there is no more
+data to read (for a regular file), or that the stream has been
+closed (for a network stream, or stream connected to a keyboard).
+
+.SH RETURN VALUES
+The value 1 is returned if EOF is detected, 0 otherwise
+.SH EXAMPLE
+while (!System.eof(s)) {
+.br
+    readline(s)
+.br
+}
+.br
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

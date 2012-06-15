@@ -1,0 +1,13 @@
+OBJS = mysqlclient.o
+
+MYSQL = /usr
+
+AIKIDO = ../..
+
+CPPFLAGS = -g -I$(AIKIDO)/include -I$(MYSQL)/include/mysql -D_OS_LINUX -D_CC_GCC -fPIC
+
+libmysqlaikidoclient.so : $(OBJS) 
+	$(CXX) -shared -o libmysqlaikidoclient.so $(OBJS)
+
+clean:
+	-rm -f *.o lib*.so

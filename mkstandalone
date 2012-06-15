@@ -1,0 +1,83 @@
+#!%%@aikidohome%%@/bin/aikido --
+
+import filename
+
+const aikidodir = "%%@aikidohome%%@"
+
+var outfile = "a.out"
+var infiles = []
+var debug = false
+var libfiles = []
+var verbose = false
+var syms = []
+
+for (var i = 0 ; i < sizeof (args) ; i++) {
+    if (args[i] == "-o") {
+        if (i == sizeof(args) -1) {
+            throw "-o requires an argument"
+        }
+        i++
+        outfile = args[i]
+    } elif (args[i] == "-g") {
+        debug = true
+    } elif (args[i] == "-v") {
+        verbose = true
+    } elif (sizeof (args[i]) > 2 && args[i][0:1] == "-U") {
+        syms.append (args[i])
+    } elif (Filename.suffix (args[i]) in ["o", "a", "so"]) {
+        libfiles.append (args[i])
+    } else {
+        infiles.append (args[i])
+    }
+}
+
+if (infiles.size() == 0) {
+    throw "usage: mkstandalone [-o outfile] infile..."
+}
+
+if (verbose) {
+    println ("generating elf files")
+}
+var tmpfiles = []
+foreach infile infiles {
+    var tmpfile = tmpnam()
+    tmpfiles.append (tmpfile)
+    var cmd = aikidodir + "bin/mkelf "
+    foreach sym syms {
+        cmd.append (sym + " ")
+    }
+    cmd.append ("-o " + tmpfile + " " + infile)
+    exec (cmd)
+}
+
+var compile = "gcc -D_OS_LINUX -D_CC_GCC  -I" + aikidodir + "src/pcre "
+if (debug) {
+    compile.append ("-g -DDEBUGON ")
+}
+compile.append ("-L. -o " + outfile + " " + aikidodir + "main.o ")
+foreach tmpfile tmpfiles {
+    compile.append (tmpfile + " ")
+}
+
+foreach lib libfiles {
+    compile.append (lib + " ")
+}
+
+compile.append (" -rdynamic " + aikidodir + "lib/libaikido")
+if (debug) {
+    compile.append ("_g")
+} else {
+    compile.append ("_o")
+}
+compile.append (".a -lpthread -ldl -lstdc++")
+
+if (verbose) {
+    println ("linking")
+}
+
+exec (compile)
+
+if (verbose) {
+    println ("done")
+}
+

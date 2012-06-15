@@ -1,0 +1,17 @@
+.\" Aikido manual
+.\" David Allison
+.TH close 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+close \- Close a stream
+.SH SYNOPSIS
+\fBSystem.close(stream)
+.SH DESCRIPTION
+The System.close() function closes an open stream.
+.SH RETURN VALUES
+No value is returned
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

@@ -1,0 +1,20 @@
+.\" Aikido manual
+.\" David Allison
+.TH remove 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+remove \- Remove a file
+.SH SYNOPSIS
+\fBSystem.remove(filename)
+.SH DESCRIPTION
+The System.remove() function removes the named file
+.SH RETURN VALUES
+Nothing is returned
+.SH EXCEPTIONS
+The exception System.Exception is thrown if the remove fails.
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+rename(3aikido), unlink(2)

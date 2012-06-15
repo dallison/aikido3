@@ -1,0 +1,132 @@
+package MySQL {
+
+    // a Table is returned from a query.
+
+    public class Table (rows) {
+        public function getNumRows {
+            return rows.size()
+        }
+
+        public function getRow (i: integer) {
+            return rows[i]
+        }
+
+        public operator sizeof {
+            return sizeof (rows)
+        }
+
+        public function size {
+            return sizeof (rows)
+        }
+
+        // simple mode iterator
+        public operator foreach {
+            return rows
+        }
+
+        public operator[] (i, j=-1) {
+            if (j == -1) {
+                return rows[i]
+            } else {
+                return rows[i:j]
+            }
+        }
+    }
+
+
+    public class PreparedQuery (db, mysql_stmt) {
+        var numbindings = 0
+        var bindings = new [1]
+
+        // pnum is the parameter number, starting at 1
+        public function bind (pnum, value) {
+            if (pnum > bindings.size()) {
+                var newbindings = new [bindings.size() * 2]
+                for (var i = 0 ; i < bindings.size() ; i++) {
+                    newbindings[i] = bindings[i]
+                }
+                bindings = newbindings
+            }
+            bindings[pnum-1] = value
+            if (pnum > numbindings) {
+                numbindings = pnum
+            }
+        }
+
+        public function reset {
+            numbindings = 0
+            bindings = new [1]
+        }
+
+        public function execute {
+            try {
+                var q = db.execute_prepared (mysql_stmt, bindings, numbindings)
+                reset()
+                return q
+            } catch (e) {
+                reset()
+                throw e
+            }
+        }
+  
+        public function close {
+           db.close_stmt (mysql_stmt)
+        }
+    }
+
+
+    public class Database (host, name, user, passwd="") {
+        import libmysqlclient
+        import libmysqlaikidoclient
+    
+        native connect_db (host, name, user, passwd)
+        native close_db (db)
+        native query_db (db, q)
+        native last_insert_id_db (db)
+        native db_query_prepared (db, stmt, bind, numbindings)
+        native prepare_db (db, q)
+        native close_stmt_db (db, stmt)
+
+        var db = connect_db (host, name, user, passwd)
+    
+        public function close {
+            close_db (db) 
+        }
+    
+        public function query (q): Table {
+            println (q, stderr)
+            return query_db (db, q)
+        }
+ 
+        public function exec (q) {
+            println (q, stderr)
+            return query_db (db, q)
+        }
+ 
+        public function prepare (q) {
+            return new PreparedQuery (this, prepare_db (db, q))
+        }
+
+        public function last_insert_id {
+           return last_insert_id_db (db)
+        }
+
+        public native function escape_file (filename) 
+
+        public function describe (table) {
+            return query ("describe " + table)
+        }
+
+        public function execute_prepared (stmt, bind, numbindings) {
+            return db_query_prepared (db, stmt, bind, numbindings)
+        }
+
+        public function close_stmt (stmt) {
+            close_stmt_db (db, stmt)
+        }
+    }
+
+    native db_init()
+    db_init() ;
+}
+

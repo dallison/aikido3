@@ -1,0 +1,91 @@
+import gtk
+
+
+function column_clicked (widget, data) {
+    println ("column " + data + " clicked")
+    widget.set_sort_column (data)
+    widget.sort()
+}
+
+function selection_made (list, row, column, event) {
+    var text = ""
+    list.get_text (row, column, text)
+    printf ("You selected row %d. More specifically you clicked in " +
+            "column %d, and the text in this cell is %s\n\n",
+            row, column, text)
+}
+
+function button_add_clicked (list) {
+    var drink = [ 
+                [ "Milk",    "7 Oz" ],
+                [ "Water",   "6 l" ],
+                [ "Carrots", "2" ],
+                [ "Snakes",  "55" ]
+                ]
+    foreach i 4 {
+        list.append (drink[i])
+    }
+}
+
+function button_clear_clicked (list) {
+    list.clear()
+}
+
+function button_hide_clicked (list) {
+    static var flag = false
+    if (flag) {
+        list.column_titles_show()
+        flag = false
+    } else {
+        list.column_titles_hide()
+        flag = true
+    }
+}
+
+var window = new GTK.Window (GTK.WINDOW_TOPLEVEL)
+window.set_usize (300, 150)
+window.signal_connect ("destroy", function (a,b) { System.exit(0) }, null)
+window.set_border_width (10)
+window.show()
+
+var vbox = new GTK.VBox(false, 5)
+window.add (vbox)
+vbox.show()
+
+var swin = new GTK.ScrolledWindow (null, null)
+swin.set_policy (GTK.POLICY_AUTOMATIC, GTK.POLICY_ALWAYS)
+vbox.pack_start (swin, true, true, 0)
+swin.show()
+
+var list = new GTK.CList(2, ["Ingredients", "Amount"])
+list.signal_connect ("select_row", selection_made, null)
+list.set_shadow_type (GTK.SHADOW_OUT)
+list.set_column_width (0, 150)
+
+list.signal_connect ("click_column", column_clicked, 0)
+
+swin.add (list)
+list.show()
+
+var hbox = new GTK.HBox (false, 0)
+vbox.pack_start (hbox, false, true, 0)
+hbox.show()
+
+var add = new GTK.Button ("Add list")
+var clear = new GTK.Button ("Clear list")
+var hide = new GTK.Button ("Hide/show titles")
+
+hbox.pack_start (add, true, true, 0)
+hbox.pack_start (clear, true, true, 0)
+hbox.pack_start (hide, true, true, 0)
+
+add.signal_connect_object ("clicked", button_add_clicked, list)
+clear.signal_connect_object ("clicked", button_clear_clicked, list)
+hide.signal_connect_object ("clicked", button_hide_clicked, list)
+
+add.show()
+clear.show()
+hide.show()
+
+window.show()
+GTK.mainloop()

@@ -1,0 +1,411 @@
+Aikido Release Notes
+--------------------
+
+Please refer to the file COPYRIGHT for information relating to the copyright
+of this code.
+Release 2.00
+------------
+
+This release adds:
+
+1. 'finally' clause for exceptions.  This change allows the use of the 'finally' clause for a 'try…catch'.  Finally blocks are always executed after all other code in the exception block regardless of how the block is exited.  For example:
+
+    var x = openit()
+    try {
+        do_something(x)
+    } catch (e) {
+        println ("oops")
+    } finally {
+        closeit (x)
+    }
+
+The 'finally' keyword may appear with or without the 'catch' keyword and is executed after the 'catch' or 'return', 'break' or 'continue' causes the try to go out of scope.
+
+2. C-style casts.  The C++ style cast syntax of Aikido is sometimes cumbersome and unwieldy.  Although it is technically clean syntactically it is kind of ugly in the opinion of many people.  This release adds a simplified C-style cast syntax.  For example:
+
+Instead of :
+
+var s = "1234"
+var i = cast<int>(s)
+var s2 = cast<string>(i)
+
+You can use:
+
+var s = "1234"
+var i = (int)s
+var s2 = (string)i
+
+The contents of the brackets must be an identifier and the close parenthesis must not be followed by a newline.
+
+3. Pass-by-name call semantics
+Prior to this release, calling a function used 'pass-by-position' call semantics.  In this, you pass the parameters by position, in that the first expression in the actual parameter list is the first formal parameter, the second actual is the second formal, and so on.  Any omitted actual parameters caused the formal parameters to be assigned their default values or an error if none was defined.
+
+In pass-by-name semantics, the call is made by naming the formal parameters and assigning their value in any order.  Any omitted actual/formal mapping results in either the default value being assigned to the formal or the value 'none' if no default value was supplied.
+
+Both call semantics are fully supported but you cannot mix them in the same call.
+
+For example:
+
+function select (file, re, filter="") {
+}
+
+// pass-by-position
+select (syslog, "ERROR")		// filter gets default
+select (syslog)				// missing parameter - error
+
+// pass-by-name
+select (re:"ERROR",
+	file:syslog)			// filter gets default
+select (file:syslog)			// re is none, filter is default
+
+This syntax is (almost) taken from Objective-C and can be very useful when there are a lot of similar parameters in a function.
+
+
+4. Overloading of operator. (operator dot)
+When using the '.' (dot) operator to access a member of a block it was an error to access a member that doesn't exist at runtime.  There was no way to provide a runtime selectable result for the dot operator.  In this release you can provide an overload function for the dot operator that can determine which member to select at runtime.
+
+For example:
+
+class Bridge {
+    function foo (a,b) {
+    }
+
+    public operator . (name) {
+       switch (name) {
+       case "join":
+           return foo
+       default:
+           return findNativeFunction (name)		// defined in shared library?
+    }
+}
+
+
+
+
+5. New 'for loop' syntax
+As part of its evolution, Aikido has been provided with the syntactic equivalents for 'for' loops from other language that may be more familiar than the 'foreach' syntax from perl.
+
+The new loop syntax effectively translates into a traditional 'foreach'.
+
+a. Java style
+    for (var entry : entries) {
+    }
+
+b. Bash or Objective-C
+    for (var entry in entries) {
+    }
+
+
+It's just syntax...
+
+
+6. Javascript object syntax
+An 'object' in Javascript is just a map of name/value pairs.  Aikido possesses a native map type already but this release adds access to it using Javascript syntax.
+
+Traditionally, a map is defined and used like this
+
+var dict = {}
+dict["foo"] = 1
+dict["bar"] = 2
+
+println (dict["foo"])
+
+
+The newer Javascript syntax allow this:
+
+var dict = {}
+dict.foo = 1
+dict.bar = 2
+
+println (dict.foo)
+
+You can also define an object in JSON syntax
+
+var dict = {
+	foo: 1,
+	bar: 2
+}
+
+
+7. Unknown object factories
+This allows the 'new' operator to be handled at runtime for an unknown class name.  
+
+
+8. Windows support
+Aikido has finally been ported to Windows!  Everything works as expected except for UNIX functions that are not supported on Windows.  The functions that spawn processes are also pretty slow due to Windows.
+
+The version I have access to is Windows XP, but it will probably work on later versions too.
+
+
+9. Various value manipulation functions
+
+
+10. Multivalued variables.  The Python language allows a set of values to be treated as a single value.  This is really just a vector of values but is syntactically different.
+
+You can now do this in Aikido:
+
+function foo {
+    return (1,2,3)
+}
+
+var a=0,b=0,c-0
+
+(a,b,c) = foo()
+
+
+
+Release 1.40
+------------
+
+This release adds:
+
+1. Coroutines.  This change incorporates a new reserved word 'yield' into the language and
+   enables it to be used for coroutine support.  You can yield any value from a function
+   and then resume the function just after the yield point.  Consider this example:
+
+   function square (start, end) {
+        for (var i = start ; i < end ; i++) {
+            yield i*i
+        }
+        return none
+   }
+
+   foreach v square (10,20) {
+        println (v)
+   }
+
+   var f = square (10, 20)
+   do {
+        println (f.value())
+        f = f.next()
+   } while (typeof(f) != "none")
+
+
+2. Case limb comparison operators.  Normally a case limb uses the '==' operator to 
+   compare with the switch value.  This change allows one of <, >, >=, <=, ==, !=, in to
+   be used.  The 'in' operator allows the case to be in a range.
+
+    switch (v) {
+    case <10:
+        println ("less than 10")
+        break
+    case in 11..20:
+        println ("between 11 and 20")
+        break
+    case == 50:
+        println ("exactly 50")
+        break
+    default:
+        println ("don't know")
+        break
+    }
+
+
+
+
+
+
+Release 1.36
+------------
+
+Changes by David Allison for Xsigo Systems Inc.
+
+1. Various bug fixes for CLI usage
+2. Added XML parser
+3. Added raw terminal control
+4. Added XML GUI interpreter (vista)
+
+Release 1.28
+------------
+
+Numerous changes by David Allison for Xsigo Systems Inc.
+
+The changes include:
+
+1. Ability to lock files into a given directory structure.  This can be used
+   for implementing sandboxes in a CLI.
+2. Some new functions in the System object.
+3. Various bug fixes
+4. Update to allow compilation with GCC 4.x (and 3.4.x)
+5. Update to Mac OS X for the new GCC 4 based developer tools
+6. Change in behavior of backtick expressions.  These no longer return the value returned
+   by the return statement, but rather redirect the output and return a vector of strings
+   written by the expression.
+
+Release 1.10
+------------
+
+This release includes support for closures.  When you pass a function (or class
+or any other block) to another block or insert it into a vector, a closure is
+created.  This allows the passed block to be called as it maintains the static
+linkage for it.
+
+
+Release 1.01
+------------
+
+This is the second public release of Aikido.  The following bugs have been fixed:
+
+1. Fix for memory leak with use of PipeStream objects.  The GCC 3.1+ library
+   contains a stdio_streambuf class that allows an open file descriptor to
+   be connected to a stream.  This appears to be missing from older versions
+   of GCC 3.1x.  This has a parameter that specifies that the file descriptor
+   should be closed when the object is descructed, however, any value other
+   than 0 causes a memory leak.
+
+2. Reading of password information using getUser() didn't work on Linux.
+
+3. If a socked connection failed, close the file descriptor.
+
+The following new features have been added:
+
+1. Output of compiled bytecode using the -c option
+2. Reading of compiled bytecode using the -l option
+3. Incorporation of mkelf and mkstandalone scripts to allow generation of
+   standalone executables.
+
+
+For Mac OS X, we can now use the latest version of GCC in Panther (3.3) as
+this includes the stdio_filebuf objects.
+
+I no longer have access to Solaris so I have no idea whether the code added
+for this release works with it.  Can someone with access to a Solaris
+machine test it for me?
+
+
+-----------------------------------------------------------------------------------
+
+Release 1.00
+------------
+
+This is the first public release of Aikido.  
+
+There are no known bugs in this release.  That is not to say that there
+are no bugs in it, just that I don't know of any.
+
+The interpreter is run by typing:
+
+% aikido filename.aikido
+
+where 'filename.aikido' is the name of the program you wish to run.
+
+The 'aikido' program is in the 'bin' directory of the release.
+
+Typing:
+
+% aikido -help
+
+shows you the command options that are available.
+
+
+To test if things are working as expected, copy the following
+line to a file called 'hello.aikido'
+
+println ("hello world")
+
+
+Then, at the shell prompt, type:
+
+% aikido hello.aikido
+
+You should see the obvious text on the output.
+
+There are a number of example programs in the 'examples'
+directory.  These include:
+
+1. a little web server that can interpret aikido programs as web pages
+2. an email client (uses GTK+)
+3. a couple of examples on use of regular expressions
+4. a C parser
+5. a simple, but very powerful, calculator
+
+The 'tests' directory contains a file called 'test.aikido'
+that is a fairly extensive test suite for the system.  It
+can be run by moving to the test directory and typing:
+
+% aikido test
+
+You should see "ALL TESTS PASSED" if all is well.
+
+
+
+
+Solaris
+-------
+
+Aikido works best on Solaris 8 (or higher).  It was developed on Solaris
+and has had the most testing and use there.  The best
+C++ compiler is the Sun Forte compiler version 6 update 2,
+but GCC is also supported.  The performance when
+compiled with the Sun CC compiler is a lot better than
+the GCC compiler.
+
+You will need to make sure that your Solaris system has 
+the most up-to-date patches for the SUNWlibC package
+(the C++ runtime library).  Here's what a working system 
+says:
+
+% showrev -p | grep SUNWlibC
+Patch: 108434-09 Obsoletes:  Requires: 109147-07 Incompatibles:  Packages: SUNWlibC
+
+This is a Solaris 8 system.
+
+Aikido also runs on Solaris 7 but I suggest you should consider
+upgrading the operating system to Solaris 8.  If you need the
+Solaris 7 version, please make sure you download the correct
+binary release, or build it from the source release.
+
+
+Linux
+-----
+
+Aikido has been tested on a couple of versions of Linux.  This
+is not an official Sun product and I only have access to 2 or
+3 versions.  If it doesn't run on your version, please download
+the source and recompile it.
+
+One thing to note is that Aikido needs version 1.2 of GTK+
+loaded on the system.  You can find out what version you
+have by typing:
+
+% gtk-config --version
+
+
+
+MAC OS X
+--------
+
+The binary Mac OS X version of Aikido is supplied as a zip'ed package.
+Simply double-click on the package named 'Aikido.pkg' to install
+it.  The package will be installed in /usr/local by default but
+you can change that to wherever you like in the install
+program.  Wherever you install it, be sure to place the
+directory containing the 'aikido' program in you path.
+
+Mac OS X 10.2 has a prerelease version of GCC version 3. This
+does not include a required file (<ext/stdio_filebuf.h>) that
+is present in later releases of the GCC compiler.  To compile
+on the Mac is is necessary to use the executable 'gcc2':
+
+% ./configure --gcc=gcc2
+
+This might change when Apple release a later version with 
+a better GCC.
+
+The C++ compiler is part of the development tools package supplied
+as part of Mac OS X.
+
+To use GTK+, you will need to download it.  GTK+ requires X11
+to be installed in order to compile or run.  It has been
+tested with Apple X11 (version Beta 3).
+
+At present, there is no native support for the Aqua interface.
+
+
+Windows
+-------
+
+Although I have ported the software to Windows, it will not
+run with sufficient reliability to be released.  
+
+

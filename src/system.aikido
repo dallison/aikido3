@@ -1,0 +1,1315 @@
+/*
+ * system.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.41
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+//
+// Aikido system package
+//
+// Author: David Allison
+// Version: 1.41 07/29/03
+//
+
+public package System {
+
+    // information about the system we are running on.  The
+    // values are assigned to these by the initSystem function
+
+    const username = ""		// username of user
+    const hostname = ""		// hostname of machine
+    const domainname = ""	// domain name of machine
+    const pid = 0		// process id  
+    const ppid = 0 		// parent process id
+    const pgrp = 0 		// process group
+    const ppgrp = 0		// parent process group
+    const uid = 0		// user id of user
+    const gid = 0		// group id of user
+    const operatingsystem = ""	// operating system
+    const osinfo = ""		// operating system name and version
+    const machine = ""		// machine type name
+    const architecture = ""     // architecure of machine
+    const platform = ""         // platform name
+    const manufacturer = ""	// manufacturer
+    const serialnumber = ""	// serial number of machine
+    const hostid = 0		// host identifier
+    const pagesize = 0		// system page size
+    const numpages = 0		// number of pages of memory
+    const numprocessors = 0  	// number of online processors
+    
+    const fileSeparator = ""	// file separator in path
+    const extensionSeparator = ""    // file extension separator
+    const clocksPerSec = 0	// clock ticks per second
+
+    const programname = ""      // executable for interpreter
+    const programdir = ""       // dir containing executable
+
+    public macro assert e {
+        if (!($e)) {
+            throw "assertion failed: $e"
+        }
+    }
+    
+    const VAR_PUBLIC = 1
+    const VAR_PRIVATE = 2
+    const VAR_PROTECTED = 3
+
+    var objectFactories = []
+
+    public native function createVariable (object, name, value, access, isconst, isgeneric)
+
+    public synchronized function addObjectFactory (f) {
+        objectFactories.append (f)
+    }
+
+    public synchronized function removeObjectFactory (f) {
+        for (var i = 0 ; i < objectFactories.size() ; i++) {
+            if (objectFactories[i] == f) {
+                delete objectFactories[i]
+                break
+            }
+        }
+    }
+
+    public synchronized function newObject (name,...) {
+        //["newObject called with name ",name,'\n'] -> stdout
+        foreach f objectFactories {
+            var obj = new f(name,args)
+            if (obj != null) {
+                return obj
+            }
+        }
+        throw "Cannot create object of type " + name
+    }
+
+    public native constructObject (type, attributes);        // construct an object
+
+    public interface ParserDelegate {
+        function initialize();
+        function parse (commandstream, outstream, instream);
+        function execute();
+        function isClaimed (line);
+    }
+
+    public native setParserDelegate (delegate);               // set the parser delegate object
+
+    private native function doprintln (s, str)
+    private native function doprint (s, str)
+    private native function doread (var v, str)
+    private native function doreadln (var v, str)
+
+    //
+    // print the given thing to standard out followed by a newline
+    //
+
+    public function println (s = "", str = output) {
+        doprintln (s, str)
+    }
+
+    //
+    // print the given thing to standard out
+    //
+
+    public function print (s = "", str = output) {
+        doprint (s, str)
+    }
+
+    public function read (var v, str = input) {
+        doread (v, str)
+    }
+
+    public function readln (var v, str = input) {
+        doreadln (v, str)
+    }
+
+    package StreamAttributes {
+        const BUFFERSIZE = 1		//  buffer size stream attribute
+        const MODE = 2			// stream mode, 0 = line, 1 = character
+        const AUTOFLUSH = 3		// autoflush stream on write
+
+        // modes
+        const LINEMODE = 0
+        const CHARMODE = 1
+    }
+
+    // operations on values
+    public native clone (object, recurse)		// clone an object
+    public native fill (object, value, start, end)	// fill a vector or string
+    public native resize (object, size)	   		// resize a vector or string
+    public native sort (vec)			// sort a vector and return it
+    public native bsearch (vec, val)		// search a vector using binary search
+    public native findn (obj, val, index, dir)		// find things in a value
+    public native split (obj, sep)		// split an object into parts
+    public native transform (val, func)		// transform to another value
+    public native reduce (val, func)        // reduce a complex value to a simple one
+    public native merge (val1, val2)        // merge two values, producing a merged result
+    public native reverse (val)            // reverse a value and return the result
+    public native trim (val)			// trim space off the ends
+    public native replace (val, find, repl, all)
+    public native hash (val)			// form a hash of the value
+    public native malloc (size)			// allocate raw memory
+    public native append (obj, val)		// append val to obj
+    public native insert (obj, val, index)	// insert val into obj at index 
+    public native clear (val)                   // clear a value
+
+    enum SerialType {
+        SERIALIZE_XML = 1,      // serialize in XML
+        SERIALIZE_JSON,         // serialize in internal JSON (objects are objects)
+        SERIALIZE_JSON_EXPORT,  // exported JSON (objects are maps)
+        SERIALIZE_BINARY        // binary
+    }
+
+    public native serialize (val, type, stream)         // serialize a value to a stream
+    public native deserialize (type, stream)            // deserialize a value from a stream
+
+    // file and stream operations
+    public native open (file, mode)
+    public native openin (file)
+    public native openout (file)
+    public native openup (file)
+    public native openfd (fd)
+    public native close (stream)
+    public native select (stream, timeout)
+    public native eof (stream)
+    public native flush (stream)
+    public native getchar (stream)		// read one character
+    public native get (stream, n)		// read n bytes from stream
+    public native getbuffer (stream)		// read all available bytes into byte vector
+    public native unget (stream)		// unget one character from a stream (if possible)
+    public native availableChars (stream)
+    public native setStreamAttribute (stream, attr, value)
+    public native rewind (stream)
+    public native seek (stream, offset, whence)
+    public native stat(file)
+    public native lstat(file)
+    public native readdir (dirname)
+    public native chdir (dirname)
+    public native getwd()			// get working directory
+    public native rename (oldname, newname)
+    public native remove (filename)
+    private native mkdir1 (dirname, mode)
+    public native mknod (nodename, mode) 		// mode in class Stat
+    public native tmpnam()				// make a temporary name
+    public native glob (pattern)                        // expand pattern into files
+    public native expand (stream)       // expand a stream or string to a string, replacing JSP-like expressions
+
+    public native resume_coroutine (closure)
+    public native get_closure_value (closure)
+
+    public function mkdir (dirname, mode = 0755) {
+        mkdir1 (dirname, mode)
+    }
+
+    public function makedirs (dirname, mode=0755) {
+        const filesep = System.fileSeparator
+        var f = split (dirname, filesep)
+        if (f.size() == 0) {
+            return
+        }
+        var path = ""
+        if (f[0] == "") {
+            f <<= 1     // remove first empty element
+        }
+        foreach dir f {
+            path = path + filesep + dir
+            if (lstat (path) == null) {
+                mkdir (path, mode)
+            }
+        }
+    }
+
+    // join a vector producing a string
+    public function joinvec (vec) {
+        var s = ""
+        var sep = ""
+        foreach v vec {
+            s.append (sep)
+            s.append ((string)v)
+            sep = ","
+        }
+        return s
+    }
+
+    public native findNativeFunction (name)     // find callable native
+    public native chmod (filename, mode)
+    public native isatty (stream)
+    public native ttyname (stream)
+
+    public native chown (filename, uid, gid)
+    public native readlink (filename)
+    public native symlink (oldpath, newpath)
+    
+    // miscellaneous operations
+    public native fork()
+    public native execv (command, args)
+    public native execl (command, ...)
+    public native execvp (command, args)
+    public native execlp (command, ...)
+    public native waitpid (pid, var status, flags)
+
+    // pseudo tty
+    // open the tty, return [master, pid].  Master is a raw fd (use raw_read and raw_write)
+    public native opentty (command, args)
+
+    // close the tty given [master, pid]
+    public native closetty (descriptor)
+
+    // raw file access
+    public native raw_open (filename, flags, mode)
+    public native raw_close (fd)
+    public native raw_read (fd, size)
+    public native raw_write (fd, buf, size)
+    public native raw_select (fdset, timeout)
+    public native raw_seek (fd, offset, whence)
+
+    // raw_open flags
+    public const O_RDONLY = 0
+    public const O_WRONLY = 1
+    public const O_RDWR = 2
+    public const O_CREAT = 0100
+    public const O_EXCL = 0200
+    public const O_NOCTTY = 0400
+    public const O_TRUNC = 01000
+    public const O_APPEND = 02000
+    public const O_NONBLOCK = 04000
+    public const O_SYNC = 010000
+
+    // wait flags
+    public const WNOHANG = 1
+    public const WUNTRACED = 2
+    public const __WALL = 0x40000000
+    public const __WCLONE = 0x80000000
+
+    // wait status (UNIX process exit status)
+    public function WEXITSTATUS (status) { return status[15:8] }
+    public function WTERMSIG (status) { return status[6:0] }
+    public function WSTOPSIG (status) { return status[15:8] }
+    public function WIFEXITED (status) { return status[6:0] == 0 }
+    public function WIFSIGNALED (status) { return status[6:0] > 0 && status[6:0] < 0x7f}
+    public function WIFSTOPPED (status) { return status[7:0] == 0x7f }
+
+
+    public native getStackTrace()
+    private native systemEnv (command, env, dir)
+    private native execEnv (command, outstream, errstream, env, dir)
+    private native pipeEnv (command, redirectStderr, env, dir)
+    public native pipeclose (stream)
+    public native pipewait (stream)
+    public native abort()
+    public native exit (code)
+    public native rand()
+    public native srand (seed)
+    public native getenv (variable)		// get an evironment variable
+    public native setenv (variable, value)      // set an environment variable
+    public native unsetenv (variable)      // remove an environment variable
+    public native error (str)
+    public native format (str,...)
+    public native vformat (str,args)
+    public native scan (str, var ...) 
+    public native getUser (name)
+    public native setlimit (limitname, limitvalue)
+    public native getlimit (limitname)
+
+    public native getUserName (uid)
+    public native getGroupName (gid)
+
+    public function printf (f : string, ...) {
+        print (vformat (f, args))
+    }
+
+    const RLIM_INFINITY =  -1
+    const RLIM_SAVED_MAX = -2
+    const RLIM_SAVED_CUR = -3
+
+    public function system (command, env = [], dir = "") {
+        return systemEnv (command, env, dir)
+    }
+
+    public native getSystemStatus ()    // get status of last system call
+
+    public function exec (command, outstream = output, errstream = stderr, env = [], dir = "") {
+        return execEnv (command, outstream, errstream, env, dir)
+    }
+
+    public function pipe (command, redirectStderr = true, env = [], dir = "") {
+        return pipeEnv (command, redirectStderr, env, dir)
+    }
+
+    public function find (obj, val, index = 0) {
+        return findn (obj, val, index, 1)
+    }
+
+    public function rfind (obj, val, index = sizeof (obj) - 1) {
+        return findn (obj, val, index, -1)
+    }
+
+    private native ipoke (address, value, size)
+    private native ipeek (address, size, forcebv)
+
+    public function poke (address, value, size = 1) {
+       ipoke (address, value, size)
+    }
+
+    public function peek (address, size = 1, forcebytevec=false) {
+        return ipeek (address, size, forcebytevec)
+    }
+
+    public native bitsToReal (bits)
+    public native realToBits (r)
+
+    // mail the contents of a stream
+    public function mail (subject, stream, address, cc = [], bcc = []) {
+        var temp = tmpnam()
+        try {
+            // copy stream to temporary file
+            var s = openout (temp)
+            stream -> s
+            close (s)
+    
+            generic recipients = address 
+            if (typeof (address) == "string") {
+                recipients = [address]
+            }
+    
+            generic vcc = cc
+            if (typeof (cc) != "vector") {
+                vcc = [cc]
+            }
+
+            generic vbcc = bcc
+            if (typeof (bcc) != "vector") {
+                vbcc = [bcc]
+            }
+
+            var command = ""
+            function addnames (flag, names, sep) {
+                if (sizeof (names) > 0) {
+                    command += " " + flag + " \""
+                    foreach n names {
+                       command += n + sep 
+                    }
+                    command >>= 1
+                    command += "\" "
+                }
+            }
+
+            switch (operatingsystem) {
+            case "Solaris":
+                command = "/usr/bin/mailx -s \"" + subject + "\" " 
+                addnames ("-b", vbcc, ' ')
+                addnames ("-c", vcc, ' ')
+                foreach r recipients {
+                    command += r + " "
+                }
+                command += " < " + temp
+                system (command)
+                break
+
+            case "Mac OS X":
+                var command = "/usr/bin/mail -s \"" + subject + "\" " 
+                addnames ("-b", vbcc, ',')
+                addnames ("-c", vcc, ',')
+                foreach r recipients {
+                    command += r + " "
+                }
+                command += " < " + temp
+                system (command)
+                break
+            case "Linux":
+                var command = "/bin/mail -s \"" + subject + "\" " 
+                addnames ("-b", vbcc, ',')
+                addnames ("-c", vcc, ',')
+                foreach r recipients {
+                    command += r + " "
+                }
+                command += " < " + temp
+                system (command)
+                break
+            default:
+                throw "mail not supported on this operating system"
+            }
+        } catch (e) {
+            try {
+                remove (temp)
+            } catch (e) {
+            }
+            throw e
+        }
+    }
+
+    private native loadStream (stream, name, filename, lineno) 
+    private native loadVector (vec, name, filename, lineno)
+    private native parseString (vec, name)
+
+    // dynamic loading
+    public function parse (statement, name="<anon>") {
+        return parseString (statement, name)
+    }
+
+    public native eval (expression)
+    public function load (from, name = "<anon>", filename="<unknown>", lineno=0) {
+        if (typeof (from) == "stream") {
+            return loadStream (from, name, filename, lineno)
+        } elif (typeof (from) == "vector") {
+            return loadVector (from, name, filename, lineno)
+        } elif (typeof (from) == "string") {
+            generic s
+            var isfile = true
+            try {
+                s = openin (from)
+            } catch (e) {
+                s = []
+                from -> s
+                isfile = false
+            }
+            if (isfile) {
+                return loadStream (s, name, filename, lineno)
+            } else {
+                return loadVector (s, name, filename, lineno)
+            }
+        } else {
+            var vec = []
+            from -> vec
+            return loadVector (vec, name, filename, lineno)
+        }
+    }
+    public native loadLibrary (filename)
+
+    // regular expression wrapper
+    public class RegexMatch (str, ex) {
+        public function expr (e) {
+            return str[ex[e].start:ex[e].end]
+        }
+        public function nExprs {
+             return sizeof (ex)
+        }
+    }
+
+    public function match (str: string, expr : string) {
+        var ex = str[expr]
+        return new RegexMatch (str, ex)
+    }
+
+    // signals
+    public native kill (pid, signal)		// send a signal
+    public native sigset (signal, handler)	// catch a signal and return previous handler
+    public native sighold (signal)		// hold signal (do not deliver)
+    public native sigrelse (signal) 		// ok, I know horrible spelling (blame UNIX)
+    public native sigignore (signal)		// ignore signal
+    public native sigpause (signal)		// wait for signal
+
+    // parameters and return values for sigset
+    const SIG_DFL = 0		// default handler
+    const SIG_IGN = 1		// ignore
+    const SIG_HOLD = 2		// add to mask (do not deliver)
+
+    // object returned from getUser
+    
+    public class User {
+    public:
+        var name = ""
+        var uid = 0
+        var gid = 0
+        var fullname = ""
+        var dir = ""
+        var shell = ""
+        var password = ""
+    }
+
+    // a stack frame object, returned by getStackTrace
+    
+    public class StackFrame {
+    public:
+        var filename = ""
+        var lineno = 1
+        var block = ""
+    }
+
+    //
+    // print the stack trace obtained by call to getStackTrace
+    //
+
+    public function printStackTrace (trace : vector) {
+        foreach t trace {
+            assert typeof t == StackFrame
+            ["Block ", t.block, " at line ", t.lineno, " of file \"", t.filename, "\"\n"] -> output
+        }
+    }
+        
+    public function whereami {
+        printStackTrace (getStackTrace())
+    }
+
+    //
+    // this is returned by the regular expression matcher syntax string["regex"]
+    //
+
+    public class Regex {
+    public:
+        var start = 0
+        var end = 0
+    }
+
+    //
+    // read all the lines in a file into a vector
+    //
+
+    public function readfile (filename : string) {
+        var instream = openin (filename)
+        var lines = []
+        instream -> lines
+        close (instream)
+        return lines
+    }
+
+    // read a line from the input and discard linefeed char
+    public function readline (instream) {
+        var line = ""
+        instream -> line
+        return line
+    }
+
+    // date and time
+    public native time()		// time in microseconds UTC
+    public native date()		// local time as instance of object of type Date (below)
+    public native gmdate()		// UTC time as instance of object of type Date (below)
+    public native makedate (time)	// make local time Date object of time value
+    public native makegmdate (time)	// make UTC time Date object of time value
+    public native parsedate (str, obj)  // parse a date string to the fields on obj
+    private native formatdate (fmt, date)    // format a date
+    private native normalizedate (date)      // normalize and return time in secs
+    private native initdate(obj)      // initialize a date object (this) with the current date and time
+
+    public class Date (s:string="") {
+    public:
+        var sec = 0	// seconds after the minute - [0, 61]
+        var min = 0	// minutes after the hour - [0, 59]
+        var hour = 0	// hour since midnight - [0, 23]
+        var mday = 1	// day of the month - [1, 31]
+        var mon = 0	// months since January - [0, 11]
+        var year = 0	// years since 1900
+        var wday = 0	// days since Sunday - [0, 6]
+        var yday = 0	// days since January 1 - [0, 365]
+        var isdst = 0	// flag for alternate daylight savings time
+        var tzdiff = 0      // difference in seconds from local timezone to GMT
+        var tz = ""         // local time zone name
+
+        // initialize with date string
+        if (s != "") {
+            System.parsedate (s, this)
+        } else {
+            initdate(this)       // build a current date object
+        }
+
+        static const defaultFormat = "%a %b %d %H:%M:%S %Z %Y"
+
+        // format using format string (see strftime man page)
+        function format (f) {
+            var str = System.formatdate (f, this)
+            return str
+        }
+        
+        // default format
+        function toString {
+            return format (defaultFormat)
+        }
+
+        function normalize {
+            return System.normalizedate (this)
+        }
+
+        operator -> (stream, isout) {
+            if (!isout) {
+                toString() -> stream
+            } else {
+                var s = ""
+                stream -> s
+                System.parsedate (s, this)
+            }
+        }
+
+        operator + (secs) {
+            if (typeof (secs) == "string") {
+                // for println (date + "foo")
+                return toString() + secs
+            } else {
+                var d = clone (this, false)
+                d.sec += secs
+                normalizedate (d)
+                return d
+            }
+        }
+
+        operator - (secs) {
+            var d = clone (this, false)
+            d.sec -= secs
+            normalizedate (d)
+            return d
+        }
+
+        operator == (otherdate) {
+            generic d
+            if (typeof (otherdate) == "string") {
+                d = new Date (otherdate)
+            } else {
+                d = otherdate
+            }
+            return sec == d.sec &&
+                   min == d.min &&
+                   hour == d.hour &&
+                   mday == d.mday &&
+                   mon == d.mon &&
+                   year == d.year &&
+                   isdst == d.isdst
+        }
+
+        operator != (d) {
+            return !(this == d)
+        }
+
+        operator < (otherdate) {
+            generic d
+            if (typeof (otherdate) == "string") {
+                d = new Date (otherdate)
+            } else {
+                d = otherdate
+            }
+            if (year > d.year) return false
+            if (year < d.year) return true
+            if (mon > d.mon) return false
+            if (mon < d.mon) return true
+            if (mday > d.mday) return false
+            if (mday < d.mday) return true
+            if (hour > d.hour) return false
+            if (hour < d.hour) return true
+            if (min > d.min) return false
+            if (min < d.min) return true
+            if (sec > d.sec) return false
+            if (sec < d.sec) return true
+            return false
+        }
+      
+        operator > (otherdate) {
+            generic d
+            if (typeof (otherdate) == "string") {
+                d = new Date (otherdate)
+            } else {
+                d = otherdate
+            }
+            if (year < d.year) return false
+            if (year > d.year) return true
+            if (mon < d.mon) return false
+            if (mon > d.mon) return true
+            if (mday < d.mday) return false
+            if (mday > d.mday) return true
+            if (hour < d.hour) return false
+            if (hour > d.hour) return true
+            if (min < d.min) return false
+            if (min > d.min) return true
+            if (sec < d.sec) return false
+            if (sec > d.sec) return true
+            return false
+        }
+
+        operator <= (d) {
+            return !(this > d)
+        }
+
+        operator >= (d) {
+            return !(this < d)
+        }
+
+        operator in (d1, d2) {
+            return this >= d1 && this <= d2
+        }
+
+        static function makeDate (time) {
+            return System.makedate (time)
+        }
+
+        static function makeUTCDate (time) {
+            return System.makegmdate (time)
+        }
+    }
+
+    // an object of this type is returned from stat call
+    // all times are in microseconds since 00:00:00 UTC, Jan. 1, 1970
+
+    public class Stat {
+    public:
+        var mode = 0	// File mode (see mknod(2))
+        var inode = 0	// Inode number
+        var dev = 0 	// ID of device containing  a directory entry for this file 
+        var rdev = 0	// ID of device
+        var nlink = 0	// Number of links 
+        var uid = 0	// User ID of the file's owner
+        var gid = 0	// Group ID of the file's group
+        var size = 0	// File size in bytes
+        var atime = 0	// Time of last access
+        var mtime = 0	// Time of last data modification
+        var ctime = 0	// Time of last file status change
+        var blksize = 0	// Preferred I/O block size
+        var blocks = 0	// Number of 512 byte blocks allocated
+
+        // mode masks
+        static const S_IFMT =         0xF000  /* type of file */
+        static const S_IAMB =         0x1FF   /* access mode bits */
+        static const S_IFIFO=         0x1000  /* fifo */
+        static const S_IFCHR=         0x2000  /* character special */
+        static const S_IFDIR=         0x4000  /* directory */
+        static const S_IFNAM=         0x5000  /* XENIX special named file */
+        static const S_INSEM=         0x1     /* XENIX semaphore subtype of IFNAM */
+        static const S_INSHD=         0x2     /* XENIX shared data subtype of IFNAM */
+        static const S_IFBLK=         0x6000  /* block special */
+        static const S_IFREG=         0x8000  /* regular */
+        static const S_IFLNK=         0xA000  /* symbolic link */
+        static const S_IFSOCK=        0xC000  /* socket */
+        static const S_IFDOOR=        0xD000  /* door */
+        static const S_ISUID =        0x800   /* set user id on execution */
+        static const S_ISGID =        0x400   /* set group id on execution */
+        static const S_ISVTX =        0x200   /* save swapped text even after use */
+        static const S_IREAD =        00400   /* read permission, owner */
+        static const S_IWRITE=        00200   /* write permission, owner */
+        static const S_IEXEC =        00100   /* execute/search permission, owner */
+        static const S_ENFMT =        S_ISGID /* record locking enforcement flag */
+
+        static const S_IRWXU = 00700           /* read, write, execute: owner */
+        static const S_IRUSR = 00400           /* read permission: owner */
+        static const S_IWUSR = 00200           /* write permission: owner */
+        static const S_IXUSR = 00100           /* execute permission: owner */
+        static const S_IRWXG = 00070           /* read, write, execute: group */
+        static const S_IRGRP = 00040           /* read permission: group */
+        static const S_IWGRP = 00020           /* write permission: group */
+        static const S_IXGRP = 00010           /* execute permission: group */
+        static const S_IRWXO = 00007           /* read, write, execute: other */
+        static const S_IROTH = 00004           /* read permission: other */
+        static const S_IWOTH = 00002           /* write permission: other */
+        static const S_IXOTH = 00001           /* execute permission: other */
+
+        function S_ISFIFO { return (mode&0xF000) == 0x1000}
+        function S_ISCHR  { return (mode&0xF000) == 0x2000}
+        function S_ISDIR  { return (mode&0xF000) == 0x4000}
+        function S_ISBLK  { return (mode&0xF000) == 0x6000}
+        function S_ISREG  { return (mode&0xF000) == 0x8000}
+        function S_ISLNK  { return (mode&0xF000) == 0xa000}
+        function S_ISSOCK { return (mode&0xF000) == 0xc000}
+        function S_ISDOOR { return (mode&0xF000) == 0xd000}
+        
+    }
+
+
+    // for iteration through maps, one of these for each iteration
+
+    public class Pair {
+    public:
+        generic first ;
+        generic second ;
+    }
+
+    public function redirectStream (var s, newvalue) {
+        s = newvalue
+    }
+
+    public native function setOutput (s)        // set the output stream for this thread
+    public native function getOutput()           // get the thread output stream
+
+    // modes for the open() function
+    public package OpenMode {
+    public:
+        const APPEND = 1
+        const BINARY = 2
+        const IN = 4
+        const OUT = 8
+        const TRUNC = 16
+        const ATEND = 32
+        const NOCREATE = 64
+        const NOREPLACE = 128
+    }
+
+    // whence values for the seek function
+    const SEEK_SET = 0
+    const SEEK_CUR = 1
+    const SEEK_END = 2
+
+    // thread priority limits
+    const MIN_PRIORITY = 0
+    const MAX_PRIORITY = 99
+
+    // expections
+
+    // generic exception
+    class Exception (protected reason) {
+        var stacktrace = System.getStackTrace()
+
+        public function report (stream) {
+            reason -> stream
+        }
+
+        public function printStackTrace (stream) {
+            foreach t stacktrace {
+                ["Block ", t.block, " at line ", t.lineno, " of file \"", t.filename, "\"\n"] -> stream
+            }
+        }
+
+        public operator -> (stream, isout) {
+            if (!isout) {
+                report (stream)
+            }
+        }
+
+        public function toString() {
+            return reason
+        }
+    }
+
+    // exceptions for file functions
+    class FileException (filename, r) extends Exception (r) {
+        public function getFileName() {
+            return filename
+        }
+
+        public operator -> (stream, isout) {
+            if (!isout) {
+                report (stream)
+                [": ", filename] -> stream
+            }
+        }
+
+        public function toString() {
+            return reason + ": " + filename
+        }
+    }
+
+    class ParameterException (func, r) extends Exception (r) {
+
+        public function getFunction {
+            return func
+        }
+
+        public operator -> (stream, isout) {
+            if (!isout) {
+                [func, ": "] -> stream
+                report (stream)
+            }
+        }
+
+        public function toString() {
+            return func + ": " + reason
+        }
+    }
+
+    // builtin methods
+    private function __size (v) {
+        return sizeof (v)
+    }
+
+    private function __type (v) {
+        return typeof (v)
+    }
+
+    private function __clear (v) {
+        clear (v)
+    }
+
+    private function __append (a,b) {
+        System.append (a,b)
+    }
+
+    private function __println (s) {
+        System.println (s)
+    }
+
+    private function __print (s) {
+        System.print (s)
+    }
+
+    private function __eof (s) {
+        return System.eof (s)
+    }
+
+    private function __unget (s) {
+        System.unget (s)
+    }
+
+    private function __getchar (s) {
+        return System.getchar (s)
+    }
+
+    private function __close (s) {
+        System.close (s)
+    }
+
+    private function __rewind (s) {
+        System.rewind (s)
+    }
+
+    private function __flush (s) {
+        System.flush (s)
+    }
+
+    private function __seek (stream, offset, whence) {
+        return System.seek (stream, offset, whence)
+    }
+
+    private function __clone (object, recurse = false)	{
+        return System.clone (object, recurse)
+    }
+
+    private function __fill (object, value, start = 0, end=sizeof (object)-1)	{
+        return System.fill  (object, value, start, end)
+    }
+
+    private function __resize (object, size) {
+        return System.resize (object, size)
+    }
+
+    private function __sort (vec) {
+        return System.sort (vec)
+    }
+
+    private function __bsearch (vec, val) {
+        return System.bsearch (vec, val)
+    }
+
+    private function __find (obj, val, index = 0) {
+        return System.findn (obj, val, index, 1)
+    }
+
+    private function __rfind (obj, val, index = sizeof (obj) - 1) {
+        return System.findn (obj, val, index, -1)
+    }
+
+    private function __split (obj, sep)	{
+        return System.split (obj, sep)
+    }
+
+    private function __transform (val, func) {
+        return System.transform (val, func)
+    }
+
+    private function __merge (val1, val2) {
+        return System.merge (val1, val2)
+    }
+
+    private function __reverse (val) {
+        return System.reverse (val)
+    }
+
+    private function __trim (val) {
+        return System.trim (val)
+    }
+
+    private function __replace (val, find, repl, all = true) {
+        return System.replace (val, find, repl, all)
+    }
+
+    private function __hash (val) {
+        return System.hash (val)
+    }
+
+    private function __insert (obj, val, index = sizeof (obj) -1)	{
+        return System.insert (obj, val, index)
+    }
+
+    private function __next (closure)	{
+        return System.resume_coroutine (closure)
+    }
+
+    private function __value (closure)	{
+        return System.get_closure_value (closure)
+    }
+
+    private function __indexOf (obj, v)	{
+        return System.find (obj, v, 0)
+    }
+
+    private function __lastIndexOf (obj, v)	{
+        return System.rfind (obj, v)
+    }
+
+    private function __serialize (v, type, stream=output) {
+        System.serialize (v, type, stream)
+    }
+
+    private native initSystem() ;
+
+    initSystem()		// init the system class for native calls
+
+    // this needs to be after initSystem because it relies on System.operatingSystem
+    package Signals {
+        generic SIGHUP  /* hangup */
+        generic SIGINT  /* interrupt (rubout) */
+        generic SIGQUIT /* quit (ASCII FS) */
+        generic SIGILL  /* illegal instruction (not reset when caught) */
+        generic SIGTRAP /* trace trap (not reset when caught) */
+        generic SIGIOT  /* IOT instruction */
+        generic SIGABRT /* used by abort, replace SIGIOT in the future */
+        generic SIGEMT  /* EMT instruction */
+        generic SIGFPE  /* floating point exception */
+        generic SIGKILL /* kill (cannot be caught or ignored) */
+        generic SIGBUS  /* bus error */
+        generic SIGSEGV /* segmentation violation */
+        generic SIGSYS  /* bad argument to system call */
+        generic SIGPIPE /* write on a pipe with no one to read it */
+        generic SIGALRM /* alarm clock */
+        generic SIGTERM /* software termination signal from kill */
+        generic SIGUSR1 /* user defined signal 1 */
+        generic SIGUSR2 /* user defined signal 2 */
+        generic SIGCLD  /* child status change */
+	generic SIGCHLD /* child status change alias (POSIX) */
+        generic SIGPWR  /* power-fail restart */
+        generic SIGWINCH /* window size change */
+        generic SIGURG  /* urgent socket condition */
+        generic SIGPOLL /* pollable event occured */
+        generic SIGIO   /* socket I/O possible (SIGPOLL alias) */
+        generic SIGSTOP /* stop (cannot be caught or ignored) */
+        generic SIGTSTP /* user stop requested from tty */
+        generic SIGCONT /* stopped process has been continued */
+        generic SIGTTIN /* background tty read attempted */
+        generic SIGTTOU /* background tty write attempted */
+        generic SIGVTALRM /* virtual timer expired */
+        generic SIGPROF /* profiling timer expired */
+        generic SIGXCPU /* exceeded cpu limit */
+        generic SIGXFSZ /* exceeded file size limit */
+        generic SIGWAITING /* process's lwps are blocked */
+        generic SIGLWP  /* special signal used by thread library */
+        generic SIGFREEZE /* special signal used by CPR */
+        generic SIGTHAW /* special signal used by CPR */
+        generic SIGCANCEL /* thread cancellation signal used by libthread */
+        generic SIGLOST /* resource lost (eg, record-lock lost) */
+
+
+        if (System.operatingsystem == "Solaris") {
+            SIGHUP  = 1       /* hangup */
+            SIGINT  = 2       /* interrupt (rubout) */
+            SIGQUIT = 3       /* quit (ASCII FS) */
+            SIGILL  = 4       /* illegal instruction (not reset when caught) */
+            SIGTRAP = 5       /* trace trap (not reset when caught) */
+            SIGIOT  = 6       /* IOT instruction */
+            SIGABRT = 6       /* used by abort, replace SIGIOT in the future */
+            SIGEMT  = 7       /* EMT instruction */
+            SIGFPE  = 8       /* floating point exception */
+            SIGKILL = 9       /* kill (cannot be caught or ignored) */
+            SIGBUS  = 10      /* bus error */
+            SIGSEGV = 11      /* segmentation violation */
+            SIGSYS  = 12      /* bad argument to system call */
+            SIGPIPE = 13      /* write on a pipe with no one to read it */
+            SIGALRM = 14      /* alarm clock */
+            SIGTERM = 15      /* software termination signal from kill */
+            SIGUSR1 = 16      /* user defined signal 1 */
+            SIGUSR2 = 17      /* user defined signal 2 */
+            SIGCLD  = 18      /* child status change */
+	    SIGCHLD = 18      /* child status change alias (POSIX) */
+            SIGPWR  = 19      /* power-fail restart */
+            SIGWINCH = 20     /* window size change */
+            SIGURG  = 21      /* urgent socket condition */
+            SIGPOLL = 22      /* pollable event occured */
+            SIGIO   = SIGPOLL /* socket I/O possible (SIGPOLL alias) */
+            SIGSTOP = 23      /* stop (cannot be caught or ignored) */
+            SIGTSTP = 24      /* user stop requested from tty */
+            SIGCONT = 25      /* stopped process has been continued */
+            SIGTTIN = 26      /* background tty read attempted */
+            SIGTTOU = 27      /* background tty write attempted */
+            SIGVTALRM = 28    /* virtual timer expired */
+            SIGPROF = 29      /* profiling timer expired */
+            SIGXCPU = 30      /* exceeded cpu limit */
+            SIGXFSZ = 31      /* exceeded file size limit */
+            SIGWAITING = 32   /* process's lwps are blocked */
+            SIGLWP  = 33      /* special signal used by thread library */
+            SIGFREEZE = 34    /* special signal used by CPR */
+            SIGTHAW = 35      /* special signal used by CPR */
+            SIGCANCEL = 36    /* thread cancellation signal used by libthread */
+            SIGLOST = 37      /* resource lost (eg, record-lock lost) */
+        } elif (System.operatingsystem == "Linux") {
+            SIGHUP          = 1       /* Hangup (POSIX).  */
+            SIGINT          = 2       /* Interrupt (ANSI).  */
+            SIGQUIT         = 3       /* Quit (POSIX).  */
+            SIGILL          = 4       /* Illegal instruction (ANSI).  */
+            SIGTRAP         = 5       /* Trace trap (POSIX).  */
+            SIGABRT         = 6       /* Abort (ANSI).  */
+            SIGIOT          = 6       /* IOT trap (4.2 BSD).  */
+            SIGBUS         =  7       /* BUS error (4.2 BSD).  */
+            SIGFPE          = 8       /* Floating-point exception (ANSI).  */
+            SIGKILL        =  9       /* Kill, unblockable (POSIX).  */
+            SIGUSR1        =  10      /* User-defined signal 1 (POSIX).  */
+            SIGSEGV        =  11      /* Segmentation violation (ANSI).  */
+            SIGUSR2        =  12      /* User-defined signal 2 (POSIX).  */
+            SIGPIPE        =  13      /* Broken pipe (POSIX).  */
+            SIGALRM         = 14      /* Alarm clock (POSIX).  */
+            SIGTERM        =  15      /* Termination (ANSI).  */
+            SIGSTKFLT      =  16      /* Stack fault.  */
+            SIGCLD         =  SIGCHLD /* Same as SIGCHLD (System V).  */
+            SIGCHLD        =  17      /* Child status has changed (POSIX).  */
+            SIGCONT        =  18      /* Continue (POSIX).  */
+            SIGSTOP        =  19      /* Stop, unblockable (POSIX).  */
+            SIGTSTP        =  20      /* Keyboard stop (POSIX).  */
+            SIGTTIN        =  21      /* Background read from tty (POSIX).  */
+            SIGTTOU        =  22      /* Background write to tty (POSIX).  */
+            SIGURG         =  23      /* Urgent condition on socket (4.2 BSD).  */
+            SIGXCPU        =  24      /* CPU limit exceeded (4.2 BSD).  */
+            SIGXFSZ        =  25      /* File size limit exceeded (4.2 BSD).  */
+            SIGVTALRM      =  26      /* Virtual alarm clock (4.2 BSD).  */
+            SIGPROF        =  27      /* Profiling alarm clock (4.2 BSD).  */
+            SIGWINCH       =  28      /* Window size change (4.3 BSD, Sun).  */
+            SIGPOLL        =  SIGIO   /* Pollable event occurred (System V).  */
+            SIGIO          =  29      /* I/O now possible (4.2 BSD).  */
+            SIGPWR         =  30      /* Power failure restart (System V).  */
+            SIGSYS         =  31      /* Bad system call.  */
+        } elif (System.operatingsystem == "Windows") {
+            SIGINT       =   2       /* interrupt */
+            SIGILL       =   4       /* illegal instruction - invalid function image */
+            SIGFPE       =   8       /* floating point exception */
+            SIGSEGV      =   11      /* segment violation */
+            SIGTERM      =   15      /* Software termination signal from kill */
+            SIGBREAK     =   21      /* Ctrl-Break sequence */
+            SIGABRT      =   22      /* abnormal termination triggered by abort call */
+        }
+
+    }
+
+    // built in annotations
+
+    // property annotation for class variables
+    @interface Property {
+        function get() default true;        // has getter method
+        function set() default true;        // has setter method
+        function boolean() default false;   // result is boolean (getter is isFoo rather than getFoo)
+    }
+
+    // allow a new function to replace the current definition 
+    @interface AllowOverride {
+    }
+
+    // this class is allow runtime access to operating system functions. Access is through os.foo
+    class OS {
+        public native getProcessMemorySize()    // size of current process in MB (real)
+        public native open (file, mode)
+        public native openin (file)
+        public native openout (file)
+        public native openup (file)
+        public native openfd (fd)
+        public native close (stream)
+        public native select (stream, timeout)
+        public native eof (stream)
+        public native flush (stream)
+        public native getchar (stream)		// read one character
+        public native get (stream, n)		// read n bytes from stream
+        public native getbuffer (stream)		// read all available bytes into byte vector
+        public native unget (stream)		// unget one character from a stream (if possible)
+        public native availableChars (stream)
+        public native setStreamAttribute (stream, attr, value)
+        public native rewind (stream)
+        public native seek (stream, offset, whence)
+        public native stat(file)
+        public native lstat(file)
+        public native readdir (dirname)
+        public native chdir (dirname)
+        public native getwd()			// get working directory
+        public native rename (oldname, newname)
+        public native remove (filename)
+        public native mknod (nodename, mode) 		// mode in class Stat
+        public native tmpnam()				// make a temporary name
+        public native glob (pattern)                        // expand pattern into files
+    
+        private native mkdir1 (dir, mode)
+
+        public function mkdir (dirname, mode = 0755) {
+            mkdir1 (dirname, mode)
+        }
+
+        public function makedirs (dirname, mode=0755) {
+            const filesep = System.fileSeparator
+            var f = split (dirname, filesep)
+            if (f.size() == 0) {
+                return
+            }
+            var path = ""
+            if (f[0] == "") {
+                f <<= 1     // remove first empty element
+            }
+            foreach dir f {
+                path = path + filesep + dir
+                if (lstat (path) == null) {
+                    mkdir (path, mode)
+                }
+            }
+        }
+
+        public native chmod (filename, mode)
+        public native isatty (stream)
+        public native ttyname (stream)
+
+        public native chown (filename, uid, gid)
+        public native readlink (filename)
+        public native symlink (oldpath, newpath)
+        
+        // miscellaneous operations
+        public native fork()
+        public native execv (command, args)
+        public native execl (command, ...)
+        public native execvp (command, args)
+        public native execlp (command, ...)
+        public native waitpid (pid, var status, flags)
+
+        // pseudo tty
+        // open the tty, return [master, pid].  Master is a raw fd (use raw_read and raw_write)
+        public native opentty (command, args)
+
+        // close the tty given [master, pid]
+        public native closetty (descriptor)
+
+        // raw file access
+        public native raw_open (filename, flags, mode)
+        public native raw_close (fd)
+        public native raw_read (fd, size)
+        public native raw_write (fd, buf, size)
+        public native raw_select (fdset, timeout)
+        public native raw_seek (fd, offset, whence)
+
+        public native setlimit (limitname, limitvalue)
+        public native getlimit (limitname)
+
+        public native getUserName (uid)
+        public native getGroupName (gid)
+
+        public native kill (pid, signal)		// send a signal
+        public native sigset (signal, handler)	// catch a signal and return previous handler
+        public native sighold (signal)		// hold signal (do not deliver)
+        public native sigrelse (signal) 		// ok, I know horrible spelling (blame UNIX)
+        public native sigignore (signal)		// ignore signal
+        public native sigpause (signal)		// wait for signal
+
+        public native abort()
+        public native exit (code)
+        public native rand()
+        public native srand (seed)
+        public native getenv (variable)		// get an evironment variable
+        public native setenv (variable, value)      // set an environment variable
+        public native unsetenv (variable)      // remove an environment variable
+    }
+
+    public var os = new OS      // allow runtime access
+}
+
+using System
+
+

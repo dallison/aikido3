@@ -1,0 +1,163 @@
+import crypto
+
+var count = 1
+
+public function doPut (request, response) {
+    println ("doPut called")
+}
+
+public function service (request, response) {
+    println ("hello world ", stderr)
+    response.setHeader( "Pragma", "no-cache" );
+    response.setHeader( "Cache-Control", "no-cache" )
+
+    var method = request.getMethod()
+    println ("method: " + method , stderr)
+
+    var content_type = request.getContentType();
+    println ("content_type: " + content_type, stderr)
+   
+
+    if (method == Apache.PUT || method == Apache.POST) {
+        if (content_type == "application/json") {
+            var m = deserialize (SERIALIZE_JSON_EXPORT, input)
+            var r = {
+                "input": m,
+                "count": count++
+            }
+            serialize (r, SERIALIZE_JSON_EXPORT, output)
+        } else {
+            var data = ""
+            while (!input.eof()) {
+                var ch = 'a'
+                read (ch)
+                if (!input.eof()) {
+                    data.append (ch)
+                }
+            }
+            var m = {
+                "data": data
+            }
+            serialize (m, SERIALIZE_JSON_EXPORT, output)
+        }
+    } else {
+        response.setContentType("text/html")
+        var cookie = new Apache.Cookie("dave", "allison")
+        response.addCookie (cookie)
+
+        print ("""
+        
+        <html>
+            <head>
+            </head>
+
+            <body>
+                <strong>Hello world in Html</strong>
+                Count is: #{count++} <br/>
+
+               <%
+               var key = []
+               foreach i 32 {
+                   key.append (rand() % 255)
+               }
+           
+               var iv = []
+               foreach i 16 {
+                   iv.append (rand() % 255)
+               }
+           
+               var enc = Crypto.aes_encrypt ("this is a test", key, iv, true)
+               println ("Encrypt test: " + enc + "<br/>")
+               var dec = Crypto.aes_decrypt (enc, key, iv, true)
+               println ("Decrypt test: " + dec + "<br/>")
+               %>
+
+                <p/>
+                The time is #{System.date().toString()}<br\>
+
+                <p/>
+                Method: #{request.getMethodString()}<br/>
+
+                <p/>
+                QueryString: #{Apache.decodeURI(request.getQueryString())}<br/>
+
+                <p/>
+                Headers are:<br/>
+                <%
+                    var headers = request.getAllHeaders()
+                    foreach h headers {
+                        println (h.first + ": " + h.second + "<br/>")
+                    }
+                %>
+
+                <p/>
+                The header for Accept is #{request.getHeader("accept")}<br/>
+                The parsed Accept header is: <br/>
+                <%
+                    var result = request.getAccept()
+                    foreach r result {
+                        println (r + "</br>")
+                    }
+                %>
+                <p/>
+                Args are:<br/>
+                <%
+                    var args = request.getArgs()
+                    foreach arg args {
+                        println (arg.first + ": " + arg.second + "<br/>")
+                    }
+                %>
+
+                <p/>
+                Vars are:<br/>
+                <%
+                    var vars = request.getVars()
+                    foreach v vars {
+                        println (v.first + ": " + v.second + "<br/>")
+                    }
+                %>
+
+                Value of DOCUMENT_ROOT: #{request.getVar("DOCUMENT_ROOT")}<br/>
+
+                <p/>
+                Cookies:<br/>
+                <%
+                    var cookies = request.getCookies()
+                    foreach c cookies {
+                        println (Apache.decodeURI(c.toString()) + "<br/>")
+                    }
+                %> 
+                <p/>
+                Remote Address: #{request.getRemoteAddr()} <br/>
+                URI: #{request.getURI()} <br/>
+                Filename: #{request.getFilename()} <br/>
+                CanonicalFilename: #{request.getCanonicalFilename()} <br/>
+
+                URI Parsing:<br/>
+                <%
+                    var uri = request.getURI();
+                    var vars = Apache.parseURI (uri, "/test/{first}/{second}.{suffix}")
+                    println (vars.first + "<br/>")
+                    println (vars.second + "<br/>")
+                    println (vars.suffix + "<br/>")
+
+                    println ("<p/>With suffix:<br/>")
+                    vars = Apache.parseURI (uri, "/{first}/{second}.{suffix}", "/test")
+                    println (vars.first + "<br/>")
+                    println (vars.second + "<br/>")
+                    println (vars.suffix + "<br/>")
+
+                %>
+                    Match 1: #{Apache.matchURI (request.getURI(), "/test/*/*.*")}<br/>
+                    Match 2: #{Apache.matchURI (request.getURI(), "/*/*.*", "/test")}<br/>
+                    No Match 1: #{Apache.matchURI (request.getURI(), "/tedst/*/*.*")}<br/>
+                    No Match 2: #{Apache.matchURI (request.getURI(), "/*/*.*", "/tedst")}<br/>
+            </body>
+        </html>
+        """)
+   }
+
+}
+
+println ("Servlet initialize called")
+

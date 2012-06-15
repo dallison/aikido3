@@ -1,0 +1,54 @@
+.\" Aikido manual
+.\" David Allison
+.TH exec 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+exec \- Execute an operating system command and collect output
+.SH SYNOPSIS
+\fBSystem.exec(command, output, error, env = [], dir = "")
+.SH DESCRIPTION
+The System.exec() function executes an operating system command
+and redirects the standard output and standard error streams.
+The 
+.I output
+and
+.I error
+parameters specify values to which the standard output and
+error (respectively) are redirected.  All output to these
+values is done using the Aikido 'stream' operator.  These values
+may be of any type that can be streamed to, but the most useful
+are vectors and streams.
+.P
+The optional
+.I env
+parameter allows the command to be passed additional evironment variables
+to be added to the set of environment variables already defined for the
+process.  The parameter consists of a vector of strings of the form:
+.I varname=value
+..
+.P
+The optional
+.I dir
+parameter allows the command to be run with a different working
+directory than the current one.
+.P
+The command is executed by the system shell (/bin/sh on UNIX).  The
+standard output and standard error file descriptors are redirected
+to the exec() function which collects them and streams them
+to the output and error parameters.
+
+.SH RETURN VALUES
+The function returns the exit status of the command.  
+.SH EXAMPLE
+var out = []
+.br
+var err = []
+.br
+exec ("grep cast *.cc", out, err)
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+system(3aikido), pipe(3aikido)

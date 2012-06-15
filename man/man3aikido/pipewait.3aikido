@@ -1,0 +1,20 @@
+.\" Aikido manual
+.\" David Allison
+.TH pipewait 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+pipewait \- Wait for a pipe to close
+.SH SYNOPSIS
+\fBSystem.pipewait(stream)
+.SH DESCRIPTION
+The System.pipewait() function waits for the command at the other end of the 
+stream pipe to finish.
+.SH RETURN VALUES
+The exit status of the command is returned.
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+pipe(3aikido), pipeclose(3aikido)

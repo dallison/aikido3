@@ -1,0 +1,30 @@
+class StringStream (value) {
+    var index = 0
+    public function eof() {
+        var iseof =  index > sizeof(value)
+        return iseof
+    }
+
+    public function getchar() {
+        if (eof()) {
+            return '\0'
+        }
+        if (index == sizeof(value)) {
+            index++
+            return '\0'
+        }
+        var ch = value[index++]
+        return ch
+    }
+
+    public function unget {
+        if (index > 0) {
+            index--
+        }
+    }
+
+    public function reset {
+        index = 0
+    }
+}
+

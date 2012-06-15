@@ -1,0 +1,39 @@
+.\" Aikido manual
+.\" David Allison
+.TH readdir 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+readdir \- Read the contents of a directory
+.SH SYNOPSIS
+\fBSystem.readdir(dirname)
+.SH DESCRIPTION
+The System.readdir() function reads the contents of a directory and
+returns a vector of strings.  Each entry in the vector is a file
+or directory that is contained within the named directory.  The
+2 special directory entries '.' and '..' are not included in the
+returned vector.
+.SH RETURN VALUES
+A vector of the entries in the directory.  
+.SH EXCEPTIONS
+If the directory cannot be opened the function throws a System.FileException
+exception.
+.SH EXAMPLE
+.br
+
+.br
+var files = System.readdir (".")
+.br
+foreach file files {
+.br
+    var s = System.stat (file)
+.br
+    println ("File: " + file + " size: " + s.size)
+.br
+}
+.br
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

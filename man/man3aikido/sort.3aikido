@@ -1,0 +1,54 @@
+.\" Aikido manual
+.\" David Allison
+.TH sort 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+sort \- sort a vector
+.SH SYNOPSIS
+\fBSystem.sort(vector)
+.SH DESCRIPTION
+This function can only be applied to vectors.  It sorts the vector
+in ascending order of value.  The comparison is done using the 'less than'
+operator for each value in the vector.
+.P
+If the vector contains objects, the object can provide an overload of
+.I operator <
+in order to be sorted correctly.
+.P
+The System.sort() function makes a copy of the input vector before
+sorting.
+
+.SH RETURN VALUES
+A sorted copy of the input vector
+.SH EXAMPLE
+class Number (public n) {
+.br
+    public operator< (x) {
+.br
+        return n < x.n
+.br
+    }
+.br
+}
+.br
+
+.br
+var v = new [10] ;
+.br
+// fill a vector with random values
+.br
+foreach i 10 {
+.br
+    v[i] = new Number (System.rand())
+.br
+}
+.br
+var v1 = System.sort (v)                // sorted vector
+.br
+
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

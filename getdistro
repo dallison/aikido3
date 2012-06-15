@@ -1,0 +1,63 @@
+if [ -r /etc/redhat-release ] 
+then
+    x=`grep Fedora /etc/redhat-release | wc -l`
+    if [ "$x" -eq 0 ]
+    then
+        x=`grep Enterprise /etc/redhat-release | wc -l`
+        if [ "$x" -ne 0 ]
+        then
+            release=`grep Enterprise /etc/redhat-release | awk '{print $7}'`
+            update=`grep Enterprise /etc/redhat-release | awk '{print $10}' | cut -d\) -f1`
+            if [ "$update" != "" ]; then
+                echo rhel${release}u${update}
+            else
+                echo rhel${release}
+            fi
+        else
+            x=`grep CentOS /etc/redhat-release | wc -l`
+            if [ "$x" -ne 0 ]; then
+                echo centos
+            else
+                echo unknown
+            fi
+        fi
+    else
+        release=`grep Fedora /etc/redhat-release | awk '{print $4}'`
+        echo fc$release
+    fi
+    exit 0
+fi
+
+if [ -r /etc/SuSE-release ]
+then
+    x=`grep Enterprise /etc/SuSE-release | wc -l`
+    if [ "$x" -ne "0" ]
+    then 
+       os="suse"
+       server=`grep Server /etc/SuSE-release | wc -l`
+       if [ "$server" -ne 0 ]; then
+          os="sles"
+       fi
+       release=`grep Enterprise /etc/SuSE-release | awk '{print $5}'`
+       echo ${os}${release}
+    else
+        echo suse
+    fi
+    exit 0
+fi
+
+if [ -r /etc/issue ]
+then
+    x=`grep Red /etc/issue | wc -l`
+    if [ "$x" -ne "0" ] ; then
+        echo redhat
+	exit 0
+    fi
+    x=`grep Debian /etc/issue | wc -l`
+    if [ "$x" -ne "0" ] ; then
+        echo debian
+	exit 0
+    fi
+fi
+
+echo generic

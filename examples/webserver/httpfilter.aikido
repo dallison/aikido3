@@ -1,0 +1,120 @@
+/*
+ * httpfilter.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.5
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+
+import mimefilter 
+
+class HTTPFilter (instream, outstream) extends MimeFilter (instream, outstream, false) {
+    protected var command = ""
+    protected var method = ""
+    protected var file = ""
+    protected var protocol = ""
+    protected var postdata = ""
+
+    var responseNum = 0
+    var responseStr = ""
+
+    public function getOutstream() {
+        return outstream
+    }
+
+    public function getFile() {
+        return file
+    }
+
+    public function getMethod() {
+        return method
+    }
+
+    public function getProtocol() {
+        return protocol
+    }
+
+    public function getPostData() {
+        return postdata
+    }
+
+    public operator[] (i, j = -1) {
+        if (j != -1) {
+            throw "range not allowed"
+        }
+        return inheaders[i]
+    }
+
+    public function setResponse (n, s) {
+        responseNum = n 
+        responseStr = s
+    }
+
+    public function setContentType (t) {
+        putHeader ("Content-Type", t)
+    }
+
+    public function setContentLength (len) {
+        System.println ("setting content length to " + len)
+        putHeader ("Content-length", cast<string>(len))
+    }
+
+
+    public operator -> (data, isout) {
+       if (isout) {
+           if (!headersSent) {
+               [protocol, ' ', responseNum, ' ', responseStr, "\r\n"] -> outstream
+               writeHeaders (outstream)
+           }
+           if (method != "HEAD") {
+               data -> outstream		// output rest of data
+           }
+           flush (outstream)
+       } else {
+           instream -> command			// read command
+           var ex = command["([A-Z]+) ([^ ]+) (.*)"]		// parse command
+           if (sizeof (ex) != 4) {
+               throw "Bad command " + command
+           }
+           method = command[ex[1].start:ex[1].end]
+           file = command[ex[2].start:ex[2].end]
+           protocol = command[ex[3].start:ex[3].end-1]
+
+           readHeaders (instream)
+           //inheaders -> stdout
+           if (method == "POST") {
+               System.println ("reading post data")
+               var len = cast<int>(getHeader ("Content-length"))
+               while (len > 0) {
+                   var ch = System.getchar (instream)
+                   postdata += ch
+                   if (ch == '\r') {
+                       break
+                   }
+                   len--
+               }
+               //instream -> postdata			// one line of data
+               //System.println (postdata)
+           }
+       }
+    }
+
+}

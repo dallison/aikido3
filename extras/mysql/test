@@ -1,0 +1,8 @@
+#!/bin/bash
+
+export AIKIDOPATH=/var/www/cgi-bin/postgres:/var/www/cgi-bin/mysql:/usr/lib64/mysql
+#/usr/local/bin/aikido test.aikido
+gdb /usr/local/bin/aikido_g
+
+
+

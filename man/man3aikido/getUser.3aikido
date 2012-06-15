@@ -1,0 +1,59 @@
+.\" Aikido manual
+.\" David Allison
+.TH getUser 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+getUser \- Get information about a particular user
+.SH SYNOPSIS
+\fBSystem.getUser(username)
+.SH DESCRIPTION
+The System.getUser() function creates a
+.I System.User
+object that corresponds to the username passed.  The contents of the 
+.I System.User
+object is:
+.br
+
+.br
+    public class User {
+.br
+    public:
+.br
+        var name = ""           // user name
+.br
+        var uid = 0             // user id
+.br
+        var gid = 0             // group id
+.br
+        var fullname = ""       // full name
+.br
+        var dir = ""            // home directory
+.br
+        var shell = ""          // login shell
+.br
+        var password = ""       // encrypted password
+.br
+    }
+.br
+
+
+.SH RETURN VALUES
+The value 
+.I null
+is returned if the username does not exist.  Otherwise an instance
+of 
+.I System.User
+is returned with information about the user.
+.SH EXAMPLE
+.br
+
+.br
+// get the details of the current user
+.br
+var user = System.getUser (System.username)
+.br
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

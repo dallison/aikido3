@@ -1,0 +1,194 @@
+/*
+ * base64.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.4
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+
+package Base64 {
+
+    const tob64 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+                   'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+                   'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
+                   'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+                   'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+                   'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7',
+                   '8', '9', '+', '/']
+
+    function toBase64 (v) {
+        return tob64[v]
+    }
+
+    const fromb64 = [ -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,   		// 0..14
+                      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,		      		// 15..25
+                      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 	// 42 not used
+                      62, -1, -1, -1, 63,					// +,-./
+                      52, 53, 54, 55, 56, 57, 58, 59, 60, 61,  			// 0..9
+                      -1, -1, -1, -1, -1, -1, -1,				// :;<=>?@
+                      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                      -1, -1, -1, -1, -1, -1,					// [ \ ] ^ | `
+                      26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                      41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,
+                      -1,-1,-1,-1,-1 ]
+
+
+    function fromBase64 (i) {
+        var x = fromb64[i]
+        return x
+    }
+
+    public function encode (invalue) {
+        generic instr
+        if (typeof(invalue) == "string") {
+            instr = invalue
+        } elif (typeof(invalue) == "vector") {
+            if (typeof(invalue[0]) == "byte") {
+                instr = invalue
+            } else {
+                instr = ""
+                foreach line invalue {
+                    if (typeof(line) == "string") {
+                       if (line.size() == 0) {
+                           instr.append ("\n")
+                       } else if (line[sizeof(line)-1] == '\n') {
+                           instr.append (line)
+                       } else {
+                           instr.append (line + "\n")
+                       }
+                    } else {
+                        throw "Invalid type in vector, need strings to encode in base64, got " + typeof(line)
+                    }
+                }
+            }
+        } else {
+            throw "Need a string or vector to encode base64"
+        }
+        var i = 0
+        var outencoding = ""
+        var end = sizeof (instr)
+
+        var outch = 0
+        function add (ch) {
+            //if (outch == 76) {
+                //outencoding += '\n' 
+                //outch = 0
+            //}
+            outencoding += ch
+            ++outch
+        }
+
+        while (i < end) {
+            if (i <= (end - 3)) {
+                var v = (cast<int>(instr[i]))[7:0]
+                v = (v << 8) | (cast<int>(instr[i+1]))[7:0]
+                v = (v << 8) | (cast<int>(instr[i+2]))[7:0]
+                add (toBase64 (v[23:18]))
+                add (toBase64 (v[17:12]))
+                add (toBase64 (v[11:6]))
+                add (toBase64 (v[5:0]))
+                i += 3
+            } else {			// get here if end of input
+                if (i == (end - 2)) {		// 2 chars left
+                    var v = (cast<int>(instr[i]))[7:0]
+                    v = (v << 8) | (cast<int>(instr[i+1]))[7:0]
+                    v <<= 2		// 18 bits
+                    add (toBase64 (v[17:12]))
+                    add (toBase64 (v[11:6]))
+                    add (toBase64 (v[5:0]))
+                    add ('=')					// 1 pad
+                } else { 			    // 1 char left
+                    var v = (cast<int>(instr[i]))[7:0] << 4		// 12 bits
+                    add (toBase64 (v[11:6]))
+                    add (toBase64 (v[5:0]))
+                    add ('=')				// 2 pads
+                    add ('=')
+                }
+                break
+            }
+        }
+        return outencoding
+    }
+
+    public function decode (instr) {
+        var len = sizeof (instr)
+        var i = 0
+        function get {
+            for (;;) {
+                var ch = instr[i++]
+                if (ch != '\n') {
+                    var ch1 = fromBase64 (ch)
+                    if (ch1 != -1) {
+                        return ch1
+                    }
+                }
+            }
+        }
+
+        var result = ""
+        function put (ch) {
+            result.append(cast<char>(ch))
+        }
+
+        while (i < len) {
+            if (instr[i+2] == '=') {	// pad in second position?
+                var v = 0
+                v[11:6] = get()
+                v[5:0] = get()
+                v >>= 4
+                put (v[7:0])
+                break
+            } elif (instr[i+3] == '=') {  // pad in last position
+                var v = 0
+                v[17:12] = get()
+                v[11:6] = get()
+                v[5:0] = get()
+                v >>=2 
+                put (v[15:8])
+                put (v[7:0])
+                break
+            } else {
+                var v = 0
+                v[23:18] = get()
+                v[17:12] = get()
+                v[11:6] = get()
+                v[5:0] = get()
+                put (v[23:16])
+                put (v[15:8])
+                put (v[7:0])
+            }
+        }
+
+        return result
+    }
+
+}
+
+function main {
+    for (;;) {
+        var s = ""
+        stdin -> s
+        var b = Base64.encode (s)
+        var s1 = Base64.decode (b)
+        System.println (s + " -> " + b + " -> " + s1)
+    }
+}

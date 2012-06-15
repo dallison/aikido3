@@ -1,0 +1,76 @@
+.\" Aikido manual
+.\" David Allison
+.TH open 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+open \- open a file given a mode
+.SH SYNOPSIS
+\fBSystem.open(file, mode)
+.SH DESCRIPTION
+The System.open() function opens a file given a file name and open mode.  The
+filename must be suitable for the operating system.  The open mode is a bit
+mask containing bit values specified in the 
+.I OpenMode
+package:
+.br
+
+.br
+    public package OpenMode {
+.br
+    public:
+.br
+        const APPEND = 1
+.br
+        const BINARY = 2
+.br
+        const IN = 4
+.br
+        const OUT = 8
+.br
+        const TRUNC = 16
+.br
+        const ATEND = 32
+.br
+        const NOCREATE = 64
+.br
+        const NOREPLACE = 128
+.br
+    }
+.br
+
+.br
+The bits in the mode mean:
+.IP "APPEND" 10
+The current position is placed at the end of the file
+.IP "BINARY " 10
+File is opened in binary mode
+.IP "IN " 10
+File is opened for input and must exist
+.IP "OUT " 10
+File is opened for output.   Will be created if it doesn't exist
+.IP "TRUNC " 10
+File is opened and truncated if it is not empty.
+.IP "ATEND " 10
+File is opened and the current position is placed at the end
+.IP "NOCREATE " 10
+If the file doesn't exist and we are opening for output, it will not be created
+.IP "NOREPLACE " 10
+If the file exists and we are opening for output, the file will not be replaced
+
+.SH RETURN VALUES
+A stream attached to the open file is returned.
+.SH EXCEPTIONS
+If the open fails, the System.open() function throws an exception 
+.I System.FileException
+
+.SH EXAMPLE
+var s = System.open ("tracefile", System.OpenMode.OUT)
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+openin(3aikido), openout(3aikido), openup(3aikido), openfd(3aikido),
+close(3aikido), seek(3aikido), eof(3aikido), flush(3aikido),
+getchar(3aikido), get(3aikido)
+

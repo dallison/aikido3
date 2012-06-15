@@ -1,0 +1,71 @@
+.\" Aikido manual
+.\" David Allison
+.TH stat 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+stat \- Get statistics on a file
+.SH SYNOPSIS
+\fBSystem.stat(filename)
+.SH DESCRIPTION
+The System.stat() function returns an instance of the
+.I System.Stat
+class.  This contains information about the file.  The contents of
+this object are:
+.br
+
+.br
+    public class Stat {
+.br
+    public:
+.br
+        var mode = 0    // File mode (see mknod(2))
+.br
+        var inode = 0   // Inode number
+.br
+        var dev = 0     // ID of device containing  a directory entry for this file
+.br
+        var rdev = 0    // ID of device
+.br
+        var nlink = 0   // Number of links
+.br
+        var uid = 0     // User ID of the file's owner
+.br
+        var gid = 0     // Group ID of the file's group
+.br
+        var size = 0    // File size in bytes
+.br
+        var atime = 0   // Time of last access
+.br
+        var mtime = 0   // Time of last data modification
+.br
+        var ctime = 0   // Time of last file status change
+.br
+        var blksize = 0 // Preferred I/O block size
+.br
+        var blocks = 0  // Number of 512 byte blocks allocated
+.br
+    }
+
+.SH RETURN VALUES
+The function returns NULL if the file does not exist, otherwise
+an instance of System.Stat is returned.
+.SH EXAMPLE
+var s = System.stat ("x.props")
+.br
+if (s != NULL) {
+.br
+    if (s.mtime > lasttime) {
+.br
+       println ("file has been modified")
+.br
+    }
+.br
+}
+.br
+
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+Stat(3aikido), mknod(2), stat(2)

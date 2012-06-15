@@ -1,0 +1,46 @@
+.\" Aikido manual
+.\" David Allison
+.TH split 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+split \- split a value into multiple parts
+.SH SYNOPSIS
+\fBSystem.split(value, separator)
+.SH DESCRIPTION
+The System.split() function takes 2 parameters: a value to be split, and a value that is
+used as the separator between parts.  This is most useful when applied to strings
+where it can be used to split the string into multiple parts at certain characters.
+The System.split() function can be applied to strings, vectors, bytevectors, objects and
+blocks.
+.IP "string" 10
+The separator can be a character or string.  The value is split into a vector of
+strings at the points specified by the separator.
+.IP "vector" 10
+The vector is split into a vector of values. Each value will be either a single
+value from the original vector or a vector of such values.  That is, the vector
+is scanned for the separator value and the sections will be either 1 or more
+elements long.  If the section is 1 element long, it is inserted directly
+into the output vector.  If the section is more than one element long, a slice
+of the vector is inserted into the output vector.
+.IP "bytevector" 10
+The separator must be an integral type.  The bytevector is split at the points
+specified by the separator value and the result is a vector of bytes or
+bytevectors depending on the length of the section.
+.IP "object" 10
+If the object contains a function called 
+.I split
+, this will be called and the result returned.  Otherwise the block corresponding
+to the type of the object will be split.
+.IP "block" 10
+For a block the separator value is ignored and the result is a vector of strings, each
+element being the name of a member of the block.
+
+.SH RETURN VALUES
+The output is a vector containing sections of the input value.
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

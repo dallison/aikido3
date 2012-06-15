@@ -1,0 +1,24 @@
+.\" Aikido manual
+.\" David Allison
+.TH mkdir 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+mkdir \- Create a directory
+.SH SYNOPSIS
+\fBSystem.mkdir(dirname, mode = 0666)
+.SH DESCRIPTION
+The System.mkdir() function creates a directory with a given access
+mode.  The
+.I mode
+parameter is optional and defaults to 0666 (---rw-rw-rw-).
+.SH RETURN VALUES
+Nothing is returned
+.SH EXCEPTIONS
+The exception System.Exception is thrown if the directory cannot
+be created.
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+mkdir(2)

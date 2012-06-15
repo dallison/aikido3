@@ -1,0 +1,103 @@
+#!/bin/sh
+
+version=1.00
+
+if [ $# -eq 0 ]
+then
+    echo usage: install destdir
+    exit 1
+fi
+
+destdir=$1
+echo Installing aikido in $destdir
+
+
+# make a directory if it doesn't already exist
+domkdir() {
+    if [ ! -d $1 ]
+    then
+        mkdir -p $1
+    fi
+}
+
+# copy a file if it exists
+docp() {
+    if [ -f $1 ]
+    then
+        domkdir $2
+        echo Copying $1 to $2
+        cp -f $1 $2
+    fi
+}
+
+
+docp bin/aikido $destdir/bin
+docp bin/aikido_g $destdir/bin
+docp bin/aikido_o $destdir/bin
+docp bin/mkstandalone $destdir/bin
+docp bin/mkelf $destdir/bin
+docp bin/aikido.zip $destdir/bin
+docp lib/libaikido_o.a $destdir/lib
+docp lib/libaikido_g.a $destdir/lib
+
+for f in include/aikido.h include/aikidozip.h include/aikidotoken.h include/aikidopcreposix.h include/aikidointerpret.h include/aikidocodegen.h include/aikidodebug.h
+do
+    docp $f            $destdir/include/
+done
+
+docp include/unix/os.h $destdir/include/unix
+
+docp lib/libaikidonetwork.so $destdir/lib
+docp lib/libaikidomath.so $destdir/lib
+docp lib/libaikidosecurity.so $destdir/lib
+docp lib/libaikidonetwork.a $destdir/lib
+docp lib/libaikidomath.a $destdir/lib
+docp lib/libaikidosecurity.a $destdir/lib
+docp lib/libaikidocrypto.a $destdir/lib
+docp lib/libddk.so $destdir/lib
+docp lib/libdtk.so $destdir/lib
+
+for f in man/man3aikido
+do
+    docp $f $destdir/man/man3aikido
+done
+
+cat > aikido-config << EOF
+#!/bin/sh
+
+usage() {
+    echo "usage: aikido-config [--cflags] [--libs] [--version]"
+    exit 1
+}
+
+if [ \$# -eq 0 ]
+then
+    usage
+fi
+
+while test \$# -gt 0 ; do
+    case "\$1" in
+        --cflags)
+            echo "-I$destdir/include/aikido"
+            shift
+            ;;
+        --libs)
+            echo "-L$destdir/lib"
+            shift
+            ;;
+        --version)
+            echo $version
+            shift
+            ;;
+        *)
+            usage
+    esac
+done
+
+
+EOF
+
+chmod +x aikido-config
+docp aikido-config $destdir/bin
+
+

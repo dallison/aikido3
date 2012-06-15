@@ -1,0 +1,52 @@
+package Crypto {
+    import base64
+    import libaikidocrypto
+
+    private native internal_aes_encrypt (v, key, iv)
+    private native internal_aes_decrypt (v, key, iv)
+    private native function internal_aes_makekey (password, keylen, salt)
+    private native function internal_sha1 (message)
+    private native function internal_md5 (message)
+
+   // AES encrypt and decrypt The key is either a 16 or 32 entry vector of integers (0..255) to use as the key
+   // 'iv' is a a 16 entry vector of numbers (0..255) used as the initialization vector
+
+   public function aes_encrypt (v, key, iv, base64=true) {
+        var ev = internal_aes_encrypt (v, key, iv)
+        if (base64) {
+            return Base64.encode (ev)
+        }
+        return ev
+    }
+
+    public function aes_decrypt (v, key, iv, base64=true) {
+        if (base64) {
+            var s = Base64.decode (v)
+            return internal_aes_decrypt (s, key, iv)
+        }
+        return internal_aes_decrypt (v, key, iv)
+    }
+
+
+    /**
+     * make a key and IV out of a string password.  Returns a vector [key, iv]
+     */
+    public function aes_makekey (password, keylen, salt=none) {
+        var saltvec = []
+        if (typeof(salt) == "none") {
+            saltvec = new char [8]
+        } else {
+            saltvec = salt
+        }
+        return internal_aes_makekey (password, keylen, saltvec)
+    }
+
+    public function sha1 (message) {
+        return internal_sha1 (message)
+    }
+
+    public function md5 (message) {
+        return internal_md5 (message)
+    }
+}
+

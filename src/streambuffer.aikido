@@ -1,0 +1,113 @@
+/*
+ * streambuffer.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.12
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+import string
+
+class Streambuffer extends String {
+    var pos = 0			// current reading position
+public:
+
+    // clear the buffer
+    function clear() {
+        value = ""
+        pos = 0
+    }
+
+    // put one item into buffer
+    function put (v) {
+        append (v)
+    }
+
+    // put a single char into buffer at the specified character position
+    function putchar (index, v) {
+        if (typeof (v) == "char") {
+            value[index] = v
+        } elif (typeof (v) == "byte") {
+            value[index] = cast<char>(v)
+        } else {
+            throw "char/byte type expected in putchar"
+        }
+    }
+
+
+    // read the next character
+    function getchar {
+        if (pos >= sizeof (value)) {
+            throw "End of buffer error"
+        }
+        return value[pos++]
+    }
+
+    // read a set of characters
+    function get (n = 1) {
+        if ((pos + n) >= sizeof (value)) {
+            throw "End of buffer error"
+        }
+        var result = value [pos: pos + n]
+        pos += n
+        return result
+    }
+
+    // read all remaining characters
+    function getall() {
+        var result = value [pos : sizeof (value) - 1]
+        pos = sizeof (value)
+        return result
+    }
+
+    // stream operator
+    operator-> (stream, read) {
+        if (read) {
+            pos = 0
+            if (typeof (stream) == "stream") {
+                value = cast<string>(System.getbuffer (stream)) 	// get a buffer from a real stream
+            } else {
+                stream -> value				// read value from other stream
+            }
+        } else {
+            value -> stream
+            if (typeof (stream) == "stream") {		// only flush real stream
+                System.flush (stream)
+            }
+        }
+    }
+
+    function toString() {
+        return value
+    }
+
+    operator[] (i, j = -1) {
+        if (j == -1) {
+            return value[i]
+        } else {
+            return value [i:j]
+        }
+    }
+
+    operator sizeof() {
+        return sizeof (value)
+    }
+
+}

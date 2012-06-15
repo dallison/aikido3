@@ -1,0 +1,20 @@
+.\" Aikido manual
+.\" David Allison
+.TH abort 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+abort \- Abort the program, generating a core dump
+.SH SYNOPSIS
+\fBSystem.abort()
+.SH DESCRIPTION
+The System.abort() function causes the currently running program to abort.
+On UNIX, this generates a core dump file.
+.SH RETURN VALUES
+Nothing is returned
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+exit(3aikido)

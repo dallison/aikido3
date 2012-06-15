@@ -1,0 +1,32 @@
+.\" Aikido manual
+.\" David Allison
+.TH vformat 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+vformat \- Format a string given a vector of arguments
+.SH SYNOPSIS
+\fBSystem.vformat(format, args)
+.SH DESCRIPTION
+The System.vformat() function is very similar to the System.format function except
+that it takes a vector of arguments rather than a variable argument list.  This is
+most useful for use inside a variable argument function.
+.SH RETURN VALUES
+A formatted string is returned.
+.SH EXAMPLE
+.br
+
+.br
+function print (s, ...) {
+.br
+    var s = vformat (s, args)
+.br
+    println (s)
+.br
+}
+.br
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+format(3aikido), sprintf(3c)

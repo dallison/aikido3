@@ -1,0 +1,93 @@
+include Makefile.common
+
+
+MSUFFIX = gcc
+CCC = $(CCCMD) 
+CC =$(CCC)
+
+MAKEFILE = Makefile.$(MSUFFIX)
+
+
+OSDEFINES = -D_OS_SOLARIS -D_CC_GCC
+
+SUPPORTLIBS = lib/libaikidonetwork.so lib/libaikidomath.so lib/libaikidosecurity.so 
+
+LDLIBS += $(LIB) -lthread -ldl -lposix4 -lstdc++ -lm
+CCFLAGS += -Isrc/pcre $(OSDEFINES) $(DEBUG)
+CFLAGS += -Isrc/pcre $(OSDEFINES) $(DEBUG)
+LDFLAGS += -L. 
+
+build: xdebug xgtk .WAIT midclean .WAIT xopt
+
+xdebug:
+	$(MAKE) -f $(MAKEFILE) DEBUG="-g -DDEBUGON" LIB=$(GLIB) BIN=$(GBIN) $(GBIN)
+
+xopt:
+	$(MAKE) -f $(MAKEFILE) DEBUG=-O3 LIB=$(OLIB) BIN=$(OBIN) $(OBIN)
+
+driver: driver.o
+	$(CCC) -o $(DRIVER) driver.o -lstdc++
+
+$(LIB) : $(OBJS)
+	ar ruv $(LIB) $(OBJS)
+
+$(BIN): $(LIB) $(EOBJS) $(SUPPORTLIBS) $(ZIPFILE)
+	$(LINK.cc) -o $(BIN) $(PROFILE) $(EOBJS) $(LDLIBS)
+
+
+$(ZIPFILE):
+	cd src ; $(ZIPCMD) ../$(ZIPFILE) $(ZIPFILES)
+	cd src/gtk ; $(ZIPCMD) ../../$(ZIPFILE) $(GTKFILES)
+
+
+lib/libaikidonetwork.so : network.o
+	$(CCC) -G -o lib/libaikidonetwork.so network.o -lsocket -lnsl
+
+network.o : src/network.cc
+	$(CCC) $(CCFLAGS) -Isrc -o network.o -c src/network.cc
+
+lib/libaikidomath.so : math.o
+	$(CCC) -G -o lib/libaikidomath.so math.o
+
+math.o : src/math.cc
+	$(CCC) $(CCFLAGS) -Isrc -o math.o -c src/math.cc
+
+lib/libaikidosecurity.so : security.o
+	$(CCC) -G -o lib/libaikidosecurity.so security.o -lcrypt
+
+security.o : src/security.cc
+	$(CCC) $(CCFLAGS) -Isrc -o security.o -c src/security.cc
+
+#
+# GTK+ support
+#
+
+xgtk: lib/libdtk.so lib/libddk.so
+
+lib/libdtk.so : dtk.o
+	$(CCC) -G -o lib/libdtk.so dtk.o
+
+dtk.o : src/gtk/dtk.cc
+	$(CCC) $(CCFLAGS) -Isrc $(GTKINC) $(GLIBINC) -o dtk.o -c src/gtk/dtk.cc
+
+ddk.o : src/gtk/ddk.cc
+	$(CCC) $(CCFLAGS) -Isrc $(GTKINC) $(GLIBINC) -o ddk.o -c src/gtk/ddk.cc
+
+
+lib/libddk.so : ddk.o
+	$(CCC) -G -o lib/libddk.so ddk.o
+
+
+
+
+
+clean:
+	rm -f *.o $(LIB) $(BIN) $(ZIPFILE) $(SUPPORTLIBS)
+
+#
+# clean for swap from debug to optimize build
+#
+
+midclean: 
+	rm -f $(OBJS) 
+

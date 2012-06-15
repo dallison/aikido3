@@ -1,0 +1,30 @@
+all: xmod_aikido xmysql xpostgres xcrypto
+clean: cmod_aikido cmysql cpostgres ccrypto
+
+
+xmod_aikido:
+	-\$(MAKE) -C mod_aikido -f Makefile.macosx
+
+xpostgres:
+	-\$(MAKE) -C postgres -f Makefile.macosx
+
+xmysql:
+	-\$(MAKE) -C mysql -f Makefile.macosx
+
+xcrypto:
+	-\$(MAKE) -C crypto -f Makefile.macosx
+
+
+cmod_aikido:
+	-\$(MAKE) -C mod_aikido -f Makefile.macosx clean
+
+cpostgres:
+	-\$(MAKE) -C postgres -f Makefile.macosx clean
+
+cmysql:
+	-\$(MAKE) -C mysql -f Makefile.macosx clean
+
+ccrypto:
+	-\$(MAKE) -C crypto -f Makefile.macosx clean
+
+

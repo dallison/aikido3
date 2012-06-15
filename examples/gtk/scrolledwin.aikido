@@ -1,0 +1,48 @@
+import gtk
+
+function destroy (widget, data) {
+    System.exit(0)
+}
+
+var window = new GTK.Dialog()
+window.signal_connect ("destroy", function (w,d) { System.exit(0) }, null)
+
+window.set_title ("scrolled window")
+window.set_border_width (0)
+window.set_usize (300, 300)
+
+
+var scrolled_window = new GTK.ScrolledWindow (null, null)
+scrolled_window.set_border_width (10)
+
+scrolled_window.set_policy (GTK.POLICY_AUTOMATIC, GTK.POLICY_ALWAYS)
+var vbox = window.get_vbox()
+vbox.pack_start (scrolled_window, true, true, 0)
+scrolled_window.show()
+
+var table = new GTK.Table (10, 10, false)
+table.set_row_spacings (10)
+table.set_col_spacings (10)
+
+scrolled_window.add_with_viewport (table)
+table.show()
+
+foreach i 10 {
+    foreach j 10 {
+        var button = new GTK.ToggleButton ("button (" + i + "," + j + ")\n")
+        table.attach_defaults (button, i, i+1, j, j+1)
+        button.show()
+    }
+}
+
+var button = new GTK.Button ("close")
+button.signal_connect_object ("clicked", function (o) { o.destroy() }, window)
+
+button.set_flags (GTK.CAN_DEFAULT)
+var action_area = window.get_action_area()
+action_area.pack_start (button, true, true, 0)
+button.grab_default()
+button.show()
+window.show()
+
+GTK.mainloop()

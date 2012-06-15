@@ -1,0 +1,189 @@
+import mysql
+
+class SchoolDatabase (host, name, user) extends MySQL.Database (host, name, user) {
+public:
+    function createSchema (nuke) {
+        // see what tables exist
+        var tables =  query ("show tables")
+        var tabmap = {}
+        foreach tab tables {
+            tabmap[tab[0]] = true
+        }
+        function createTable (tab, cols) {
+            if (typeof (tabmap[tab]) != "none") {
+                if (nuke) {
+                    query ("drop table " + tab)
+                } else {
+                    return false
+                }
+            }
+            var command = "create table " + tab + "( " ;
+            foreach col cols {
+                command += col + ", "
+            }
+            command >>= 2
+            command += ")"
+
+            System.println (command)
+            query (command)
+            return true
+        }
+
+        // table of persistent ids
+        var ids = ["studentid integer", "teacherid integer", "classid integer",
+                   "roomid integer"]
+
+        // students enrolled in the school
+        var students = ["id integer",
+		        "name varchar(32)",
+                        "address varchar(255)",
+                        "dob date"]
+
+        // teachers employed by the school
+        var teachers = ["id integer",
+		        "name varchar(40)",
+                        "employeeid integer"]
+
+        // classes offered by the school
+        var classes = ["id integer", "subject varchar(40)", "level varchar(20)", "period integer", "day integer"]
+
+        // rooms available for classes
+        var rooms = ["id integer", "number integer", "location varchar(80)"]
+
+        // relation: student takes class
+        var studenttakesclass = ["studentid integer", "classid integer"]
+
+        // relation: class occupies room
+        var classoccupiesroom = ["classid integer", "roomid integer"]
+                   
+        // relation: class taught by teacher
+        var classtaughtbyteacher = ["classid integer", "teacherid integer"]
+
+        createTable ("students", students)
+        if (createTable ("ids", ids)) {
+            query ("insert into ids values (1,1,1,1)")
+        }
+        createTable ("teachers", teachers)
+        createTable ("classes", classes)
+        createTable ("rooms", rooms)
+        createTable ("studenttakesclass", studenttakesclass)
+        createTable ("classoccupiesroom", classoccupiesroom)
+        createTable ("classtaughtbyteacher", classtaughtbyteacher)
+
+        
+    }
+
+    // make a date string in the format required by mysql
+    function makeDate (date) {
+        return date.format ("%Y-%m-%d %H:%M:%S")
+    }
+
+    // get a new persistent id of the type given
+    function newId (id) {
+        query ("update ids set " + id + " = " + id + " + 1")
+        var idtab = query ("select " + id + " from ids")
+        if (sizeof (idtab) == 0) {
+           throw "no id available"
+        }
+        var row = idtab[0]
+        return eval("row."+id)
+    }
+
+    function addStudent (name, address, dob) {
+        var newid = newId("studentid")
+        if (sizeof (query ("select * from students where name = '" + name + "'")) != 0) {
+            throw "student " + name + " already exists"
+        } else {
+            query ("insert into students values (" + newid + ", '" + name + "', '" + address + "', '" + makeDate (dob) + "')")
+        }
+        return newid
+    }
+
+    function addTeacher (name, employeeid) {
+        var newid = newId("teacherid")
+        if (sizeof (query ("select * from teachers where name = '" + name + "'")) != 0) {
+            throw "teacher " + name + " already exists"
+        } else {
+            query ("insert into teachers values (" + newid + ", '" + name + "', " + employeeid + ")")
+        }
+        return newid
+    }
+
+    function addClass (subject, level, period, day, teacher, room) {
+        var newid = newId("classid")
+        if (sizeof (query ("select * from classes where subject = '" + subject + "' and level = '" + level + "'")) != 0) {
+            throw "class " + subject + ' ' + level + " already exists"
+        } else {
+            query ("insert into classes values (" + newid + ", '" + subject + "', '" + level + "', " + period + ", " + day + ")")
+            var teacheridtab = query ("select id from teachers where name = '" + teacher + "'")
+            if (sizeof (teacheridtab) == 0) {
+                throw "No such teacher " + teacher
+            }
+            query ("insert into classtaughtbyteacher values (" + newid + ", " + teacheridtab.getRow(0).id + ")")
+            var roomidtab = query ("select id from rooms where number = " + room )
+            if (sizeof (roomidtab) == 0) {
+                throw "No such room " + room
+            }
+
+            var q = "insert into classoccupiesroom values (" + newid + ", " + roomidtab.getRow(0).id + ")"
+            query(q)
+
+        }
+        return newid
+    }
+
+    function addRoom (number, location) {
+        var newid = newId("roomid")
+        if (sizeof (query ("select * from rooms where number = " + number)) != 0) {
+            throw "room " + number + " already exists"
+        } else {
+            query ("insert into rooms values (" + newid + ", " + number + ", '" + location + "')")
+        }
+        return newid
+    }
+
+}
+
+var db = new SchoolDatabase ("localhost", "school", "root")
+
+function loadData (filename) {
+    var lines = readfile (filename)
+    var mode = ""
+    foreach line lines {
+        line = line.trim()
+        if (line.size() == 0) {
+            continue
+        }
+        if (line[0] == '#') {
+            continue
+        }
+        if (line[0] == '[') {
+            mode = line[1:line.size() - 2]
+            continue
+        }
+        var fields = line.split (',')
+        foreach i sizeof (fields) {
+           fields[i] = trim (fields[i])
+        }
+        switch (mode) {
+        case "students":
+            db.addStudent (fields[0], fields[1], new Date (fields[2]))
+            break
+        case "teachers":
+            db.addTeacher (fields[0], fields[1])
+            break
+        case "classes":
+            db.addClass (fields[0], fields[1], fields[2], fields[3], fields[4], fields[5])
+            break
+        case "rooms":
+            db.addRoom (fields[0], fields[1])
+            break
+        default:
+            throw "unknown mode " + mode
+        }
+    }
+}
+
+db.createSchema(true)
+loadData ("data")
+

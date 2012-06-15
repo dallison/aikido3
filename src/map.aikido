@@ -1,0 +1,107 @@
+/*
+ * map.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.12
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+import container
+
+monitor Map implements Container {
+private:
+    var value = {}
+
+public:
+    function insert (key, data) {
+        value[key] = data
+    }
+
+    function isPresent (key) {		// is the key present in the map
+        var v = value[key]
+        if (typeof (v) == "none") {
+            return false 
+        }
+        return true
+    }
+
+    function find (key) {		// find a key in a map.  Exception if not present
+        var v = value[key]
+        if (typeof (v) == "none") {
+            throw "Key not present"
+        }
+        return v
+    }
+
+    function put (key, data) {
+        insert (key, data)
+    }
+
+    function get (key) {
+        var v = value[key]
+        if (typeof (v) == "none") {
+            return none
+        }
+        return v
+    }
+
+    function erase (key) {		// erase the given key
+        delete value[key]
+    }
+
+    function keys {
+        var v = []
+        foreach k value {
+            v += k.first
+        }
+        return v
+    }
+
+    function size() {
+        return sizeof (value)
+    }
+
+    function empty {
+        return size() == 0
+    }
+
+    operator sizeof() {
+        return sizeof (value)
+    }
+
+    operator foreach {
+        return value
+    }
+  
+    function clear() {
+        value = {}
+    }
+
+    operator [] (i, j = -1) {
+        if (j != -1) {
+            throw "Illegal map subscript"
+        }
+        return value[i]
+    }
+
+    operator in (key) {
+        return key in value
+    }
+}

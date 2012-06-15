@@ -1,0 +1,32 @@
+.\" Aikido manual
+.\" David Allison
+.TH glob 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+glob \- Generate path names matching a pattern
+.SH SYNOPSIS
+\fBSystem.glob(pattern)
+.SH DESCRIPTION
+The System.glob() function provides the same functionality as
+the glob(3c) function.  It takes a pattern that can expand to a set
+of path names.  The pattern can contain wildcard characters.
+.SH RETURN VALUES
+A vector of strings, each entry being one filename that matches the
+pattern.
+.SH EXAMPLE
+.br
+
+.br
+var files = System.glob ("*.c")
+.br
+foreach f files {
+.br
+    println (f)
+.br
+}
+.br
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

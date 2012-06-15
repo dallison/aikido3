@@ -1,0 +1,767 @@
+/*
+ * cparse.aikido
+ *
+ * Aikido Language System,
+ * export version: 1.00
+ * Copyright (c) 2002-2003 Sun Microsystems, Inc.
+ *
+ * Sun Public License Notice
+ * 
+ * The contents of this file are subject to the Sun Public License Version 1.0 (the "License"). You
+ * may not use this file except in compliance with the License. A copy of the License is available
+ * at http://www.opensource.org/licenses/sunpublic.php
+ * 
+ * The Original Code is Aikido. 
+ * The Initial Developer of the Original Code is David Allison on behalf of Sun Microsystems, Inc. 
+ * Copyright (C) Sun Microsystems, Inc. 2000-2003. All Rights Reserved.
+ * 
+ * 
+ * Contributor(s): dallison
+ *
+ * Version:  1.2
+ * Created by dallison on 4/19/2002
+ * Last modified by dallison on 03/07/29
+ */
+
+/**
+ * Main C Parser program.  This defines the global objects and types
+ */
+
+native breakpoint(s)
+
+import clex
+import hashtable
+import list
+import stack
+
+package CParser {
+
+    extend Tokens {
+        T_WHILE, T_IF, T_ELSE, T_DO, T_FOR,
+        T_INT, T_CHAR, T_LONG, T_SHORT, T_FLOAT, T_DOUBLE,
+        T_SIGNED, T_UNSIGNED, T_CONST, T_VOLATILE,
+        T_STRUCT, T_UNION, T_ENUM, T_VOID,
+        T_AUTO, T_STATIC, T_EXTERN, T_REGISTER, T_TYPEDEF,
+        T_SIZEOF, T_BREAK, T_CONTINUE, T_RETURN,
+        T_SWITCH, T_CASE, T_DEFAULT, T_GOTO, 
+
+        T_SEMICOLON, T_STAR, T_RPAREN, T_LPAREN, T_DOT,
+        T_LSQUARE, T_RSQUARE, T_PLUS, T_MINUS, T_SLASH,
+        T_PERCENT, T_QUESTION, T_COLON, T_COMMA, T_LBRACE,
+        T_RBRACE, T_TILDE, T_CARET, T_BANG, T_AMPERSAND,
+        T_BITOR, T_LOGAND, T_LOGOR, T_LSHIFT, T_RSHIFT,
+        T_LESS, T_GREATER, T_LESSEQ, T_GREATEREQ, T_EQUAL, T_NOTEQ,
+        T_PLUSPLUS, T_MINUSMINUS, T_ASSIGN,
+        T_PLUSEQ, T_MINUSEQ, T_STAREQ, T_SLASHEQ, T_PERCENTEQ,
+        T_LSHIFTEQ, T_RSHIFTEQ, T_ANDEQ,
+        T_OREQ, T_XOREQ, T_ARROW, T_ELLIPSIS,
+
+        // pseudo tokens
+        T_POSTINC, T_POSTDEC, T_UMINUS, T_UPLUS, T_CONTENTS,
+        T_ADDRESS, T_EXPR, T_NULL, T_COMPOUND, T_FIX, T_FLT,
+        T_CAST, T_LABEL
+
+    }
+
+    class CLex (lines, file) extends Lex (lines, file) {
+        addReservedWord ("while", T_WHILE)
+        addReservedWord ("if", T_IF)
+        addReservedWord ("else", T_ELSE)
+        addReservedWord ("do", T_DO)
+        addReservedWord ("for", T_FOR)
+        addReservedWord ("int", T_INT)
+        addReservedWord ("char", T_CHAR)
+        addReservedWord ("long", T_LONG)
+        addReservedWord ("short", T_SHORT)
+        addReservedWord ("float", T_FLOAT)
+        addReservedWord ("double", T_DOUBLE)
+        addReservedWord ("signed", T_SIGNED)
+        addReservedWord ("unsigned", T_UNSIGNED)
+        addReservedWord ("const", T_CONST)
+        addReservedWord ("volatile", T_VOLATILE)
+        addReservedWord ("struct", T_STRUCT)
+        addReservedWord ("union", T_UNION)
+        addReservedWord ("enum", T_ENUM)
+        addReservedWord ("auto", T_AUTO)
+        addReservedWord ("extern", T_EXTERN)
+        addReservedWord ("static", T_STATIC)
+        addReservedWord ("register", T_REGISTER)
+        addReservedWord ("typedef", T_TYPEDEF)
+        addReservedWord ("sizeof", T_SIZEOF)
+        addReservedWord ("break", T_BREAK)
+        addReservedWord ("continue", T_CONTINUE)
+        addReservedWord ("return", T_RETURN)
+        addReservedWord ("switch", T_SWITCH)
+        addReservedWord ("case", T_CASE)
+        addReservedWord ("default", T_DEFAULT)
+        addReservedWord ("goto", T_GOTO)
+        addReservedWord ("void", T_VOID)
+
+        addToken ("...", T_ELLIPSIS) ;
+        addToken ("*", T_STAR) ;
+        addToken (")", T_RPAREN) ;
+        addToken ("(", T_LPAREN) ;
+        addToken (".", T_DOT) ;
+        addToken ("[", T_LSQUARE) ;
+        addToken ("]", T_RSQUARE) ;
+        addToken ("+", T_PLUS) ;
+        addToken ("-", T_MINUS) ;
+        addToken ("/", T_SLASH) ;
+        addToken ("%", T_PERCENT) ;
+        addToken ("?", T_QUESTION) ;
+        addToken (":", T_COLON) ;
+        addToken (",", T_COMMA) ;
+        addToken ("{", T_LBRACE) ;
+        addToken ("}", T_RBRACE) ;
+        addToken ("~", T_TILDE) ;
+        addToken ("^", T_CARET) ;
+        addToken ("!", T_BANG) ;
+        addToken ("&", T_AMPERSAND) ;
+        addToken ("|", T_BITOR) ;
+        addToken ("&&", T_LOGAND) ;
+        addToken ("||", T_LOGOR) ;
+        addToken ("<<", T_LSHIFT) ;
+        addToken (">>", T_RSHIFT) ;
+        addToken ("<", T_LESS) ;
+        addToken (">", T_GREATER) ;
+        addToken ("<=", T_LESSEQ) ;
+        addToken (">=", T_GREATEREQ) ;
+        addToken ("==", T_EQUAL) ;
+        addToken ("!=", T_NOTEQ) ;
+        addToken ("++", T_PLUSPLUS) ;
+        addToken ("--", T_MINUSMINUS) ;
+        addToken ("=", T_ASSIGN) ;
+        addToken ("+=", T_PLUSEQ) ;
+        addToken ("-=", T_MINUSEQ) ;
+        addToken ("*=", T_STAREQ) ;
+        addToken ("/=", T_SLASHEQ) ;
+        addToken ("%=", T_PERCENTEQ) ;
+        addToken ("<<=", T_LSHIFTEQ) ;
+        addToken (">>=", T_RSHIFTEQ) ;
+        addToken ("&=", T_ANDEQ) ;
+        addToken ("|=", T_OREQ) ;
+        addToken ("^=", T_XOREQ) ;
+        addToken (";", T_SEMICOLON) ;
+        addToken ("->", T_ARROW) ;
+
+    }
+
+    function printToken (tok, s) {
+        switch (tok) {
+        case T_STAR:
+            '*' -> s
+            break
+        case T_DOT:
+            '.' -> s
+            break
+        case T_PLUS:
+            '+' -> s
+            break
+        case T_MINUS:
+            '-' -> s
+            break
+        case T_SLASH:
+            '/' -> s
+            break
+        case T_PERCENT:
+            '%' -> s
+            break
+        case T_COMMA:
+            ',' -> s
+            break
+        case T_TILDE:
+            '~' -> s
+            break
+        case T_CARET:
+            '^' -> s
+            break
+        case T_BANG:
+            '!' -> s
+            break
+        case T_AMPERSAND:
+            '&' -> s
+            break
+        case T_BITOR:
+            '|' -> s
+            break
+        case T_LOGAND:
+            "&&" -> s
+            break
+        case T_LOGOR:
+            "||" -> s
+            break
+        case T_LSHIFT:
+            "<<" -> s
+            break
+        case T_RSHIFT:
+            ">>" -> s
+            break
+        case T_LESS:
+            '<' -> s
+            break
+        case T_GREATER:
+            '>' -> s
+            break
+        case T_LESSEQ:
+            "<=" -> s
+            break
+        case T_GREATEREQ:
+            ">=" -> s
+            break
+        case T_EQUAL:
+            "==" -> s
+            break
+        case T_NOTEQ:
+            "!=" -> s
+            break
+        case T_PLUSPLUS:
+            "++" -> s
+            break
+        case T_MINUSMINUS:
+            "--" -> s
+            break
+        case T_ASSIGN:
+            '=' -> s
+            break
+        case T_PLUSEQ:
+            "+=" -> s
+            break
+        case T_MINUSEQ:
+            "-=" -> s
+            break
+        case T_STAREQ:
+            "*=" -> s
+            break
+        case T_SLASHEQ:
+            "/=" -> s
+            break
+        case T_PERCENTEQ:
+            "%=" -> s
+            break
+        case T_LSHIFTEQ:
+            "<<=" -> s
+            break
+        case T_RSHIFTEQ:
+            ">>=" -> s
+            break
+        case T_ANDEQ:
+            "&=" -> s
+            break
+        case T_OREQ:
+            "|=" -> s
+            break
+        case T_XOREQ:
+            "^=" -> s
+            break
+        case T_ARROW:
+            "->" -> s
+            break
+        case T_POSTINC:
+            "++" -> s
+            break
+        case T_POSTDEC:
+            "--" -> s
+            break
+        case T_UMINUS:
+            "-" -> s
+            break
+        case T_UPLUS:
+            "+" -> s
+            break
+        case T_CONTENTS:
+            '*' -> s
+            break
+        case T_ADDRESS:
+            '&' -> s
+            break
+        case T_FIX:
+            " FIX " -> s
+            break
+        case T_FLT:
+            " FLT " -> s
+            break
+        }
+    }
+
+    public class Parser (cppopts) {
+        var cpp = "gcc -E "             // use C compiler as the preprocessor
+        foreach c cppopts {
+            cpp += " " + c
+        }
+        var tmpfile = tmpnam()
+
+        var lex = null
+
+        var numErrors = 0
+        const maxErrors = 50
+
+       
+        var flags = 0
+
+        function error (s) { 
+            println ("\"" + lex.filename + "\", line " + lex.lineno + ": " + s, stderr)
+            numErrors++
+            if (numErrors > maxErrors) {
+                println ("Too many errors, goodbye", stderr)
+                exit (1)
+            }
+        }
+
+        function warning (s) { 
+            println ("\"" + lex.filename + "\", line " + lex.lineno + ": warning: " + s, stderr)
+        }
+
+       
+        interface Printable {
+            function print (s, indent)
+        }
+
+        interface Dumpable {
+            function dump (stream)
+        }
+
+        class ParseNode implements Printable {
+            static var nodecount = 0
+
+            public var id = 0
+
+            public function print (s, indent) {
+            }
+
+            public function dump (stream) {
+                if (id != 0) {
+                    throw "Attempt to dump node " + id + " multiple times"
+                }
+                id = ++nodecount
+                format ("\n%-8d %-25s", id, typeof (this)) -> stream
+                //['\n', id, '\t', typeof (this), '\t'] -> stream
+            }
+
+        }
+
+        const CINT = 0x000001
+        const CCHAR = 0x000002
+        const CFLOAT = 0x000004
+        const CDOUBLE = 0x000008
+        const CVOID = 0x000010
+        const CSIGNED = 0x000020
+        const CUNSIGNED = 0x000040
+        const CLONG = 0x000080
+        const CSHORT = 0x000100
+        const CSTRUCT = 0x000200
+        const CUNION = 0x000400
+        const CENUM = 0x000800
+        const CCONST = 0x0001000
+        const CVOLATILE = 0x002000
+        const CBITFIELD = 0x004000
+        const CLONGLONG = 0x008000
+
+        // storage classes
+        const sSTATIC = 0x0001
+        const sAUTO = 0x0002
+        const sEXTERN = 0x0010
+        const sTYPEDEF = 0x0020
+        const sREGISTER = 0x0040
+        const sARGUMENT = 0x0080
+        const sENUMCONST = 0x0100
+        const sSTRTAG = 0x0200
+
+        function fakename {
+            static var fnnum = 0
+            return "__fake__" + fnnum++
+        }
+
+        class Symbol...
+
+        class Function (symbol) {
+            var dependencies = {}               // map of name vs symbol
+            var body = null
+            var busy = false
+
+        public:
+            function getSymbol {
+                return symbol
+            }
+
+            function setBody (b) {
+                body = b
+            }
+ 
+            function getBody() {
+                return body
+            }
+
+            function addDependency (sym) {
+                var name = sym.getName()
+                if (!(name in dependencies)) {
+                     dependencies[name] = sym
+                }
+            }
+
+            function showDependencies {
+                println ("function " + symbol.getName() + " dependencies:")
+                foreach dep dependencies {
+                    println ("    " + dep.first)
+                }
+            }
+
+            function checkDependencies (parent) {
+                if (busy) {
+                    error ("Recursive path to " + symbol.getName() + " from " + (parent << 1))
+                } else {
+                    busy = true
+                    var par = parent + "." + symbol.getName()
+                    foreach dep dependencies {
+                        var func = dep.second.getDetails()
+                        if (func != null) {
+                            func.checkDependencies (par)
+                        }
+                    }
+                    busy = false
+                }
+            }
+
+            function print (s, indent) {
+               if (body != null) {
+                   body.print (s,indent)
+               } 
+            }
+        }
+
+        var currentFunction = null
+
+        class Symbol (name, stor = 0) extends ParseNode {
+            var type = null         // type of symbol
+            var predefined = false  // symbol is predefined
+            var offset = 0          // offset into things
+            var storage = stor
+            generic details = null         // function body, initial value or enum value
+
+            public function setType (t) {
+                type = t
+            }
+
+            public function setStorage (s) {
+                storage = s
+            }
+
+            public function getStorage() {
+                return storage
+            }
+
+            public function getName {
+                return name
+            }
+
+            public function getType {
+                return type
+            }
+
+            public function predefine {
+                predefined = true
+            }
+     
+            public function isPredefined {
+                return predefined
+            }
+
+            public function define {
+                predefined = false
+            }
+
+            public function getSize() {
+                return type.getSize()
+            }
+
+            public function getOffset() {
+                return offset
+            }
+
+            public function setOffset (off) {
+                offset = off
+            }
+
+            public function getDetails() {
+                return details
+            }
+
+            public function setDetails (d) {
+                details = d
+            }
+
+            public function dump (stream) {
+                if (type.id == 0) {
+                    type.dump (stream)
+                }
+                ParseNode.dump (stream)
+                [name, ' ', type.id, ' ', predefined, ' ', offset, ' ', storage] -> stream
+            }
+        }
+
+        // complete registry of all symbols
+        var variables = []
+        var functions = []
+
+        function addFunction (sym) {
+            append (functions, sym)
+        }
+
+        function addVariable (sym) {
+            append (variables, sym)
+        }
+
+        class SymbolTable (size) extends Hashtable (size) {
+            public function insert (symbol) {
+                var name = symbol.getName()
+                var oldsym = get (name)
+                if (typeof (oldsym) != "none") {
+                    if (oldsym.isPredefined()) {
+                        oldsym.define()
+                        oldsym.setType (symbol.getType())
+                        return oldsym
+                    }
+                    if (oldsym.getStorage() == sEXTERN || symbol.getStorage() == sEXTERN) {
+                        oldsym.setType (symbol.getType())
+                        return oldsym
+                    }
+                    error ("Duplicate definition of symbol " + name)
+                    return oldsym
+                } else {
+                    put (name, symbol)
+                    if (symbol.getType() != null) {
+                        if (symbol.getType().isFunction()) {
+                            addFunction (symbol)
+                        } else {
+                            addVariable (symbol)
+                        }
+                    }
+                    return symbol
+                }
+            }
+
+            public function find (name) {
+                var sym = get (name)
+                if (typeof (sym) != "none") {
+                    return sym
+                }
+                return null
+            }
+        }
+
+        class SymbolStack (topsize, size) extends List {
+            public function push {
+                var sz = sizeof(this) == 0 ? topsize : size
+                var table = new SymbolTable (sz)
+                insertEnd (table)
+            }
+
+            public function pop {
+                erase (lastitem)
+            }
+
+            public function findTop (name) {
+                if (lastitem == null) {
+                    return null
+                }
+                return lastitem.value.find (name)
+            }
+
+            public function find (name) {
+                var item = lastitem
+                while (item != null) {
+                   var sym = item.value.find (name)
+                   if (sym != null) {
+                       return sym
+                   }
+                   item = item.prev
+                }
+                return null
+            }
+
+            public function insert (sym) {
+                return lastitem.value.insert (sym)
+            }
+
+            public function insertBottom (sym) {
+                items.value.insert (sym)
+            }
+
+            public operator sizeof {
+                return List.operator sizeof()
+            }
+        }
+
+        var symbolStack = new SymbolStack(1009, 101)
+        var tagStack = new SymbolStack(101, 11)
+
+        // global symbol and tag tables
+        symbolStack.push()
+        tagStack.push()
+
+        function findSymbol (name) {
+            return symbolStack.find (name)
+        }
+
+        function findTopSymbol (name) {
+            return symbolStack.findTop (name)
+        }
+
+        function insertSymbol (sym) {
+            return symbolStack.insert (sym)
+        }
+
+        
+
+        // insert a symbol at the bottom of the stack
+        function insertGlobalSymbol (tag) {
+            symbolStack.insertBottom (tag)
+        }
+
+        
+        function findTag (name) {
+            return tagStack.find (name)
+        }
+
+        function findTopTag (name) {
+            return tagStack.findTop (name)
+        }
+
+        function insertTag (tag) {
+            tagStack.insert (tag)
+        }
+
+        function pushScope {
+            symbolStack.push()
+            tagStack.push()
+        }
+
+        function popScope {
+            symbolStack.pop()
+            tagStack.pop()
+        }
+
+        function functionBody ...
+        function storage...
+        function type...
+        function declaration...
+        function needsemi...
+        function staticInitializer...
+        function implicitType...
+
+        function needbrack (brack) {
+            if (!lex.match (brack)) {
+                var b = '('
+                switch (brack) {
+                case T_RPAREN:
+                    b = ')'
+                    break
+                case T_LBRACE:
+                    b = '{'
+                    break
+                case T_RBRACE:
+                    b = '}'
+                    break
+                case T_LSQUARE:
+                    b = '['
+                    break
+                case T_RSQUARE:
+                    b = ']'
+                    break
+                }
+                error ("'" + b + "' expected")
+            }
+        }
+
+        public function parse (file) {
+            system (cpp + " " + file + " > " + tmpfile)
+            
+            var lines = readfile (tmpfile)
+            lex = new CLex (lines, file)
+
+            lex.readLine()
+            lex.nextToken()
+            while (!lex.eof()) {
+                var s = storage()
+                var done = false
+                var typ = type()
+                if (typ == null) {
+                    typ = implicitType()
+                }
+                while (!done) {
+                    var decl = declaration (s, typ)
+                    if (decl != null) {
+                        var t = decl.getType()
+                        decl = insertSymbol (decl)
+                        if (t.isFunction()) {
+                            if (lex.match (T_LBRACE)) {
+                                var func = new Function (decl)
+                                currentFunction = func
+                                var body = functionBody(decl)
+                                func.setBody(body)
+                                decl.setDetails (func)
+                                println (decl.getName())
+                                needbrack (T_RBRACE)
+                                done = true
+                            } else {
+                                decl.predefine()
+                            }
+
+                        } elif (lex.match (T_ASSIGN)) {             // initializer
+                            var initval = staticInitializer (t)
+                            decl.setDetails (initval)
+                        }
+                        if (!lex.match (T_COMMA)) {
+                            break
+                        }
+                    } else {
+                        error ("Declaration expected")
+                        lex.nextToken()
+                    }
+                }
+                if (!done) {
+                    needsemi()
+                }
+            }
+            remove (tmpfile)
+        }
+    }
+}
+
+var cppopts = []
+var files = []
+
+function usage() {
+    println ("usage: cparse [-Idir] [-Dmacro[=value]] [-Umacro] file ...", stderr)
+    exit (1)
+}
+
+
+for (var i = 0 ; i < sizeof (args) ;i++) {
+    var arg = args[i]
+    if (arg[0] == '-') {
+        if (arg[1] == 'I' || arg[1] == 'D' || arg[1] == 'U') {
+            append (cppopts, arg)
+        } else {
+            switch (arg) {
+                // other options here
+            default:
+                usage()
+            }
+        }
+    } else {
+         append (files, arg)
+    }
+}
+
+if (sizeof (files) == 0) {
+    usage()
+}
+
+var parser = new CParser.Parser (cppopts)
+parser.declarevarargs() ;
+
+foreach file files {
+    parser.parse(file)
+    parser.printFunctions()
+}
+

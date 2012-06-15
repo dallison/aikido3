@@ -1,0 +1,3 @@
+var i = openin (args[0])
+i -> stdout
+close (i)

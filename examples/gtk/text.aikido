@@ -1,0 +1,82 @@
+import gtk
+
+function text_toggle_editable (checkbutton, text) {
+   text.set_editable (checkbutton.get_active())
+}
+
+function text_toggle_word_wrap (checkbutton, text) {
+    text.set_word_wrap (checkbutton.get_active())
+}
+
+function close_application (widget, data) {
+   System.exit (0)
+}
+
+var window = new GTK.Window (GTK.WINDOW_TOPLEVEL)
+window.set_usize (600, 500)
+window.set_policy (true, true, false)
+window.signal_connect ("destroy", close_application, null)
+window.set_title ("Text widget example")
+window.set_border_width (0)
+
+var box1 = new GTK.VBox (false, 0)
+window.add (box1)
+box1.show()
+
+var box2 = new GTK.VBox (false, 10)
+box2.set_border_width (10)
+box1.pack_start (box2, true, true, 0)
+box2.show()
+
+var table = new GTK.Table (2, 2, false)
+table.set_row_spacing (0, 2)
+table.set_col_spacing (0, 2)
+box2.pack_start (table, true, true, 0)
+table.show()
+
+var text = new GTK.Text (null, null)
+text.set_editable (true)
+table.attach (text, 0, 1, 0, 1,
+                    GTK.EXPAND | GTK.SHRINK | GTK.FILL,
+                    GTK.EXPAND | GTK.SHRINK | GTK.FILL, 0, 0);
+text.show()
+
+var vadj = null
+var hadj = null
+text.get_adjustments (hadj, vadj)
+var vscrollbar = new GTK.VScrollbar (vadj)
+table.attach (vscrollbar, 1, 2, 0, 1,
+                    GTK.FILL, GTK.EXPAND | GTK.SHRINK | GTK.FILL, 0, 0);
+
+vscrollbar.show()
+
+var cmap = GDK.colormap_get_system()
+var color = new GDK.Color (0xffff, 0, 0)
+
+if (!GDK.color_alloc (cmap, color)) {
+    throw "can't allocate color"
+}
+
+var fixed_font = GDK.font_load ("-misc-fixed-medium-r-*-*-*-140-*-*-*-*-*-*");
+
+text.realize() 
+text.freeze()
+
+var tstyle = text.get_style()
+text.insert (0, tstyle.black, null, "Supports ", -1)
+text.insert (0, color,  null, "colored ", -1)
+text.insert (0, tstyle.black, null, "text and different ", -1)
+text.insert (fixed_font, tstyle.black, null, "fonts\n\n", -1)
+
+
+var infile = readfile ("text.aikido")
+foreach line infile {
+    text.insert (fixed_font, null, null, line, sizeof (line))
+}
+  
+
+text.thaw()
+
+window.show()
+
+GTK.mainloop()

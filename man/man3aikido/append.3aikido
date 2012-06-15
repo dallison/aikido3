@@ -1,0 +1,38 @@
+.\" Aikido manual
+.\" David Allison
+.TH append 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+append \- append one value to another
+.SH SYNOPSIS
+\fBSystem.append(object, value)
+.SH DESCRIPTION
+The System.append() function appends a value to the end of another.  It works with 
+vectors, bytevectors, strings and maps.
+
+.SH RETURN VALUES
+There is no value returned from this function.
+.SH EXAMPLE
+var s = "hello "
+.br
+System.append (s, "world")
+
+
+.SH NOTE
+This function is also called when the builtin method
+.I append
+is called on a value.  The above example can be
+done by:
+.br
+
+.br
+var s = "hello "
+.br
+s.append ("world")              // call System.append()
+
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

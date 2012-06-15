@@ -1,0 +1,44 @@
+.\" Aikido manual
+.\" David Allison
+.TH malloc 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+malloc \- allocate raw memory
+.SH SYNOPSIS
+\fBSystem.malloc(size)
+.SH DESCRIPTION
+The System.malloc() function allocates a block of raw memory.  The result
+of the System.malloc() call is a
+.I pointer
+type.  The memory can be read and written using the
+.I System.peek()
+and
+.I System.poke()
+functions.  The value returned may be manipulated to form pointers into the
+block.
+.P
+The memory allocated by the System.malloc() function is garbage-collected
+so there is no need for a free() function.  The Aikido
+.I delete
+operator will artificially decrement the reference count for the memory
+and force a deletion if desired.
+
+.SH RETURN VALUES
+The return value is a pointer to a piece of raw memory.
+.SH EXAMPLE
+var mem = malloc (100)          // allocate the memory
+.br
+System.poke (mem + 10, 1)       // write to it
+.br
+var i = System.peek (mem + 10)  // read it
+.br
+var mem1 = mem + 20             // manipulate the address
+.br
+
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+peek(3aikido), poke(3aikido)

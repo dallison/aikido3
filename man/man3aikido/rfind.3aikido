@@ -1,0 +1,62 @@
+.\" Aikido manual
+.\" David Allison
+.TH find 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+rfind \- search for a value within a value
+.SH SYNOPSIS
+\fBSystem.rfind(object, value, index = 0)
+.SH DESCRIPTION
+The System.rfind() function searches for a value within another value in reverse
+order. The first parameter specifies the value to be searched, the second the value to find and the third, optional,
+parameter specifies the start index.  The search is performed forwards from the starting
+index backwards until the start of the value.
+.P
+The rfind function uses the type of the first parameter to determine how the search is done:
+.IP "vector" 10
+The value may be any type.  The vector is searched for the specified value.
+.IP "bytevector" 10
+The value must be an integral type and the bytevector is searchhhed for a byte of that value.
+.IP "string" 10
+The value must be either a string or character.  The string is searched for it
+.IP "map" 10
+The value may be any type, and a search of the map is performed
+.IP "object" 10
+If the object contains a 
+.I rfind
+function, that function is called.  Otherwise the value to be found must be a string
+and the block corresponding to the type of the object is searched for a member
+whose name is spelled by the string.
+.IP "block" 10
+The value must be a string type.  The block is searched for a member whose name is
+spelled by the contents of the string.
+
+
+.SH RETURN VALUES
+The return value depends on the type being searched:
+.IP "vector" 10
+Index into the vector of the found value, -1 if not found
+.IP "bytevector" 10
+Index into the bytevector of the found value, -1 if not found
+.IP "string" 10
+Index into the string of the found value, -1 if not found
+.IP "map" 10
+The mapping of the key found.  The value 
+.I none
+if not found
+.IP "object" 10
+If the object contains a 
+.I rfind
+function the value returned from it.  Otherwise, the result is as if a block was searched
+.IP "block" 10
+If the block contains a member that is named by the string the member itself is returned.  Otherwise
+the number 0 is returned.
+
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+find(3aikido)

@@ -1,0 +1,22 @@
+.\" Aikido manual
+.\" David Allison
+.TH pipeclose 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+pipeclose \- Close a stream connected to a pipe 
+.SH SYNOPSIS
+\fBSystem.pipeclose(stream)
+.SH DESCRIPTION
+The System.pipeclose() function closes the stream connected to a pipe and waits
+for the command at the other end of the pipe to finish.  The pipeclose()
+function should be used with streams created using the System.pipe() function.
+
+.SH RETURN VALUES
+The exit status of the command is returned.
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+pipe(3aikido), pipewait(3aikido)

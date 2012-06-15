@@ -1,0 +1,65 @@
+.\" Aikido manual
+.\" David Allison
+.TH replace 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+replace \- replace parts of a value with another value
+.SH SYNOPSIS
+\fBSystem.replace(value, findvalue, replacevalue, all)
+.SH DESCRIPTION
+The System.replace() function replaces parts of a value by another value.  It's
+a "search and replace" type function.  The input value is first copied and
+then searched for the 
+.I findvalue
+parameter.  The first occurrence of this value is replace by the
+.I replacevalue
+parameter.  Depending on the value of the 
+.I all
+parameter, the function either continues to find other values
+or finishes after one.
+.P
+It should be noted that the System.replace() function does not
+modify the original value, but make a copy of it and modifies
+the copy.
+.P
+The following types may be used as the first parameter:
+.IP "string" 10
+The 
+.I findvalue
+and 
+.I replacevalue
+parameters must be string types.
+.IP "vector" 10
+The 
+.I findvalue
+and
+.I replacevalue
+can be of any type.
+
+.IP "bytevector" 10
+The 
+.I findvalue
+and 
+.I replacevalue
+must be an integral type
+
+.SH RETURN VALUES
+The System.replace() function returns a copy of the original value
+with the replacements performed.
+.SH EXAMPLE
+var s = "hello world"
+.br
+var p = System.replace (s, "l", "r", true)      // p = "herro worrd"
+.br
+var v = [1, 2, 3, 4, 4, 5]
+.br
+var v1 = replace (v, 4, 10, false)              // v1 = [1, 2, 3, 10, 4, 5]
+
+.SH PACKAGE
+.IP "System" 10
+
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+find(3aikido), transform(3aikido)
+

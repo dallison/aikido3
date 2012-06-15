@@ -1,0 +1,38 @@
+.\" Aikido manual
+.\" David Allison
+.TH readfile 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+readfile \- Read a file into a vector of strings
+.SH SYNOPSIS
+\fBSystem.readfile(filename)
+.SH DESCRIPTION
+The System.readfile() function reads the named file into a vector of
+strings.  Each line in the file is one element of the vector.  The
+line feed characters are retained.
+.P
+This function is the fastest way to read a file into memory.  Once
+in memory, the file appears as a regular vector that can
+be manipulated.
+.SH RETURN VALUES
+A vector of strings is returned
+.SH EXAMPLE
+.P
+var lines = readfile ("results.txt")
+.br
+foreach line lines {
+.br
+    if ("total" in line) {
+.br
+        print (line)
+.br
+    }
+.br
+}
+.br
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+openin(3aikido)

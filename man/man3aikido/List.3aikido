@@ -1,0 +1,108 @@
+.\" Aikido manual
+.\" David Allison
+.TH List 3aikido 3/10/2003 aikido "Aikido classes"
+
+.SH NAME
+List \- Double-linked list monitor
+.SH SYNOPSIS
+\fBimport list
+.P
+\fBmonitor List implements Container {
+.br
+    ...
+.br
+}
+.br
+.SH DESCRIPTION
+The List monitor is mutex-locked object that implements a double-linked
+list of values.  Functions are provided to insert values into the list
+at various points and also to delete values and iterate over the list.
+.P
+The list is implemented as a linked list of 
+.I Item
+objects.  An item is an object with a next and previous pointer along
+with a value.
+.P
+Certain operations in the list operate on items rather than the
+values held in the items.  To obtain an item from a value, use
+the 
+.I find
+function.
+
+The functions provided are:
+.IP "insertEnd (v)" 10
+Insert the value v at the end of the list
+.IP "insertStart (v)" 10
+Insert the value v at the start of the list
+.IP "insertBefore (i, v)" 10
+Given an item i, insert the value v before it.  The item 'i' must be obtained
+by use of the
+.I find
+function.
+.IP "insertAfter (i, v)" 10
+Given an item i, insert the value v after it.  The item 'i' must be obtained
+by use of the
+.I find
+function.
+.IP "clear()" 10
+Clear the list by removing all the items
+.IP "operator sizeof ()" 10
+Return the number of items in the list
+.IP "find(v, start = null)" 10
+Search the list at a given item and return the item found.  An object of
+type
+.I List.Item
+is returned.
+.IP "operator in (v)" 10
+Return true if the value v is present in the list
+.IP "erase(i)" 10
+Given an item i, erase it from the list
+.IP "empty()" 10
+Is the list empty
+.IP "push_back(v)" 10
+Compatibility function, same as insertEnd()
+.IP "push_front(v)" 10
+Compatibility function, same as insertStart()
+.IP "size()" 10
+Return number of items in the list
+.IP "operator foreach(var i)" 10
+Complex iterator.  On each call, this will return the value of each
+successive item iterating from the start of the list to the end.  When
+the last item value has been returned, the next call will return the
+value
+.I none
+..
+.SH EXAMPLE
+.P
+import list
+.P
+var names = new List()
+.br
+names.insertEnd ("dave")
+.br
+names.insertEnd ("fred")
+.br
+names.insertStart ("joe")
+.br
+
+.br
+println ("there are " + names.size() + " items in the list")
+.br
+foreach name names {
+.br
+    println (name)(
+.br
+}
+.br
+
+.br
+var i = names.find ("dave")
+.br
+names.erase (i)
+.br
+
+.br
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO
+Container(3aikido)

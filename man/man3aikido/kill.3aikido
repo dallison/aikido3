@@ -1,0 +1,17 @@
+.\" Aikido manual
+.\" David Allison
+.TH kill 3aikido 3/10/2003 aikido "Aikido functions"
+
+.SH NAME
+kill \- 
+.SH SYNOPSIS
+\fBSystem.kill()
+.SH DESCRIPTION
+The System.kill() function
+.SH RETURN VALUES
+.SH EXAMPLE
+.SH PACKAGE
+.IP "System" 10
+.SH AUTHOR
+David Allison, Sun Microsystems Laboratories.
+.SH SEE ALSO

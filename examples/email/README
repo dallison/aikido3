@@ -1,0 +1,21 @@
+Email sender GUI example
+------------------------
+
+This example is a GTK+ program that presents a window
+that allows you to send an email.  The window has
+fields for the recipient addresses, CC addresses,
+subject and the text itself.
+
+Since this is a GTK+ example, you will have to set
+your AIKIDOPATH variable to tell the interpreter
+where the GTK+ libaries are if they are not in
+your LD_LIBRARY_PATH or in /usr/lib
+
+The program sends a single email and exits.
+
+% setenv AIKIDOPATH <path for aikido libraries>
+% aikido emailsender
+
+Note, this won't work on Windows as there is
+no command line mailer available as stock.
+

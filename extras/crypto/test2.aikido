@@ -1,0 +1,7 @@
+import base64
+
+var s = "XIYkFoWaUNSrlNlyKrM4K3E6I8fdeaRV+saxCA0bHICXDnEebzZLmgBmFgsCwGDb"
+//var s = "tZH4dUJHOMUxUbCq5ReYzWYQW6qjA+N5suNHbORNoVpdgsSgQgt0kHewD2IKZp6f"
+var p = Base64.decode(s)
+println (p.size())
+
