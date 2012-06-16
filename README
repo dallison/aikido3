@@ -3,6 +3,160 @@ Aikido Release Notes
 
 Please refer to the file COPYRIGHT for information relating to the copyright
 of this code.
+
+Release 3.00
+------------
+
+This release adds the following:
+
+1. extras directory containing:
+   a. mod_aikido: a webapp/servlet Apache2 module that allows Aikido scripts to run inside apache without using CGI
+   b. mysql and postgres database interfaces
+   c. crypto: encryption and decryption using openssl for AES and SHA1
+
+2. New syntax for variable definitions.  Now, instead of just supplying an initial value for variables at definition time you can also provide a type.  The syntax is
+the same as that used for formal paramter type declarations and function return types.  The initial value for the variable is not necessary if a type is given and
+will be cast to the defined type at runtime.
+
+For example:
+
+var myint:int = initme()        // the result of initme() will be cast to int
+var mystring:string = 3         // the result will be "3"
+
+// also no initializers
+var x:int           // x initialized to 0
+var y:real          // y initialized to 0.0
+
+
+3. Java-style annotations.
+
+Although I don't like the syntax, Aikido now supports Java style annotations for variables and blocks (classes, etc).  To define an annotation, use the same
+syntax as Java.  For example, the builtin annotation @Property is defined (in system.aikido) as:
+
+    @interface Property {
+        function get() default true;        // has getter method
+        function set() default true;        // has setter method
+        function boolean() default false;   // result is boolean (getter is isFoo rather than getFoo)
+    }
+
+This can be applied to a variable inside a block and will generate getter and setter methods automatically (like Objective-C's @property directive).  For
+example:
+
+class Foo {
+    @Property var x: int
+    @Property (set=false) var y:string
+}
+
+The class Foo will have the following function defined:
+
+public function getX()
+public function setX(v)
+public function getY()
+
+(The variable name's first letter is capitalized in the getter and setter method names)
+
+Another builtin annotation is the @AllowOverride annotation.  The purpose of this is to allow a block with a previously defined body to have its body
+redefined later in the program.
+
+To retrieve the annotations of a variable, use the '@' prefix operator.  For example:
+
+// define an annotation
+@interface Override {
+    function value() default 2
+    function test() default "hello"
+}
+
+@Override(value=1,test="foo")
+function foo() {
+}
+
+// get the annotations for foo
+var x = @foo
+var override = x.Override
+
+The result of the '@' operator is a map of annotation name (minus the @) versus a map of function name vs values. 
+
+That is, the following retrieves the values for the @Override annotation:
+
+var annotations = @foo
+var override = annotations.Override
+var value = override.value
+var test = override.test
+
+
+4. No aikido.zip any more
+The aikido.zip file has gone away and has been encoded into the binaries.  Therefore there is no need to have the file.
+
+
+5. Long strings
+This is a very useful construct that is available in other languages.  A long string is a string that is not limited to one line in length but can span
+multiple lines and contain line feeds.
+
+A long string is defined thus
+
+var longstring = """
+
+this is a long
+string.
+
+"""
+
+It is delimited by three double quote characters.  It can be used anywere a regular string is used.
+
+
+6. Expansion (JSP like feature)
+
+This ia very useful new feature that allows long strings (see above) to contain Java Server Pages (JSP) style syntax elements that are replaced at runtime.
+
+For example:
+
+var v = getvalue()
+
+var s = """
+
+The value of v is #{v}.  Its square is #{v*v}.
+
+"""
+
+The result of this is a string with the #{...} expressions replaced by their runtime values.  In this case it would evaluate the variable 'v' at runtime
+and substitute it into the string.
+
+You can also include arbitrary code:
+
+var s = """
+
+There are #{count} iterations
+
+<%
+foreach i count {
+    println ("Count: " +i)
+}
+%>
+
+"""
+
+
+Expansion can also be used on a stream (say from an open file) using the System.expand() function.  It behaves identically to the long string
+expansion except the input can come from any string or stream.
+
+var v = getvalue()
+
+var s = openin ("test.txt")
+
+var result = System.expand (s)
+s.close()
+
+println (result)
+
+
+
+The expansion is executed in the current static context and has access to the variables in the local static chain.  So the variable 'v' is available during the expansion.
+
+
+------------------------------------
+
+
+
 Release 2.00
 ------------
 
