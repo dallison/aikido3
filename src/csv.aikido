@@ -1,0 +1,175 @@
+import ctype
+public class CSV (separator = ',') {
+    var rows = []
+
+    class FieldSet {
+        var fields = []
+        public function addField (f) {
+            fields.append (f)
+        }
+
+        public operator[] (i, j=-1) {
+            if (j == -1) {
+                return fields[i]
+            } else {
+                return fields[i:j]
+            }
+        }
+
+        public operator foreach (var i) {
+            if (sizeof(fields) == 0) {
+                i = none
+                return
+            }
+            if (typeof (i) == "none") {
+                i = 0
+                return fields[i]
+            } elif (i == sizeof(fields) -1 ) {
+                i = none
+            } else {
+                return fields[++i]
+            }
+        }
+
+        public operator sizeof {
+            return sizeof(fields)
+        }
+    }
+
+    public function parse (instream) {
+        var currentFieldSet = null
+
+        var ch = 0
+        var line = ""
+        var size = sizeof(line)
+
+        function get() {
+            if (ch < size) {
+                return line[ch++]
+            }
+            return '\0'
+        }
+
+        function peek() {
+            if (ch < size) {
+                return line[ch]
+            }
+            return '\0'
+        }
+
+        function getField(text) { 
+            var fieldtext = ""
+            if (text != "") {
+                fieldtext.append (text)
+            }
+            var s = get()
+            if (fieldtext != "" || s == '"') {
+                if (fieldtext != "") {
+                    // continuaton
+                    fieldtext.append (s)
+                }
+                while (ch < size) {
+                    s = get()
+                    if (ch == size) {
+                        // newline within quotes, need to preserve
+                        return fieldtext + '\n'
+                    }
+                    if (s == '"') {
+                        if (peek() == '"') {
+                            // double quote marks
+                            fieldtext.append ('"')
+                            ch++
+                        } else {
+                            ch++
+                            break
+                        }
+                    } else {
+                        fieldtext.append (s)
+                    }
+                }
+                if (peek() == separator) {
+                    ch++
+                }
+            } elif (s == separator) {
+                // empty field
+            } else {
+                fieldtext.append (s)
+                while (ch < sizeof(line)) {
+                    s = get()
+                    if (ch == sizeof(line) || s == separator) {
+                        break
+                    }
+                    fieldtext.append (s)
+                }
+            }
+            currentFieldSet.addField (fieldtext)
+            return none
+        }
+
+        var currentText = ""
+        foreach l instream {
+            if (sizeof(trim(l)) == 0) {
+                continue
+            }
+            line = l
+            size = sizeof(l)
+            ch = 0
+            if (currentText == "") {
+                currentFieldSet = new FieldSet()
+                rows.append (currentFieldSet)
+            }
+
+            while (ch < size) {
+                var v = getField(currentText)
+                if (typeof(v) == "string") {
+                    // need to continue line
+                    currentText.append (v)
+                } else {
+                    currentText = ""
+                }
+            }
+        }
+    }
+
+    public operator[] (i, j=-1) {
+        if (j == -1) {
+            return rows[i]
+        } else {
+            return rows[i:j]
+        }
+    }
+
+    public operator foreach (var i) {
+        if (sizeof(rows) == 0) {
+            i = none
+            return
+        }
+
+        if (typeof (i) == "none") {
+            i = 0
+            return rows[i]
+        } elif (i == sizeof(rows)-1) {
+            i = none
+        } else {
+            return rows[++i]
+        }
+    }
+
+    public operator sizeof {
+        return sizeof(rows)
+    }
+}
+
+/*
+function main {
+    var csv = new CSV()
+    csv.parse (readfile (args[0]))
+
+    foreach row csv {
+        foreach field row {
+            print (field + "|")
+        }
+        println()
+    }
+}
+*/
