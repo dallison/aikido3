@@ -3325,7 +3325,7 @@ Node *Aikido::parseCommand (Token access, bool isstatic, bool issync) {
                             case T_MONITOR: {
                                
                                 break;
-                                {
+                                }
                             }
                         } else {
                             while (currentToken != BAD && currentToken != GREATER) {

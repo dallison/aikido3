@@ -210,7 +210,12 @@ public package System {
     public native mknod (nodename, mode) 		// mode in class Stat
     public native tmpnam()				// make a temporary name
     public native glob (pattern)                        // expand pattern into files
-    public native expand (stream)       // expand a stream or string to a string, replacing JSP-like expressions
+
+
+    native expandInternal (stream, scope)       // expand a stream or string to a string, replacing JSP-like expressions
+    public function expand (stream, args={}) {
+        return expandInternal (stream, expand)
+    }
 
     public native resume_coroutine (closure)
     public native get_closure_value (closure)

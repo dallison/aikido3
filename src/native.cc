@@ -4361,7 +4361,7 @@ AIKIDO_NATIVE(setParserDelegate) {
 
 
 
-AIKIDO_NATIVE (expand) {
+AIKIDO_NATIVE (expandInternal) {
     if (paras[1].type != T_STREAM && paras[1].type != T_NONE && paras[1].type != T_STRING) {
         throw newParameterException (vm, stack, "expand", "Illegal type for parameter 'stream'") ;
     }
@@ -4378,6 +4378,8 @@ AIKIDO_NATIVE (expand) {
         istr = &paras[1].stream->getInStream();
     }
    
+   Closure *scope = paras[2].closure;
+
    std::string news;
    std::string expr;
 
@@ -4517,13 +4519,14 @@ AIKIDO_NATIVE (expand) {
                 string filename (vm->getIR()->source->filename) ;
 
                 parserLock.acquire(true) ;
-                StaticLink newslink (stack->slink, stack) ;
 
-                Block *parentBlock = stack->block ;
+                Block *parentBlock = scope->block ;      // parent block is the caller of expand
                 int level = parentBlock->level + 1 ;
 
                 Block *block = new Class (b, "<inline>", level, parentBlock) ;
                 block->stacksize = 1 ;      // room for this
+
+                StaticLink newslink (scope->slink, stack->dlink);
 
                 Variable *thisvar = new Variable ("this", 0) ;
                 thisvar->setAccess (PROTECTED) ;
