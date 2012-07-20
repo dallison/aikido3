@@ -196,6 +196,9 @@ public package HTTP {
         private native function internal_getCanonicalFilename(req);
         private native function internal_getVars(req);
         private native function internal_getVar(req, name);
+        private native function internal_getApplicationVar(req, name);
+        private native function internal_setApplicationVar(req, name, value);
+
 
 
         public function getVars(): map {
@@ -204,6 +207,14 @@ public package HTTP {
 
         public function getVar(name:string):string {
             return internal_getVar (req, name)
+        }
+
+        public function getApplicationVar(name:string):string {
+            return internal_getApplictionVar (req, name)
+        }
+
+        public function setApplicationVar(name:string, value):string {
+            internal_setApplictionVar (req, name, value)
         }
 
         public function getContentType():string {

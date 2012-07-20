@@ -45,7 +45,7 @@ GTKFILES = gdk.aikido gtk.aikido gtkevents.aikido gtkfields.aikido
 ZIPFILES = system.aikido math.aikido net.aikido string.aikido stringstream.aikido streambuffer.aikido vector.aikido \
         map.aikido properties.aikido ctype.aikido security.aikido database.aikido lex.aikido \
         filename.aikido $(JAVAFILES) list.aikido queue.aikido stack.aikido hashtable.aikido container.aikido\
-	xml.aikido terminal.aikido base64.aikido 
+	xml.aikido terminal.aikido base64.aikido csv.aikido
 
 mkdirs:
 	-mkdir bin lib include include/unix 

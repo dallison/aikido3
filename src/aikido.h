@@ -976,6 +976,7 @@ AIKIDO_EXPORT struct Value {
         Value &operator[] (int i) { return vec[i] ; }
         vector *erase (ValueVec::iterator s, ValueVec::iterator e) { vec.erase (s, e) ; return this ; }
         ValueVec vec ;
+        //Value elementtype;          // type of elements (none means don't check)
     } ;
 
     // a vector of bytes
@@ -1406,6 +1407,9 @@ struct Variable {
     // find an annotation if it exists
     Annotation *getAnnotation (string name);
     bool allowsOverride();      // does this block allow an override
+
+    // actual subtypes defined for variable (var x:foo<int,string> - subtypes are int,string)
+    std::vector<Node*> subtypes;
 } ;
 
 //                           
@@ -1834,6 +1838,7 @@ struct InterpretedBlock : public Function {
     InterpretedBlock(Aikido*b):Function(b) {} 
     InterpretedBlock (Aikido *b, string nm, int l, Scope *parent, Type t = T_FUNCTION) : Function (b, nm, l, parent, t) {}
     std::vector<Parameter *> parameters ;
+    std::vector<Parameter *> types ;            // parameterized types
     bool isNative() { return false ; }
 
     virtual void dump (std::ostream &os) ;

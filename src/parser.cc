@@ -3284,7 +3284,57 @@ Node *Aikido::parseCommand (Token access, bool isstatic, bool issync) {
                     } else {
                         error ("The type of a variable or constant must be a compile-time constant");
                     }
+
+                    // check for subtype specification
+                    if (match (LESS)) {
+                        bool ok = true;
+                        switch (vartype) {
+                        case T_VECTOR:
+                        case T_MAP:
+                        case T_CLASS:
+                        case T_MONITOR:
+                            break;
+                        default:
+                            error ("Subtype specification is not applicable for this type");
+                            ok = false;
+                        }
+
+                        if (ok) {
+                            std::vector<Node*> types;
+                            while (currentToken != GREATER) {
+                                Node *n = primaryExpression();
+                                types.push_back (n);
+                                if (!match (COMMA)) {
+                                    break;
+                                }
+                            }
+                            needbrack (GREATER);
+
+                            switch (vartype) {
+                            case T_VECTOR:
+                                if (types.size() != 1) {
+                                    error ("Vectors must have one subtype");
+                                }
+                                break;
+                            case T_MAP:
+                                if (types.size() != 2) {
+                                    error ("Maps must have two subtypes (key and value)");
+                                }
+                                break;
+                            case T_CLASS:
+                            case T_MONITOR: {
+                               
+                                break;
+                                {
+                            }
+                        } else {
+                            while (currentToken != BAD && currentToken != GREATER) {
+                                nextToken();
+                            }
+                        }
+                    }
                 }
+
 
                 if (match (ASSIGN)) {      
                     int oldp = properties ;
@@ -5057,6 +5107,41 @@ Node *Aikido::getBlockContents (Token command, Tag *tag, Variable *var, Interpre
         }
     }
 
+    // parse parameterized types
+    if (match (LESS)) {
+        if (command != CLASS && command != MONITOR) {
+            error ("Only classes can have parameterized types");
+        }
+
+        while (currentToken != GREATER) {
+            if (currentToken == TIN) {
+               strcpy (spelling, "in") ;
+               currentToken = IDENTIFIER ;
+            }
+
+            if (currentToken == IDENTIFIER) {
+                string pname = spelling; 
+                Variable *p = findTopScopeVariable (pname) ;
+                Parameter *para = NULL ;
+                if (p == NULL) {
+                    para = addParameter (pname) ;
+                    para->setAccess (PRIVATE) ;
+                    block->types.push_back (para) ;
+                } else {
+                    error ("Multiple definition of %s parameterized type %s", blockname, spelling) ;
+                }
+                nextToken() ;
+            } else {
+                error ("Expected an identifier for a parameterized type name");
+            }
+            if (!match (COMMA)) {
+                break;
+            }
+        }  
+        needbrack (GREATER);
+
+    }
+
     // parse the arguments
     if (match (LBRACK)) {
         if (command == PACKAGE) {
@@ -5228,6 +5313,8 @@ Node *Aikido::getBlockContents (Token command, Tag *tag, Variable *var, Interpre
     Tag *super = NULL ;
     Variable *supervar ;
     std::vector<Node *> superargs ;
+    std::vector<Node *> supertypes ;
+    bool typesdefined = false;
     int superlevel ;
     if (match (EXTENDS)) {			// any superclass
        if (currentToken == IDENTIFIER) {
@@ -5276,6 +5363,21 @@ Node *Aikido::getBlockContents (Token command, Tag *tag, Variable *var, Interpre
                }
 
                block->superblock = super ;
+
+         
+               // parameterized types
+               if (match (LESS)) {
+                   typesdefined = true;
+                   while (currentToken != GREATER) {
+                       Node *e = primaryExpression() ;
+                       supertypes.push_back (e) ;
+                       if (!isComma()) {
+                           break ;
+                       }
+                   }
+                   needbrack (GREATER) ;
+               }
+         
                if (match (LBRACK)) {
                    while (currentToken != RBRACK) {
                        Node *e = single_expression() ;
@@ -5428,7 +5530,12 @@ Node *Aikido::getBlockContents (Token command, Tag *tag, Variable *var, Interpre
     if (command != ENUM && super != NULL) {
         Node *supernode = new Node (this,IDENTIFIER, supervar) ;
         supernode->value.integer = superlevel ;
-        Node *supercall = new Node (this,SUPERCALL, supernode, new Node (this, FUNCPARAS, superargs)) ;
+        Node *supercall;
+        if (typesdefined) { 
+            supercall = new Node (this,SUPERCALL, supernode, new Node (this, SEMICOLON, new Node (this, DEFTYPES, supertypes), new Node (this, FUNCPARAS, superargs))) ;
+        } else {
+            supercall = new Node (this,SUPERCALL, supernode, new Node (this, FUNCPARAS, superargs)) ;
+        }
         Node *newbody = new Node (this,SEMICOLON, supercall, block->body) ;
         block->body = newbody ;
     }
@@ -7950,9 +8057,23 @@ Node *Aikido::primaryExpression() {
                     vec = parseNew() ;		// returns NEWVECTOR tree
                 }
                 std::vector<Node *> actuals ;
+                std::vector<Node *> actualtypes ;
                 bool paras = false ;
                 bool passbyname = false;
                 bool passbyposition = false;
+                bool typesdefined = false;
+
+                if (match (LESS)) {     // new xxx <foo,bar>...
+                    typesdefined = true;
+                    while (currentToken != GREATER) {
+                        Node *ex = primaryExpression();
+                        actualtypes.push_back (ex);
+                        if (!match (COMMA)) {
+                            break;
+                        }
+                    }
+                    needbrack (GREATER);
+                }
 
                 if (match (LBRACK)) {
                     bool errorgiven = false;
@@ -7994,7 +8115,11 @@ Node *Aikido::primaryExpression() {
                     }
                     paras = true ;
                 }
-                node = new Node (this,NEW, node, new Node (this, FUNCPARAS, actuals)) ;
+                if (typesdefined) {
+                    node = new Node (this,NEW, node, new Node (this,SEMICOLON, new Node (this,DEFTYPES, actualtypes), new Node (this, FUNCPARAS, actuals))) ;
+                } else {
+                    node = new Node (this,NEW, node, new Node (this, FUNCPARAS, actuals)) ;
+                }
                 if (passbyname) {
                     node->flags |= NODE_PASSBYNAME;
                 }

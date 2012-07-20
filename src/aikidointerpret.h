@@ -206,8 +206,8 @@ public:
     void dosizeof (Operand *dest, Operand *op) ;
     void dotypeof (Operand *dest, Operand *op) ;
     Value *getaddr (Operand *op) ;
-    void call (Operand *dest, Operand *nargs, Operand *func) ;
-    bool supercall(Operand *nargs, Operand *func) ;
+    void call (Operand *dest, Operand *nargs, Operand *func, Operand *types=NULL) ;
+    bool supercall(Operand *nargs, Operand *func, Operand *types=NULL) ;
     Object *getthis (Operand *src) ;
     StackFrame *getStack (int level);
     Variable *findMember (Value &val, Block *block, StackFrame *stack, bool directParent) ;
@@ -228,9 +228,9 @@ public:
     void getAnnotations (Operand *dest, Operand *var) ;
 
     void callThread (Operand *dest, int nargs, Function *func);
-    bool assignParameters (Function *func, StackFrame *newframe, int nactuals, bool thispresent);
+    bool assignParameters (Function *func, StackFrame *newframe, int nactuals, bool thispresent, int ntypes=0);
     bool assignNativeParameters (Function *func, StackFrame *newframe, int nactuals, bool thispresent, ValueVec &parameters);
-    void newObject (Operand *dest, int nargs, Type type, InterpretedBlock *block, bool thispresent);
+    void newObject (Operand *dest, int nargs, Type type, InterpretedBlock *block, bool thispresent, int ntypes=0);
     void makeVector (Operand *dest, Operand *n) ;
     void makeMap (Operand *dest, Operand *n) ;
     void streamCopy (Operand *dest, Value &left, Value &right) ;

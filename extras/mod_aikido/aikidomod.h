@@ -66,6 +66,8 @@ public:
     void parseWAR (aikido::WorkerContext *ctx);
     void service (Servlet *servlet, Request *req, std::istream &instream, std::ostream &outstream, aikido::WorkerContext *ctx);
 
+    void setVar (std::string name, const Value &v);
+    Value getVar (std::string name);
 private:
     void parse (Servlet *servlet,  StackFrame *stack, StaticLink *slink, Scope *scope, int sl);
     Function *findServletFunction (Servlet *servlet, std::string name);
@@ -83,6 +85,10 @@ private:
     std::string wardir;
  
     std::vector<Servlet*> servlets;
+
+    // global variables shared among all servlets in this webapp
+    typedef std::map<std::string, Value> Variables;
+    Variables variables;
 };
 
 class Request {

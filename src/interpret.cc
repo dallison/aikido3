@@ -2785,7 +2785,7 @@ bool VirtualMachine::execute (int startaddr) {
             call (ir->dest, ir->src[0], ir->src[1]) ;
             break ;
         case opSUPERCALL:
-            if (!supercall (ir->src[0], ir->src[1])) {
+            if (!supercall (ir->src[0], ir->src[1], ir->src[2])) {
                  endReturn = false ;
                  goto endloop ;
             }
@@ -2839,7 +2839,7 @@ bool VirtualMachine::execute (int startaddr) {
             exception.destruct() ;
             break ;
         case opNEW:
-            call (ir->dest, ir->src[0], ir->src[1]) ;
+            call (ir->dest, ir->src[0], ir->src[1], ir->src[2]) ;
             break ;
         case opNEWVECTOR: {
             int ctstart = ir->src[1]->val.integer ;
@@ -3339,8 +3339,11 @@ void VirtualMachine::dotypeof (Operand *dest, Operand *op) {
 // call a block
 //
 
-void VirtualMachine::call (Operand *dest, Operand *n, Operand *f) {
+// the 't' operand may be NULL.  It is the number of defined types
+void VirtualMachine::call (Operand *dest, Operand *n, Operand *f, Operand *t) {
     int nargs = n->val.integer ;		// guarnteed to be constant
+    int ntypes = t == NULL ? 0 : t->val.integer;
+
     Value &val = get (f) ;
     InterpretedBlock *opfunc ;
 
@@ -3370,7 +3373,7 @@ void VirtualMachine::call (Operand *dest, Operand *n, Operand *f) {
 
     case T_MONITOR:
     case T_CLASS:
-        newObject (dest, nargs, val.block->type, val.cls, true) ;
+        newObject (dest, nargs, val.block->type, val.cls, true, ntypes) ;
         break ;
     case T_PACKAGE:
         runtimeError ("Cannot create an instance of a package") ;
@@ -4202,7 +4205,7 @@ inline Value &getarg (Value &arg) {
 //
 // Have to be careful to pop the correct number of args off the stack in the caller
 
-bool VirtualMachine::assignParameters (Function *func, StackFrame *newframe, int nactuals, bool thispresent) {
+bool VirtualMachine::assignParameters (Function *func, StackFrame *newframe, int nactuals, bool thispresent, int ntypes) {
     InterpretedBlock *ifunc ;
     int nformals ;
     bool varargs = false ;
@@ -4230,6 +4233,23 @@ bool VirtualMachine::assignParameters (Function *func, StackFrame *newframe, int
         actuals-- ;
         act++ ;
         num_names--;
+    }
+
+    if (ntypes > 0) {
+        // there are types, assign them
+        if (ntypes != ifunc->types.size()) {
+            runtimeError ("Incorrect number of types passed to constructor for %s (expected %d, got %d)", func->name.c_str(), ifunc->types.size(), ntypes);
+        }
+        int t = 0;
+        while (ntypes > 0) {
+            Value &val = *actuals ;
+            ifunc->types[t]->setValue(val, newframe) ;
+            actuals--;
+            ntypes--;
+            t++;
+        }
+
+        // the 'actuals' pointer has been increased by ntypes
     }
 
     if (passbyname) {
@@ -4262,7 +4282,6 @@ bool VirtualMachine::assignParameters (Function *func, StackFrame *newframe, int
                 Value &val = actit->second;
                 if (para->isReference()) {
                     if (val.type != T_ADDRESS) {
-printf ("1. Invalid actual parameter for reference parameter %p", para->name.c_str());
                         runtimeError ("Invalid actual parameter for reference parameter %s", para->name.c_str()) ;
                     } else {
                         Reference *ref = static_cast<Reference*>(para) ;
@@ -4436,7 +4455,7 @@ bool VirtualMachine::assignNativeParameters (Function *func, StackFrame *newfram
 //
 // allocate a new object and set its address in *dest
 //
-void VirtualMachine::newObject (Operand *dest, int nargs, Type type, InterpretedBlock *block, bool thispresent) {
+void VirtualMachine::newObject (Operand *dest, int nargs, Type type, InterpretedBlock *block, bool thispresent, int ntypes) {
     if (block->isAbstract()) {
 #if defined(_CC_GCC) && __GNUC__ == 2
         std::strstream info ;
@@ -4513,20 +4532,20 @@ void VirtualMachine::newObject (Operand *dest, int nargs, Type type, Interpreted
         sp-- ;
         nargs-- ;
     }
-    if (!assignParameters (block, obj, nargs, false)) {		
+    if (!assignParameters (block, obj, nargs, false, ntypes)) {		
         if (ir->flags & INST_PASSBYNAME) {
-            sp -= nargs * 2;
+            sp -= ntypes + nargs * 2;
         } else {
-            sp -= nargs ;			// delete args from stack
+            sp -= ntypes + nargs ;			// delete args from stack
         }
         delete obj ;
 
         runtimeError ("Incorrect number of parameters for constructor call for %s", block->name.c_str()) ;
     } else {
         if (ir->flags & INST_PASSBYNAME) {
-            sp -= nargs * 2;
+            sp -= ntypes + nargs * 2;
         } else {
-            sp -= nargs ;			// delete args from stack
+            sp -= ntypes + nargs ;			// delete args from stack
         }
 #if 0
         int offset = block->parameters.size() - nargs ;
@@ -4624,8 +4643,9 @@ void VirtualMachine::runtimeError (const char *s,...) {
 // so that the code executed has the correct parent
 
 
-bool VirtualMachine::supercall (Operand *n, Operand *f) {
+bool VirtualMachine::supercall (Operand *n, Operand *f, Operand *t) {
     int nargs = n->val.integer ;		// guarnteed to be constant
+    int ntypes = t == NULL ? 0 : t->val.integer;
     Value *val ;
     int level = 0 ;
     // check for old value override
@@ -4661,11 +4681,11 @@ bool VirtualMachine::supercall (Operand *n, Operand *f) {
     }
 
 
-    if (!assignParameters (block, frame, nargs, false)) {
-        sp -= nargs ;			// delete args from stack
+    if (!assignParameters (block, frame, nargs, false, ntypes)) {
+        sp -= ntypes + nargs ;			// delete args from stack
         runtimeError ("Incorrect number of parameters for superconstructor call for %s", block->name.c_str()) ;
     } else {
-        sp -= nargs ;			// delete args from stack
+        sp -= ntypes + nargs ;			// delete args from stack
 #if 0
         int offset = block->parameters.size() - nargs ;
         if (offset < 0) {

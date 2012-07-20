@@ -174,7 +174,8 @@ enum Token {
     BREAKPOINT,
     ENUMBLOCK,
     RANGE,		// range of expressions
-    ACTUAL      // named actual
+    ACTUAL,      // named actual
+    DEFTYPES     // defined types
    
     
 } ;

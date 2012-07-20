@@ -1376,7 +1376,8 @@ IFNode *CodeGenerator::call (Node *node) {
     IFNode *func ;
     int nacts = 1 ;
     if (node->right != NULL) {
-        std::vector<Node*> &actuals = node->right->vec ;
+        Node *pnode = node->right;
+        std::vector<Node*> &actuals = pnode->vec ;
         std::vector<Node*> actualnames;
         for (int i = actuals.size() - 1 ; i >= 0 ; i--) {
             Node *act = actuals[i] ;
@@ -1397,6 +1398,7 @@ IFNode *CodeGenerator::call (Node *node) {
             issue (new IFExpression (act, opPUSH, new IFValue (act, act->value))) ;
         }
     }
+
     if (node->left->op == DOT) {
         thisptr = expression (node->left->left) ;
         IFExpression *expr = new IFExpression (node, opPUSHV) ;
@@ -1471,8 +1473,16 @@ IFNode *CodeGenerator::construct (Node *node) {
     IFNode *thisptr ;
     IFNode *func ;
     int nacts = 1 ;
+    int ntypes = 0 ;
     if (node->right != NULL) {
-        std::vector<Node*> &actuals = node->right->vec ;
+        Node *pnode = node->right;
+        Node *deftypesnode = NULL;
+        if (node->right->op == SEMICOLON) {
+            // we have defined types present
+            deftypesnode = node->right->left;
+            pnode = node->right->right;
+        }
+        std::vector<Node*> &actuals = pnode->vec ;
         std::vector<Node*> actualnames;
         for (int i = actuals.size() - 1 ; i >= 0 ; i--) {
             Node *act = actuals[i] ;
@@ -1492,6 +1502,16 @@ IFNode *CodeGenerator::construct (Node *node) {
             Node *act = actualnames[i];
             issue (new IFExpression (act, opPUSH, new IFValue (act, act->value))) ;
         }
+
+        // now push the defined types, reversed
+        if (deftypesnode != NULL) {
+            std::vector<Node*> &actualtypes = deftypesnode->vec;
+            ntypes = actualtypes.size();
+            for (int i = actualtypes.size() - 1 ; i >= 0 ; i--) {
+                Node *act = actualtypes[i] ;
+                issue (new IFExpression (act, opPUSH, expression (act))) ;
+            }
+        }
     }
     if (node->left->op == DOT) {
         thisptr = expression (node->left->left) ;
@@ -1505,7 +1525,13 @@ IFNode *CodeGenerator::construct (Node *node) {
         thisptr = issue (new IFExpression (node->left, opGETTHIS, func)) ;
     }
     IFNode *numacts = integer (node, nacts) ;
-    IFNode *n = issue (new IFExpression (node, opNEW, numacts, func)) ;
+    IFNode *n;
+    if (ntypes > 0) {
+        IFNode *numtypes = integer (node, ntypes) ;
+        n = issue (new IFExpression (node, opNEW, numacts, func, numtypes));
+    } else {
+        n = issue (new IFExpression (node, opNEW, numacts, func));
+    }
     if (node->flags & NODE_PASSBYNAME) {
         n->flags |= INST_PASSBYNAME;
     }
@@ -2240,16 +2266,41 @@ void CodeGenerator::foreign (Node *node) {
 void CodeGenerator::supercall (Node *node) {
     IFNode *block = expression (node->left) ;
     int nacts = 0 ;
+    int ntypes = 0 ;
     if (node->right != NULL) {
-        std::vector<Node*> &actuals = node->right->vec ;
+        Node *pnode = node->right;
+        Node *deftypesnode = NULL;
+        if (node->right->op == SEMICOLON) {
+            // we have defined types present
+            deftypesnode = node->right->left;
+            pnode = node->right->right;
+        }
+        std::vector<Node*> &actuals = pnode->vec ;
+
         for (int i = actuals.size() - 1 ; i >= 0 ; i--) {
             Node *act = actuals[i] ;
             pushaddress (act) ;
         }
         nacts = actuals.size() ;
+
+        // now push the defined types, reversed
+        if (deftypesnode != NULL) {
+            std::vector<Node*> &actualtypes = deftypesnode->vec;
+            ntypes = actualtypes.size();
+            for (int i = actualtypes.size() - 1 ; i >= 0 ; i--) {
+                Node *act = actualtypes[i] ;
+                issue (new IFExpression (act, opPUSH, expression (act))) ;
+            }
+        }
+
     }
     IFNode *numacts = integer (node, nacts) ;
-    issue (new IFInstruction (node, opSUPERCALL, numacts, block)) ;
+    if (ntypes > 0) {
+        IFNode *numtypes = integer (node, ntypes) ;
+        issue (new IFInstruction (node, opSUPERCALL, numacts, block, numtypes)) ;
+    } else {
+        issue (new IFInstruction (node, opSUPERCALL, numacts, block)) ;
+    }
 }
 
 
@@ -2505,7 +2556,13 @@ void CodeGenerator::expression (IFExpression *ex) {
         if (ex->flags & INST_PASSBYNAME) {
             flags |= INST_PASSBYNAME;
         }
-        // fall through
+        inst.setOperand (0, operand (ex->ops[0])) ;
+        inst.setOperand (1, operand (ex->ops[1])) ;
+        // set defined types if they exist (only for opNEW)
+        if (ex->ops[2] != NULL) {
+            inst.setOperand (2, operand (ex->ops[2])) ;
+        }
+        break;
 
     case opADD:
     case opSUB:
@@ -2681,6 +2738,10 @@ void CodeGenerator::statement (IFInstruction *i) {
     case opSUPERCALL:
         inst.setOperand (0, operand(i->ops[0])) ;
         inst.setOperand (1, operand(i->ops[1])) ;
+        if (i->ops[2] != NULL) {
+            // defined types
+            inst.setOperand (2, operand(i->ops[2])) ;
+        }
         break ;
 
     case opPUSHSCOPE:

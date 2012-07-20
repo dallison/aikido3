@@ -1,7 +1,5 @@
 CXXFLAGS = -I../../src -D_CC_GCC -D_OS_MACOSX `/usr/bin/apr-1-config --includes` -I/usr/include/apache2 -dynamic -g
 
-
-AIKIDO = ../../bin/aikido
 AIKIDOLIBDIR = ../../lib
 AIKIDOLIB = aikido_o
 
@@ -12,7 +10,9 @@ rootscript.o : rootscript.cc
 	g++ -c rootscript.cc -dynamic
 
 rootscript.cc : apachemod.aikido
-	$(AIKIDO) makeroot.aikido
+	echo 'extern "C" {' > rootscript.cc
+	xxd -i apachemod.aikido >>rootscript.cc
+	echo '}' >> rootscript.cc
 	
 install: 
 	apxs -i -n aikido .libs/mod_aikido.so
