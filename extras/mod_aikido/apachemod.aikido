@@ -210,11 +210,11 @@ public package HTTP {
         }
 
         public function getApplicationVar(name:string):string {
-            return internal_getApplictionVar (req, name)
+            return internal_getApplicationVar (req, name)
         }
 
-        public function setApplicationVar(name:string, value):string {
-            internal_setApplictionVar (req, name, value)
+        public function setApplicationVar(name:string, value) {
+            internal_setApplicationVar (req, name, value)
         }
 
         public function getContentType():string {
