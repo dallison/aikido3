@@ -17,7 +17,7 @@ old_library='mod_aikido.a'
 inherited_linker_flags=' '
 
 # Libraries that this one depends upon.
-dependency_libs=' -L/Users/dallison/github/local/aikido3/lib -laikido_o -lstdc++'
+dependency_libs=' -L/Users/dallison/aikido3/lib -laikido_o -lstdc++'
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''

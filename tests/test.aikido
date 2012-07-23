@@ -2166,12 +2166,12 @@ assert s2 == expected
 
 // test the 'expand' function for a file
 var ins = openin ("string.txt")
-var s3 = expand (ins)
+var s3 = expand (ins, {"p":p})
 ins.close()
 assert s3 == expected
 
 // expand a string
-var s4 = expand("value: #{p+1}")
+var s4 = expand("value: #{args.p+1}", {"p":p})
 assert s4 == "value: 124"
 }
 
