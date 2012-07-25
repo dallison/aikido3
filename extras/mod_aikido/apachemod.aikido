@@ -209,7 +209,7 @@ public package HTTP {
             return internal_getVar (req, name)
         }
 
-        public function getApplicationVar(name:string):string {
+        public function getApplicationVar(name:string) {
             return internal_getApplicationVar (req, name)
         }
 
