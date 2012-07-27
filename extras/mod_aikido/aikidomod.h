@@ -37,7 +37,7 @@ class Servlet {
     friend class WebApp;
 public:
     Servlet (std::string nm) : name(nm),serviceFunction(NULL), doGet(NULL),
-                   doPost(NULL),doPut(NULL), doDelete(NULL) {}
+                   doPost(NULL),doPut(NULL), doDelete(NULL), initialize(NULL), initialized(false) {}
     ~Servlet();
 
     bool match (std::string url);       // does the url match a known url pattern
@@ -54,6 +54,8 @@ private:
     Function *doPost;
     Function *doPut;
     Function *doDelete;
+    Function *initialize;
+    bool initialized;
 };
 
 class WebApp {

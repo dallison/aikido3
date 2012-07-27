@@ -678,18 +678,7 @@ void WebApp::parseWAR (aikido::WorkerContext *ctx) {
 
     parseWebInf();
 
-    // allocate an HTTP.Application object
-    appobj = new (applicationClass->stacksize) Object (applicationClass, ctx->slink, ctx->stack, ctx->stack->inst) ;
-    appobj->ref++ ;
-
-    appobj->varstack[0] = Value (appobj) ;
-    // construct the object
-
-    VirtualMachine vm (aikido);
-    vm.execute (applicationClass, appobj, ctx->slink, 0) ;
-
-    appobj->varstack[1] = Value((UINTEGER)this) ;
-    
+    std::cerr << "application class: " << applicationClass << "\n";
     for (unsigned int i = 0 ; i < servlets.size() ; i++) {
         parse (servlets[i], ctx->stack, ctx->slink, ctx->currentScope, ctx->currentScopeLevel);
     }
@@ -750,6 +739,7 @@ void WebApp::parse (Servlet *servlet, StackFrame *stack, StaticLink *slink, Scop
         servlet->doPost = findServletFunction (servlet, "doPost");
         servlet->doPut = findServletFunction (servlet, "doPut");
         servlet->doDelete = findServletFunction (servlet, "doDelete");
+        servlet->initialize = findServletFunction (servlet, "initialize");
     } catch (Exception &e) {
         std::stringstream str;
         aikido->reportException (e, str);
@@ -759,20 +749,6 @@ void WebApp::parse (Servlet *servlet, StackFrame *stack, StaticLink *slink, Scop
     } catch (...) {
         std::cerr << "mod_aikido: failed to load servlet '" << servlet->name << "' due to unknown reason\n";
     }
-
-    // now initialize the servlet by calling the initialization function
-    Function *appinit = findServletFunction (servlet, "initialize");
-    if (appinit != NULL) {
-        if (aikido_debug) {
-            std::cerr << "mod_aikido: Initializing servlet " << servlet->name << "\n";
-        }
-        std::vector<Value> args;
-        args.push_back (appobj);
-        std::stringstream dummyin;
-
-        aikido->call (servlet->object.object, appinit, args, &std::cerr, &dummyin);
-    }
-
 }
 
 void WebApp::writeErrorPage (Servlet *servlet, Request *req, std::ostream &outstream, std::string error) {
@@ -808,6 +784,36 @@ void WebApp::service (Servlet *servlet, Request *req, std::istream &instream, st
     if (aikido_debug) {
         std::cerr << "mod_aikido: service using servlet " << servlet->name << "\n";
     }
+
+    // we can now do stuff with the webapp because it's been initialized properly.  If there is no Application object, allocate it now
+    if (appobj == NULL) {
+        // allocate an HTTP.Application object
+        appobj = new (applicationClass->stacksize) Object (applicationClass, ctx->slink, ctx->stack, ctx->stack->inst) ;
+        appobj->ref++ ;
+    
+        appobj->varstack[0] = Value (appobj) ;
+        // construct the object
+    
+        VirtualMachine vm (aikido);
+        vm.execute (applicationClass, appobj, ctx->slink, 0) ;
+    
+        appobj->varstack[1] = Value((UINTEGER)this) ;
+    }
+    
+    // Lazy initialization of servlet now
+    if (!servlet->initialized && servlet->initialize != NULL) {
+        servlet->initialized = true;
+
+        std::vector<Value> args;
+        std::stringstream dummyin;
+        args.push_back (appobj);
+
+        if (aikido_debug) {
+            std::cerr << "Initializing servlet " << servlet->name << "\n";
+        }
+        aikido->call (servlet->object.object, servlet->initialize, args, &std::cerr, &dummyin);
+    }
+
     Block *code = servlet->object.object->block;
     std::vector<Value> args;
     //std::cerr << "executing preload\n";
