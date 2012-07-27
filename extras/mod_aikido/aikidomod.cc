@@ -678,7 +678,6 @@ void WebApp::parseWAR (aikido::WorkerContext *ctx) {
 
     parseWebInf();
 
-    std::cerr << "application class: " << applicationClass << "\n";
     for (unsigned int i = 0 ; i < servlets.size() ; i++) {
         parse (servlets[i], ctx->stack, ctx->slink, ctx->currentScope, ctx->currentScopeLevel);
     }
