@@ -26,6 +26,7 @@ extern "C" {
 
 Class *requestClass;
 Class *responseClass;
+Class *applicationClass;
 
 int aikido_debug = 0;
 
@@ -91,6 +92,12 @@ aikidoenv *aikido_init(const char *rootdir, const char *webappdir) {
             throw Exception ("Can't find HTTP.Response") ;
         }
         responseClass = (Class *)restag->block ;
+
+        Tag *apptag = (Tag *)apache->findVariable (string (".Application"), scope, VAR_ACCESSFULL, NULL, NULL) ;
+        if (apptag == NULL) {
+            throw Exception ("Can't find HTTP.Application") ;
+        }
+        applicationClass = (Class *)apptag->block ;
 
         std::stringstream initstream;
         initstream << "apache-init\n";
@@ -459,7 +466,7 @@ void mkdir (std::string dir, int mode) {
 //
 // Web Applications
 //
-WebApp::WebApp (Aikido *aikido, std::string dir, std::string warfile) : aikido(aikido), dir(dir), warfile(warfile) {
+WebApp::WebApp (Aikido *aikido, std::string dir, std::string warfile) : aikido(aikido), dir(dir), warfile(warfile), appobj(NULL) {
     //std::cerr << "new webapp " << warfile << "\n";
     // XXX: hardcode for now
     std::string::size_type suffix = warfile.find (".war");
@@ -528,6 +535,7 @@ WebApp::WebApp (Aikido *aikido, std::string dir, std::string warfile) : aikido(a
 }
 
 WebApp::~WebApp() {
+    delete appobj;
     for (unsigned int i = 0 ; i < servlets.size() ; i++) {
         delete servlets[i];
     }
@@ -670,6 +678,18 @@ void WebApp::parseWAR (aikido::WorkerContext *ctx) {
 
     parseWebInf();
 
+    // allocate an HTTP.Application object
+    appobj = new (applicationClass->stacksize) Object (applicationClass, ctx->slink, ctx->stack, ctx->stack->inst) ;
+    appobj->ref++ ;
+
+    appobj->varstack[0] = Value (appobj) ;
+    // construct the object
+
+    VirtualMachine vm (aikido);
+    vm.execute (applicationClass, appobj, ctx->slink, 0) ;
+
+    appobj->varstack[1] = Value((UINTEGER)this) ;
+    
     for (unsigned int i = 0 ; i < servlets.size() ; i++) {
         parse (servlets[i], ctx->stack, ctx->slink, ctx->currentScope, ctx->currentScopeLevel);
     }
@@ -739,6 +759,20 @@ void WebApp::parse (Servlet *servlet, StackFrame *stack, StaticLink *slink, Scop
     } catch (...) {
         std::cerr << "mod_aikido: failed to load servlet '" << servlet->name << "' due to unknown reason\n";
     }
+
+    // now initialize the servlet by calling the initialization function
+    Function *appinit = findServletFunction (servlet, "initialize");
+    if (appinit != NULL) {
+        if (aikido_debug) {
+            std::cerr << "mod_aikido: Initializing servlet " << servlet->name << "\n";
+        }
+        std::vector<Value> args;
+        args.push_back (appobj);
+        std::stringstream dummyin;
+
+        aikido->call (servlet->object.object, appinit, args, &std::cerr, &dummyin);
+    }
+
 }
 
 void WebApp::writeErrorPage (Servlet *servlet, Request *req, std::ostream &outstream, std::string error) {
@@ -1172,6 +1206,13 @@ AIKIDO_NATIVE(internal_getApplicationVar) {
     return webapp->getVar (name);
 }
 
+AIKIDO_NATIVE(internal_getApplication) {
+    Request *req = reinterpret_cast<Request*>(paras[1].integer);
+    std::string name = paras[2].str->str;
+    WebApp *webapp = req->getWebApp();
+    return webapp->getAppObj();
+}
+
 
 // Response functions
 
@@ -1514,6 +1555,25 @@ AIKIDO_NATIVE(internal_matchURI) {
     }
 
     return 1;
+}
+
+AIKIDO_NATIVE(internal_setAppVariable) {
+    WebApp *webapp = reinterpret_cast<WebApp*>(paras[1].integer);
+    std::string name = paras[2].str->str;
+    webapp->setVar (name, paras[3]);
+    return 0;
+}
+
+
+AIKIDO_NATIVE(internal_getAppVariable) {
+    WebApp *webapp = reinterpret_cast<WebApp*>(paras[1].integer);
+    std::string name = paras[2].str->str;
+    return webapp->getVar (name);
+}
+
+AIKIDO_NATIVE(internal_getAppDir) {
+    WebApp *webapp = reinterpret_cast<WebApp*>(paras[1].integer);
+    return new string (webapp->getDir());
 }
 
 

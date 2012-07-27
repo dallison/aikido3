@@ -68,6 +68,10 @@ public:
 
     void setVar (std::string name, const Value &v);
     Value getVar (std::string name);
+
+    std::string getDir() { return wardir; }
+    Object *getAppObj() { return appobj; }
+
 private:
     void parse (Servlet *servlet,  StackFrame *stack, StaticLink *slink, Scope *scope, int sl);
     Function *findServletFunction (Servlet *servlet, std::string name);
@@ -84,6 +88,8 @@ private:
     std::string warfile;
     std::string wardir;
  
+    Object *appobj;     // HTTP.Application object
+
     std::vector<Servlet*> servlets;
 
     // global variables shared among all servlets in this webapp

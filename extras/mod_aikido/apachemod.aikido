@@ -200,8 +200,11 @@ public package HTTP {
         private native function internal_getVar(req, name);
         private native function internal_getApplicationVar(req, name);
         private native function internal_setApplicationVar(req, name, value);
+        private native function internal_getApplication (req)
 
-
+        public function getApplication() {
+            return internal_getApplication (req)
+        }
 
         public function getVars(): map {
             return internal_getVars (req)
@@ -379,6 +382,25 @@ public package HTTP {
         
         public function setStatus (status:integer) {
             internal_setStatus (req, status)
+        }
+    }
+
+    public class Application {
+        var app = 0
+        private native function internal_getAppDir (app)
+        private native function internal_getAppVariable (app, name)
+        private native function internal_setAppVariable (app, name, value)
+
+        public function getVariable (name) {
+            return internal_getAppVariable (app, name)
+        }
+
+        public function setVariable (name, value) {
+            return internal_setAppVariable (app, name, value)
+        }
+
+        public function getDir() {
+            return internal_getAppDir(app)
         }
     }
 }
