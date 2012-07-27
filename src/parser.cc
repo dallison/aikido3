@@ -5152,13 +5152,14 @@ Node *Aikido::getBlockContents (Token command, Tag *tag, Variable *var, Interpre
         }
         AnnotationList annotations;
         while (currentToken != RBRACK) {
-
             Token access = PRIVATE ;
-            switch (currentToken) {
-            case ANNOTATE:
-                annotations = parseAnnotationSequence();
-                break;
 
+            if (currentToken == ANNOTATE) {
+                nextToken();
+                annotations = parseAnnotationSequence();
+            }
+
+            switch (currentToken) {
             case PRIVATE:
             case PUBLIC:
             case PROTECTED:
@@ -6175,6 +6176,11 @@ AnnotationList Aikido::parseAnnotationSequence() {
                 }
                 needbrack (RBRACK);
             }
+        }
+
+        // another annotation?
+        if (!match (ANNOTATE)) {
+            break;
         }
     }
     return result;

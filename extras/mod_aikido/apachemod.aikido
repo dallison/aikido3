@@ -64,7 +64,7 @@ public package HTTP {
     public const INSUFFICIENT_STORAGE          = 507
     public const NOT_EXTENDED                  = 510
 
-    public class Cookie (name="",value="") {
+    public class Cookie (@Property(set=false) name="", @Property value="") {
         public var domain = ""
         public var path = ""
         public var expires = null
@@ -183,6 +183,8 @@ public package HTTP {
         var req = 0
         var args = {}
         var argsset = false
+        var cookies = {}
+        var cookiesset = false
 
         private native function internal_getMethod(req);
         private native function internal_getMethodString(req);
@@ -278,8 +280,11 @@ public package HTTP {
             return internal_getHeader (req, name, true)
         }
 
-        public function getCookies(): vector {
-            var cookies = []
+        public function getCookies(): map {
+            if (cookiesset) {
+                return cookies
+            }
+            cookiesset = true
             var val = getHeader ("cookie")
             if (typeof(val) == "none") {
                 return cookies
@@ -287,9 +292,30 @@ public package HTTP {
             foreach v val.split (';') {
                 var cookie = new Cookie()
                 cookie.parse_in (trim(v))
-                cookies.append (cookie)
+                var name = transform (cookie.getName(), ctype.toupper)
+                cookies[name] = cookie
             }
             return cookies
+        }
+
+        public function hasCookie (name) {
+            if (!cookiesset) { 
+                getCookies()
+            }
+            var uname = transform (name, ctype.toupper)
+            return typeof (cookies[uname]) != "none"
+        }
+
+        public function getCookie (name) {
+            if (!cookiesset) { 
+                getCookies()
+            }
+            var uname = transform (name, ctype.toupper)
+            var cookie = cookies[uname]
+            if (typeof(cookie) == "none") {
+                return null
+            }
+            return cookie
         }
 
         public function getAccept(): vector {
