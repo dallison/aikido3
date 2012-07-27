@@ -1213,7 +1213,6 @@ AIKIDO_NATIVE(internal_getApplicationVar) {
 
 AIKIDO_NATIVE(internal_getApplication) {
     Request *req = reinterpret_cast<Request*>(paras[1].integer);
-    std::string name = paras[2].str->str;
     WebApp *webapp = req->getWebApp();
     return webapp->getAppObj();
 }
