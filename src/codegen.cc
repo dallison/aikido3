@@ -294,16 +294,19 @@ CodeGenerator::CodeGenerator() {
 
     // initialize the op type maps
     movOps[T_INTEGER] = opMOV_I ;
+    movOps[T_BOOL] = opMOV_I ;
     movOps[T_REAL] = opMOV_R ;
     movOps[T_STRING] = opMOV_S ;
     movOps[T_CHAR] = opMOV_I ;
 
     movcOps[T_INTEGER] = opMOVC_I ;
+    movcOps[T_BOOL] = opMOVC_I ;
     movcOps[T_REAL] = opMOVC_R ;
     movcOps[T_STRING] = opMOVC_S ;
     movcOps[T_CHAR] = opMOVC_I ;
 
     movfOps[T_INTEGER] = opMOVF_I ;
+    movfOps[T_BOOL] = opMOVF_I ;
     movfOps[T_REAL] = opMOVF_R ;
     movfOps[T_STRING] = opMOVF_S ;
     movfOps[T_CHAR] = opMOVF_I ;
@@ -312,6 +315,7 @@ CodeGenerator::CodeGenerator() {
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opADD_I ;
+    (*ops)[T_BOOL] = opADD_I ;
     (*ops)[T_REAL] = opADD_R ;
     (*ops)[T_STRING] = opADD_S ;
     (*ops)[T_CHAR] = opADD_I ;
@@ -320,76 +324,90 @@ CodeGenerator::CodeGenerator() {
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opSUB_I ;
+    (*ops)[T_BOOL] = opSUB_I ;
     (*ops)[T_REAL] = opSUB_R ;
     (*ops)[T_CHAR] = opSUB_I ;
     fixedTypes[MINUS] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opMUL_I ;
+    (*ops)[T_BOOL] = opMUL_I ;
     (*ops)[T_REAL] = opMUL_R ;
     (*ops)[T_CHAR] = opMUL_I ;
     fixedTypes[STAR] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opDIV_I ;
+    (*ops)[T_BOOL] = opDIV_I ;
     (*ops)[T_REAL] = opDIV_R ;
     (*ops)[T_CHAR] = opDIV_I ;
     fixedTypes[SLASH] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opMOD_I ;
+    (*ops)[T_BOOL] = opMOD_I ;
     (*ops)[T_REAL] = opMOD_R ;
     (*ops)[T_CHAR] = opMOD_I ;
     fixedTypes[PERCENT] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opSLL_I ;
+    (*ops)[T_BOOL] = opSLL_I ;
     (*ops)[T_CHAR] = opSLL_I ;
     fixedTypes[LSHIFT] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opSRL_I ;
+    (*ops)[T_BOOL] = opSRL_I ;
     (*ops)[T_CHAR] = opSRL_I ;
     fixedTypes[ZRSHIFT] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opSRA_I ;
+    (*ops)[T_BOOL] = opSRA_I ;
     (*ops)[T_CHAR] = opSRA_I ;
     fixedTypes[RSHIFT] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opOR_I ;
+    (*ops)[T_BOOL] = opOR_I ;
     (*ops)[T_CHAR] = opOR_I ;
     fixedTypes[BITOR] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opXOR_I ;
+    (*ops)[T_BOOL] = opXOR_I ;
     (*ops)[T_CHAR] = opXOR_I ;
     fixedTypes[CARET] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opAND_I ;
+    (*ops)[T_BOOL] = opAND_I ;
     (*ops)[T_CHAR] = opAND_I ;
     (*ops)[T_VECTOR] = opAND_V ;
     fixedTypes[AMPERSAND] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opCOMP_I ;
+    (*ops)[T_BOOL] = opCOMP_I ;
     (*ops)[T_CHAR] = opCOMP_I ;
     fixedTypes[TILDE] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opNOT_I ;
+    (*ops)[T_BOOL] = opNOT_I ;
     (*ops)[T_CHAR] = opNOT_I ;
     fixedTypes[BANG] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opUMINUS_I ;
+    (*ops)[T_BOOL] = opUMINUS_I ;
     (*ops)[T_CHAR] = opUMINUS_I ;
     fixedTypes[UMINUS] = ops ;
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opRETVAL_I ;
+    (*ops)[T_BOOL] = opRETVAL_I ;
     (*ops)[T_REAL] = opRETVAL_R ;
     (*ops)[T_STRING] = opRETVAL_S ;
     (*ops)[T_CHAR] = opRETVAL_I ;
@@ -398,6 +416,7 @@ CodeGenerator::CodeGenerator() {
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opCMPEQ_I ;
+    (*ops)[T_BOOL] = opCMPEQ_I ;
     (*ops)[T_REAL] = opCMPEQ_R ;
     (*ops)[T_STRING] = opCMPEQ_S ;
     (*ops)[T_CHAR] = opCMPEQ_I ;
@@ -405,6 +424,7 @@ CodeGenerator::CodeGenerator() {
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opCMPNE_I ;
+    (*ops)[T_BOOL] = opCMPNE_I ;
     (*ops)[T_REAL] = opCMPNE_R ;
     (*ops)[T_STRING] = opCMPNE_S ;
     (*ops)[T_CHAR] = opCMPNE_I ;
@@ -412,6 +432,7 @@ CodeGenerator::CodeGenerator() {
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opCMPLT_I ;
+    (*ops)[T_BOOL] = opCMPLT_I ;
     (*ops)[T_REAL] = opCMPLT_R ;
     (*ops)[T_STRING] = opCMPLT_S ;
     (*ops)[T_CHAR] = opCMPLT_I ;
@@ -419,6 +440,7 @@ CodeGenerator::CodeGenerator() {
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opCMPLE_I ;
+    (*ops)[T_BOOL] = opCMPLE_I ;
     (*ops)[T_REAL] = opCMPLE_R ;
     (*ops)[T_STRING] = opCMPLE_S ;
     (*ops)[T_CHAR] = opCMPLE_I ;
@@ -426,6 +448,7 @@ CodeGenerator::CodeGenerator() {
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opCMPGT_I ;
+    (*ops)[T_BOOL] = opCMPGT_I ;
     (*ops)[T_REAL] = opCMPGT_R ;
     (*ops)[T_STRING] = opCMPGT_S ;
     (*ops)[T_CHAR] = opCMPGT_I ;
@@ -433,6 +456,7 @@ CodeGenerator::CodeGenerator() {
 
     ops = new OpTypeMap ;
     (*ops)[T_INTEGER] = opCMPGE_I ;
+    (*ops)[T_BOOL] = opCMPGE_I ;
     (*ops)[T_REAL] = opCMPGE_R ;
     (*ops)[T_STRING] = opCMPGE_S ;
     (*ops)[T_CHAR] = opCMPGE_I ;
@@ -2794,6 +2818,9 @@ void Operand::print (std::ostream &os) {
         switch (val.type) {
         case T_INTEGER:
             os << "#" << val.integer ;
+            break ;
+        case T_BOOL:
+            os << "#" << (val.integer ? "true" : "false");
             break ;
         case T_REAL:
             os << "#" << val.real ;

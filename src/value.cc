@@ -59,6 +59,9 @@ std::ostream &operator << (std::ostream &os, Value &v) {
     case T_INTEGER:
         return os << v.integer ;
         break ;
+    case T_BOOL:
+        return os << (v.integer ? "true":"false");
+        break ;
     case T_BYTE:
         os.put ((unsigned char)v.integer) ;     // binary output
         break ;
@@ -161,6 +164,12 @@ inline std::istream &operator >> (std::istream &is, Value &v) {
     case T_INTEGER:
         return is >> v.integer ;
         break ;
+    case T_BOOL: {
+        std::string buf;
+        is >> buf;
+        v.integer = buf == "true";
+        return is;
+        }
     case T_BYTE:
         v.integer = is.get() ;
         return is ;
@@ -233,7 +242,8 @@ Value::operator bool() const {       // conversion to boolean
     case T_INTEGER:
     case T_CHAR:
     case T_BYTE:
-    return integer != 0 ;
+    case T_BOOL:
+        return integer != 0 ;
     case T_REAL:
         return real != 0.0 ;
 
@@ -285,10 +295,11 @@ void Value::incBlockRef () {
 Value Value::operator< (const Value &v) {
     switch (type) {
     case T_INTEGER:
+    case T_BOOL:
     case T_BYTE:
     case T_CHAR:
         switch (v.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             return Value (integer < v.integer) ;
         
         case T_STRING:
@@ -303,7 +314,7 @@ Value Value::operator< (const Value &v) {
         break ;
     case T_REAL:
         switch (v.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             return Value (real < v.integer) ;
         
         case T_STRING:
@@ -318,7 +329,7 @@ Value Value::operator< (const Value &v) {
         break ;
     case T_STRING:
         switch (v.type) {
-        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE: case T_BOOL:
             return Value (*str < v.toString()) ;
         
         case T_STRING:
@@ -370,9 +381,9 @@ Value Value::operator< (const Value &v) {
 Value Value::operator== (const Value &v) {
     switch (type) {
     case T_INTEGER: case T_BYTE:
-    case T_CHAR:
+    case T_CHAR: case T_BOOL:
         switch (v.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             return Value (integer == v.integer) ;
         
         case T_STRING:
@@ -387,7 +398,7 @@ Value Value::operator== (const Value &v) {
         break ;
     case T_REAL:
         switch (v.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             return Value (real == v.integer) ;
         
         case T_STRING:
@@ -402,7 +413,7 @@ Value Value::operator== (const Value &v) {
         break ;
     case T_STRING:
         switch (v.type) {
-        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE: case T_BOOL:
             return Value (*str == v.toString()) ;
         
         case T_STRING:
@@ -458,7 +469,7 @@ Value Value::operator== (const Value &v) {
 int Value::size() {
     switch (type) {
     case T_INTEGER: case T_BYTE:
-    case T_CHAR:
+    case T_CHAR: case T_BOOL:
     case T_ENUMCONST:
     case T_REAL:
         return 1 ;
@@ -510,6 +521,9 @@ string Value::toString() const {
     case T_CHAR:
         sprintf (buf, "%c", (char)integer) ;
         break ;
+    case T_BOOL:
+        sprintf (buf, "%s", integer ? "true":"false") ;
+        break ;
     }
     return buf ;
 }
@@ -518,7 +532,7 @@ string Value::toString() const {
 
 Value Value::operator[] (int i) const {			// array subscript
     switch (type) {
-    case T_INTEGER: case T_CHAR: case T_BYTE:    			// for integer, it means a bit number
+    case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:   			// for integer, it means a bit number
         return Value (((UINTEGER)(integer & (1 << i))) >> i) ;
 
     case T_STRING:
@@ -541,7 +555,7 @@ Value Value::operator[] (int i) const {			// array subscript
 
 Value Value::operator[] (const Value &v) const {
     switch (type) {
-    case T_INTEGER: case T_CHAR: case T_BYTE:
+    case T_BOOL:case T_INTEGER: case T_CHAR: case T_BYTE:
         return Value (0) ;
 
     case T_STRING:

@@ -194,6 +194,7 @@ public:
     int lastSystemResult ;              // exit code from last system call
 
     Value &get (Operand *op) ;
+    bool toBool (const Value &v) ;
     void checkType (const string &varname, const Value &val, Type t, const string &typen, Object *obj = NULL)  ;
     void checkType (const string &varname, const Value &val, Type t, const Value &typen, Object *obj = NULL)  ;
     void checkType (const string &varname, const Value &val, Type t, const char *typen, Object *obj = NULL)  ;

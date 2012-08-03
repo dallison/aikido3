@@ -51,29 +51,44 @@ package PostgreSQL {
             pgclose (native_conn)
         }
 
-        public function exec (query:string) {
+        public function exec (query:string):Table {
+            //println (query, stderr)
             pgexec (native_conn, query)
         }
 
-        public function query (query:string) {
+        public function query (query:string):Table {
+            //println (query, stderr)
             return pgquery (native_conn, query)             // returns a Table object
         }
 
-        public function describe (table) {
-            var q = "SELECT " +
-                    "a.attname AS Field," +		// NOTE: upper case to match mysql
-                    "t.typname AS Type " +
-                    "FROM" +
-                    "pg_class c," +
-                    "pg_attribute a," +
-                    "pg_type t" +
-                    "WHERE" +
-                    "c.relname = '" + table + "'" +
-                    "and a.attnum > 0" +
-                    "and a.attrelid = c.oid" +
-                    "and a.atttypid = t.oid" +
-                    "ORDER BY a.attnum;" 
-            return query (q)
+        public function describe (table:string):Table {
+            var q = "SELECT" +
+                    " a.attname AS Field," +		// NOTE: upper case to match mysql
+                    " t.typname AS Type" +
+                    " FROM" +
+                    " pg_class c," +
+                    " pg_attribute a," +
+                    " pg_type t" +
+                    " WHERE" +
+                    " c.relname = '" + table + "'" +
+                    " and a.attnum > 0" +
+                    " and a.attrelid = c.oid" +
+                    " and a.atttypid = t.oid" +
+                    " ORDER BY a.attnum;" 
+            var r = query (q)
+            if (sizeof(r) == 0) {
+                throw "Relation " + table + " does not exist"
+            }
+            return r
+        }
+
+        public function nextId (sequence:string):int {
+            var q = "select nextval ('" + sequence + "')"
+            var r = query (q)
+            if (sizeof(r) == 1) {
+                return r[0].nextval
+            }
+            throw "No such sequence " + sequence
         }
     }
 

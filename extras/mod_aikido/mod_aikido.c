@@ -54,6 +54,7 @@ extern void *aikido_new_request (request_rec *req);
 extern void aikido_delete_request (void *req);
 extern int aikido_check_uri (void *aikido, void *req);
 extern void aikido_run (void *aikido, void *req, int in, int out);
+extern int aikido_post_initialize (void *aikido);
 extern int aikido_debug;
 
 /* the aikido object (opaque handle) */
@@ -526,6 +527,7 @@ static void aikido_child_init(apr_pool_t *p, server_rec *s)
 {
     // initialize Aikido here
     aikido = aikido_init (aikidozipdir, webappdir);
+    aikido_post_initialize (aikido);
 }
 
 static void register_hooks(apr_pool_t *p)

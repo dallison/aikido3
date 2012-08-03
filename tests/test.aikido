@@ -143,6 +143,30 @@ i1 = r > 1001 ; assert i1 == false
 i1 = r <= 1000 ; assert i1 == true
 i1 = r >= 1000 ; assert i1 == true
 
+// boolean tests
+var b1 = true
+var b2 = false
+assert typeof (b1) == "boolean"
+assert typeof (b2) == "boolean"
+
+b1 = 1 < 2 ; assert typeof(b1) == "boolean" && b1 == true
+b1 = 1 > 2 ; assert typeof(b1) == "boolean" && b1 == false
+b1 = 1 <= 2 ; assert typeof(b1) == "boolean" && b1 == true
+b1 = 1 >= 2 ; assert typeof(b1) == "boolean" && b1 == false
+b1 = !b2 ; assert typeof(b1) == "boolean" && b1 == true
+
+var bv1 = false
+if (b1) {
+    bv1 = true
+}
+assert bv1 == true
+if (!b2) {
+    bv1 = true
+} else {
+}
+assert bv1 == true
+
+
 // vector tests
 var v3 = [1]
 var v4 = [1,2,3,4,5]

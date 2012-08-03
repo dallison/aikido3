@@ -1,6 +1,6 @@
 OBJS=postgres.o
 
-CPPFLAGS=-D_OS_MACOSX -D_CC_GCC  -fPIC -I../../src
+CPPFLAGS=-D_OS_MACOSX -D_CC_GCC  -fPIC -I../../src -g
 
 libpgclient.so: $(OBJS)
 	g++ -bundle -undefined suppress -flat_namespace -o $@ $< -lpq

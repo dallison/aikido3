@@ -35,7 +35,7 @@ AIKIDO_NATIVE (db_init) {
     initdone = true ;
 
     Scope *scope ;
-    Tag *pkg = b->findTag (string (".MySQL")) ;
+    Tag *pkg = b->findTag (string (".MySQL"), currentScope) ;
     if (pkg == NULL) {
         throw Exception ("Can't find MySQL package") ;
     }

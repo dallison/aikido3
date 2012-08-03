@@ -183,7 +183,7 @@ typedef unsigned long long UINTEGER ;
 #endif
 #endif
 
-#define VERSION 301
+#define VERSION 302
 const int version_number = VERSION ;
 
 // set of properties
@@ -260,6 +260,7 @@ enum Type {
      T_INTEGER = 1,		// regular 64 bit integer
      T_BYTE = 3,		// 8 bit unsigned integer
      T_CHAR = 5,		// character
+     T_BOOL = 7,		// boolean
      T_REAL = 6,		// floating point
      T_ADDRESS = 8,		// address of another value
      T_ENUMCONST = 10,	// enumerated constant
@@ -1021,7 +1022,7 @@ AIKIDO_EXPORT struct Value {
     Value (UINTEGER i) { integer = i ; type = T_INTEGER ; }
     Value (string s) { integer = 0 ; str = new string (s) ; type = T_STRING ; incRef(str,string) ; }
     Value (string *s) { integer = 0 ; str = s ; type = T_STRING ; incRef(str,string) ; }
-    Value (bool b) { integer = b == true ; type = T_INTEGER ; }
+    Value (bool b) { integer = b == true ; type = T_BOOL ; }
     Value (vector *v) { integer = 0 ; vec = v ; type = T_VECTOR ; incRef(v,vector) ; }
     Value (bytevector *v) { integer = 0 ; bytevec = v ; type = T_BYTEVECTOR ; incRef(v,bytevector) ; }
     Value (Function *f) { integer = 0 ; func = f ; type = T_FUNCTION ; incBlockRef () ; }
@@ -1096,7 +1097,7 @@ AIKIDO_EXPORT struct Value {
     Value &operator= (UINTEGER i) { destruct() ; integer = i ; type = T_INTEGER ; return *this ;}
     Value &operator= (string s) { destruct() ; str = new string (s) ; type = T_STRING ; incRef(str,string) ; return *this ;}
     Value &operator= (string *s) { destruct() ; integer = 0 ; str = s ; type = T_STRING ; incRef(str,string) ; return *this ;}
-    Value &operator= (bool b) { destruct() ; integer = b == true ; type = T_INTEGER ; return *this ;}
+    Value &operator= (bool b) { destruct() ; integer = b == true ; type = T_BOOL ; return *this ;}
     Value &operator= (vector *v) { destruct() ; vec = v ; type = T_VECTOR ; incRef(v,vector) ; return *this ;}
     Value &operator= (bytevector *v) { destruct() ; bytevec = v ; type = T_BYTEVECTOR ; incRef(v,bytevector) ; return *this ;}
     Value &operator= (Function *f) { destruct() ; func = f ; type = T_FUNCTION ; return *this ;}
@@ -1144,7 +1145,7 @@ AIKIDO_EXPORT struct Value {
     Value operator[] (int i) const ;
     Value operator[] (const Value &v) const ;
 
-    bool checkInt() { return type == T_INTEGER || type == T_CHAR || type == T_BYTE; }
+    bool checkInt() { return type == T_INTEGER || type == T_CHAR || type == T_BYTE || type == T_BOOL; }
     bool checkReal() { return type == T_REAL ; }
     bool checkEnum() { return type == T_ENUMCONST ; }
 
@@ -2399,7 +2400,7 @@ public:
     Variable *findVariable (const string &name, int &level, int access, SourceLocation *source = NULL, Package **p = NULL) ;
     Variable *findVariable (const string &name, int &level, int access, SourceLocation *source, Scope *scope, int scopelevel) ;
     Macro *findMacro (const string &name, Package *&pkg) ;
-    Tag *findTag (const string &name) ;
+    Tag *findTag (const string &name, Scope *topscope=NULL) ;
     Variable *findPackageIdentifier (string &name, int &level) ;
     Tag *findPackageTag (string &name) ;
     Variable *findPackageVariable (const string &name, int &level) ;

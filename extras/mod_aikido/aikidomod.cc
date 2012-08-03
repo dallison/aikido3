@@ -144,7 +144,7 @@ void aikido_run (aikidoenv *env, Request *req, int in, int out) {
     std::stringstream str;
     str << "apache-service " << in << " " << out << " " << req << "\n";
     if (aikido_debug) {
-        std::cerr << "mod_aikido: " << str.str() << "\n";
+        std::cerr << "mod_aikido: " << str.str();
     }
 
     try {
@@ -160,6 +160,28 @@ void aikido_run (aikidoenv *env, Request *req, int in, int out) {
     }
 }
 
+
+// perform post initialization tasks by initializing all the webapps and servlets
+void aikido_post_initialize (aikidoenv *env) {
+    // form an aikido foreign command to initialize the webapps
+    std::stringstream str;
+    str << "apache-postinit\n";
+    if (aikido_debug) {
+        std::cerr << "mod_aikido: " << str.str();
+    }
+
+    try {
+        env->aikido->execute (str, env->root, NULL, NULL);
+    } catch (Exception &e) {
+        std::stringstream str;
+        env->aikido->reportException (e, str);
+        std::cerr << "mod_aikido: service failure: " << str.str() << "\n";
+    } catch (const char *s) {
+        std::cerr << "mod_aikido: service failure:  " << s << "\n";
+    } catch (...) {
+        std::cerr << "mod_aikido: service failure due to unknown reason\n";
+    }
+}
 
 int aikido_check_uri (aikidoenv *env, void *r) {
     Request *req = reinterpret_cast<Request*>(r);
@@ -263,6 +285,7 @@ void *ApacheWorker::readAddr (std::string::size_type &ch, std::string line, char
     return reinterpret_cast<void*>(n);
 }
 
+
 void ApacheWorker::initWebapps(aikido::WorkerContext *ctx) {
     DIR *dir ;
     struct dirent *entry ;
@@ -273,7 +296,7 @@ void ApacheWorker::initWebapps(aikido::WorkerContext *ctx) {
     }
     while ((entry = readdir (dir)) != NULL) {
         if (strstr(entry->d_name, ".war") != NULL) {
-           WebApp *webapp = new WebApp (aikido, webappdir, entry->d_name);
+           WebApp *webapp = new WebApp (aikido, this, webappdir, entry->d_name);
            try {
                webapp->parseWAR (ctx);
            } catch (...) {
@@ -286,6 +309,26 @@ void ApacheWorker::initWebapps(aikido::WorkerContext *ctx) {
 
 }
 
+void ApacheWorker::postInitWebapps(aikido::WorkerContext *ctx) {
+    if (aikido_debug) {
+        std::cerr << "mod_aikido: postInitWebapps\n";
+    }
+    for (unsigned int i = 0 ; i < webapps.size() ; i++) {
+        webapps[i]->postInitialize(ctx);
+    }
+}
+
+Servlet *ApacheWorker::findServlet (std::string warname, std::string servletname) {
+    for (unsigned int i = 0 ; i < webapps.size() ; i++) {
+        WebApp *webapp = webapps[i];
+        if (webapp->getWARName() == warname) {
+            return webapp->findServlet (servletname, false);
+        }
+    }
+    return NULL;
+}
+
+
 
 void ApacheWorker::parse (std::istream &in, int scopeLevel, int pass, std::ostream &os, std::istream &is, aikido::WorkerContext *ctx) {
     std::string line;
@@ -293,6 +336,8 @@ void ApacheWorker::parse (std::istream &in, int scopeLevel, int pass, std::ostre
     if (line == "apache-init") {
         // initialize the apache module
         initWebapps(ctx);
+    } else if (line == "apache-postinit") {
+        postInitWebapps (ctx);
     } else if (line.find("apache-service") != std::string::npos) {
         // service a request
         // this is passed the file descriptors for the input and output pipes followed by the address (in hex) of the Request object
@@ -466,7 +511,7 @@ void mkdir (std::string dir, int mode) {
 //
 // Web Applications
 //
-WebApp::WebApp (Aikido *aikido, std::string dir, std::string warfile) : aikido(aikido), dir(dir), warfile(warfile), appobj(NULL) {
+WebApp::WebApp (Aikido *aikido, ApacheWorker *worker, std::string dir, std::string warfile) : aikido(aikido), worker(worker), dir(dir), warfile(warfile), appobj(NULL) {
     //std::cerr << "new webapp " << warfile << "\n";
     // XXX: hardcode for now
     std::string::size_type suffix = warfile.find (".war");
@@ -541,6 +586,14 @@ WebApp::~WebApp() {
     }
 }
 
+std::string WebApp::getWARName() {
+    std::string::size_type suffix = warfile.find('.');
+    if (suffix != std::string::npos) {
+        return warfile.substr(0, suffix);
+    }
+    return warfile;
+}
+
 void WebApp::setVar (std::string name, const Value &v) {
     variables[name] = v;
 }
@@ -554,7 +607,7 @@ Value WebApp::getVar (std::string name) {
 }
 
 
-Servlet *WebApp::findServlet (std::string name) {
+Servlet *WebApp::findServlet (std::string name, bool create) {
     //std::cerr << "Looking for servlet " << name << "\n";
     for (unsigned int i = 0 ; i < servlets.size() ; i++) {
         if (servlets[i]->name == name) {
@@ -564,6 +617,10 @@ Servlet *WebApp::findServlet (std::string name) {
             return servlets[i];
         }
     }
+    if (!create) {
+        return NULL;
+    }
+
     if (aikido_debug) {
         std::cerr << "mod_aikido: creating servlet " << name << "\n";
     }
@@ -728,6 +785,7 @@ void WebApp::parse (Servlet *servlet, StackFrame *stack, StaticLink *slink, Scop
         }
         std::cerr << "\n";
     }
+
     try {
         std::vector<Value> args;
         servlet->object = aikido->loadFile (files, args, stack, slink, scope, sl, "", &std::cerr, NULL);
@@ -779,40 +837,41 @@ void WebApp::writeErrorPage (Servlet *servlet, Request *req, std::ostream &outst
 }
 
 
+void WebApp::postInitialize (aikido::WorkerContext *ctx) {
+    // allocate an HTTP.Application object
+    appobj = new (applicationClass->stacksize) Object (applicationClass, ctx->slink, ctx->stack, ctx->stack->inst) ;
+    appobj->ref++ ;
+
+    appobj->varstack[0] = Value (appobj) ;
+    // construct the object
+
+    VirtualMachine vm (aikido);
+    vm.execute (applicationClass, appobj, ctx->slink, 0) ;
+
+    appobj->varstack[1] = Value((UINTEGER)this) ;
+
+    // initialize the servlets
+    for (unsigned int i = 0 ; i < servlets.size() ; i++) {
+        Servlet *servlet = servlets[i];
+        if (servlet->initialize != NULL) {
+            std::vector<Value> args;
+            std::stringstream dummyin;
+            args.push_back (appobj);
+    
+            if (aikido_debug) {
+                std::cerr << "Initializing servlet " << servlet->name << "\n";
+            }
+            aikido->call (servlet->object.object, servlet->initialize, args, &std::cerr, &dummyin);
+        }
+    }
+
+}
+
 void WebApp::service (Servlet *servlet, Request *req, std::istream &instream, std::ostream &outstream, aikido::WorkerContext *ctx) {
     if (aikido_debug) {
         std::cerr << "mod_aikido: service using servlet " << servlet->name << "\n";
     }
-
-    // we can now do stuff with the webapp because it's been initialized properly.  If there is no Application object, allocate it now
-    if (appobj == NULL) {
-        // allocate an HTTP.Application object
-        appobj = new (applicationClass->stacksize) Object (applicationClass, ctx->slink, ctx->stack, ctx->stack->inst) ;
-        appobj->ref++ ;
     
-        appobj->varstack[0] = Value (appobj) ;
-        // construct the object
-    
-        VirtualMachine vm (aikido);
-        vm.execute (applicationClass, appobj, ctx->slink, 0) ;
-    
-        appobj->varstack[1] = Value((UINTEGER)this) ;
-    }
-    
-    // Lazy initialization of servlet now
-    if (!servlet->initialized && servlet->initialize != NULL) {
-        servlet->initialized = true;
-
-        std::vector<Value> args;
-        std::stringstream dummyin;
-        args.push_back (appobj);
-
-        if (aikido_debug) {
-            std::cerr << "Initializing servlet " << servlet->name << "\n";
-        }
-        aikido->call (servlet->object.object, servlet->initialize, args, &std::cerr, &dummyin);
-    }
-
     Block *code = servlet->object.object->block;
     std::vector<Value> args;
     //std::cerr << "executing preload\n";
@@ -1578,6 +1637,17 @@ AIKIDO_NATIVE(internal_getAppVariable) {
 AIKIDO_NATIVE(internal_getAppDir) {
     WebApp *webapp = reinterpret_cast<WebApp*>(paras[1].integer);
     return new string (webapp->getDir());
+}
+
+AIKIDO_NATIVE(internal_findServlet) {
+    WebApp *webapp = reinterpret_cast<WebApp*>(paras[1].integer);
+    std::string war = paras[2].str->str;
+    std::string name = paras[3].str->str;
+    Servlet *s = webapp->getWorker()->findServlet (war, name);
+    if (s == NULL) {
+         throw newException (vm, stack, "Unable to find servlet");
+    }
+    return s->getObject();
 }
 
 

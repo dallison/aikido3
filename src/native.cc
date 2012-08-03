@@ -170,7 +170,7 @@ void setSysVar (string name, const Value &v, StaticLink *slink) {
    
 
 bool isIntegral (const Value &v) {
-    return v.type == T_INTEGER || v.type == T_BYTE || v.type == T_CHAR || v.type == T_ENUMCONST ;
+    return v.type == T_INTEGER || v.type == T_BYTE || v.type == T_CHAR || v.type == T_ENUMCONST || v.type == T_BOOL;
 }
 
 static INTEGER getInt (const Value &v) {
@@ -919,6 +919,7 @@ static bool formatNumber (char *format, char *buf, const Value &v) {
     case T_CHAR:
     case T_BYTE:
     case T_ENUMCONST:
+    case T_BOOL:
         sprintf (buf, format, getInt (v)) ;
         return true ;
     case T_REAL:
@@ -938,6 +939,7 @@ static bool formatChar (char *format, char *buf, const Value &v) {
     switch (v.type) {
     case T_INTEGER:
     case T_CHAR:
+    case T_BOOL:
     case T_BYTE:
         sprintf (buf, format, (char)getInt (v)) ;
         return true ;
@@ -957,6 +959,7 @@ static bool formatReal (char *format, char *buf, const Value &v) {
     switch (v.type) {
     case T_INTEGER:
     case T_CHAR:
+    case T_BOOL:
     case T_BYTE:
     case T_ENUMCONST:
         sprintf (buf, format, (double)getInt (v)) ;
@@ -984,6 +987,10 @@ static bool formatString (char *format, char *buf, const Value &v) {
         sprintf (nbuf, "%lld", getInt (v)) ;
         sprintf (buf, format, nbuf) ;
         return true ;
+    case T_BOOL:
+        strcpy (nbuf, getInt (v)?"true":"false") ;
+        sprintf (buf, format, nbuf) ;
+        return true ;
     case T_STRING:
         sprintf (buf, format, v.str->c_str()) ;
         return true ;
@@ -1008,7 +1015,7 @@ static bool formatString (char *format, char *buf, const Value &v) {
 
 
 static bool formatBinary (char *format, char *buf, const Value &v) {
-    if (!(v.type ==T_INTEGER || v.type == T_CHAR || v.type == T_BYTE)) {
+    if (!(v.type ==T_INTEGER || v.type == T_CHAR || v.type == T_BYTE || v.type == T_BOOL)) {
         return false ;
     }
     int width = 0 ;
@@ -1634,6 +1641,7 @@ static void cloneBlock (Value *base, Block *blk, Object *obj, bool recurse, Clon
 static Value clone (const Value &v, bool recurse, CloneInfo &info) {
     switch (v.type) {
     case T_INTEGER:
+    case T_BOOL:
     case T_CHAR:
     case T_BYTE:
         return v.integer ;
@@ -2082,6 +2090,7 @@ static INTEGER hashCode (VirtualMachine *vm, StackFrame *stack, const Value &obj
         return 0 ;
 
     case T_INTEGER:
+    case T_BOOL:
     case T_CHAR:
     case T_BYTE:
     case T_ENUMCONST:
@@ -3322,7 +3331,7 @@ enum Stype{
    STYPE_REF,
    STYPE_EOB,
    STYPE_MEMBER,
-   
+   STYPE_BOOL
 };
 
 static void serialize_leb128 (INTEGER v, std::ostream &output) {
@@ -3454,6 +3463,16 @@ static void serialize (VirtualMachine *vm, const Value &v, SerialInfo &info, std
             output << "<integer value=\"" << v.integer << "\"/>";
         } else {
             output << v.integer;
+        }
+        break;
+    case T_BOOL:
+        if (type == SERIALIZE_BINARY) {
+            output.put (STYPE_BOOL);
+            serialize_leb128 (v.integer, output);
+        } else if (type == SERIALIZE_XML) {
+            output << "<boolean value=\"" << (v.integer?"true":"false") << "\"/>";
+        } else {
+            output << (v.integer ? "true":"false");
         }
         break;
     case T_CHAR:
@@ -3883,6 +3902,9 @@ static Value deserialize_xml_value (Aikido *aikido, VirtualMachine *vm, XML::Ele
     } else if (node->name == "char") {
         std::string value = node->getAttribute ("value");
         return Value (value[0]);
+    } else if (node->name == "boolean") {
+        std::string value = node->getAttribute ("value");
+        return Value (value == "true");
     } else if (node->name == "byte") {
         std::string value = node->getAttribute ("value");
         return Value (((INTEGER)value[0] & 0xff));
@@ -4150,9 +4172,9 @@ static Value deserialize_json_value (Aikido *aikido, VirtualMachine *vm, Deseria
             s += ch ;
         }
         if (s == "true") {
-            return 1;
+            return true;
         } else if (s == "false") {
-            return 0 ;
+            return false ;
         } else if (s == "null") {
             return Value((Object*)NULL) ;
         } else {
@@ -4169,6 +4191,9 @@ static Value deserialize_binary_value (Aikido *aikido, VirtualMachine *vm, Deser
     switch (stype) {
     case STYPE_INTEGER:
         return Value (deserialize_leb128 (in));
+
+    case STYPE_BOOL:
+        return Value (deserialize_leb128 (in) != 0);
 
     case STYPE_CHAR:
         return Value ((char)deserialize_leb128 (in));

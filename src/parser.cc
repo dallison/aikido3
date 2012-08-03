@@ -320,6 +320,8 @@ Aikido::Aikido (std::string dir, std::string programnm,
     // make a variable for the builtin types
     tree = new Node (this,SEMICOLON, tree, addFixedTypeVar ("int", NUMBER, Value ((INTEGER)0))) ;
     tree = new Node (this,SEMICOLON, tree, addFixedTypeVar ("integer", NUMBER, Value ((INTEGER)0))) ;
+    tree = new Node (this,SEMICOLON, tree, addFixedTypeVar ("bool", NUMBER, Value (false))) ;
+    tree = new Node (this,SEMICOLON, tree, addFixedTypeVar ("boolean", NUMBER, Value (false))) ;
     tree = new Node (this,SEMICOLON, tree, addFixedTypeVar ("byte", NUMBER, Value ((unsigned char)0))) ;
     tree = new Node (this,SEMICOLON, tree, addFixedTypeVar ("char", CHAR, Value ('a'))) ;
     tree = new Node (this,SEMICOLON, tree, addFixedTypeVar ("string", STRING, Value (""))) ;
@@ -5617,7 +5619,7 @@ void Aikido::generateProperty (Variable *var, Block *block, Annotation *propann)
     if (geti != propann->actuals.end()) {
         Node *node = geti->second;
         if (node->op == NUMBER) {
-            if (node->value.type == T_INTEGER) {
+            if (node->value.type == T_BOOL) {
                 get = node->value.integer != 0;
             } else {
                 error ("Expected boolean value for @Property(get=<value>)");
@@ -5630,7 +5632,7 @@ void Aikido::generateProperty (Variable *var, Block *block, Annotation *propann)
     if (seti != propann->actuals.end()) {
         Node *node = seti->second;
         if (node->op == NUMBER) {
-            if (node->value.type == T_INTEGER) {
+            if (node->value.type == T_BOOL) {
                 set = node->value.integer != 0;
             } else {
                 error ("Expected boolean value for @Property(set=<value>)");
@@ -5643,7 +5645,7 @@ void Aikido::generateProperty (Variable *var, Block *block, Annotation *propann)
     if (booli != propann->actuals.end()) {
         Node *node = booli->second;
         if (node->op == NUMBER) {
-            if (node->value.type == T_INTEGER) {
+            if (node->value.type == T_BOOL) {
                 boolean = node->value.integer != 0;
             } else {
                 error ("Expected boolean value for @Property(boolean=<value>)");
@@ -7981,12 +7983,12 @@ Node *Aikido::primaryExpression() {
             return node ;
             }
         case TTRUE: {
-            Node *node = new Node (this,NUMBER, Value (1)) ;
+            Node *node = new Node (this,NUMBER, Value (true)) ;
             nextToken() ;
             return node ;
             }
         case TFALSE: {
-            Node *node = new Node (this,NUMBER, Value(0)) ;
+            Node *node = new Node (this,NUMBER, Value(false)) ;
             nextToken() ;
             return node ;
             }
@@ -8345,10 +8347,10 @@ Macro *Aikido::findMacro (const string &name, Package *&pkg) {
 
 
 
-Tag *Aikido::findTag (const string &name) {
+Tag *Aikido::findTag (const string &name, Scope *topscope) {
     Variable *var ;
     Scope *s ;
-    Scope *scope = currentScope ;
+    Scope *scope = topscope == NULL ? currentScope : topscope;
     while (scope != NULL) {
         if ((var = scope->findVariable (name, s, VAR_ACCESSFULL, NULL, NULL)) != NULL) {
             return (Tag*)var ;
@@ -8616,7 +8618,7 @@ void Node::propagateFlags() {
         case GREATER:
         case GREATEREQ:
         case BANG:
-             type = T_INTEGER ;
+             type = T_BOOL ;
              break ;
         case NEWVECTOR:
              type = T_VECTOR ;
@@ -9117,10 +9119,10 @@ INTEGER Aikido::constPrimaryExpression() {
              return value ;
         case TTRUE: 
             nextToken() ;
-            return 1 ;
+            return true ;
         case TFALSE: 
             nextToken() ;
-            return 0 ;
+            return false ;
         case FNUMBER:
             nextToken() ;
             error ("Illegal real constant in constant expression") ;
@@ -9475,6 +9477,7 @@ void Aikido::dumpValue (const Value &v, std::ostream &os) {
     switch (v.type) {
     case T_REAL :
     case T_INTEGER :
+    case T_BOOL :
         dumpWord ((v.integer >> 32), os) ;
         dumpWord (v.integer & 0xffffffff, os) ;
         break ;
@@ -9540,6 +9543,7 @@ Value Aikido::readValue (std::istream &is) {
     switch (t) {
     case T_REAL :
     case T_INTEGER :
+    case T_BOOL :
         v.integer = readWord (is) ;
         v.integer = (v.integer << 32) | readWord (is) ;
         break ;

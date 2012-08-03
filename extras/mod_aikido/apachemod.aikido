@@ -390,6 +390,7 @@ public package HTTP {
         private native function internal_getAppDir (app)
         private native function internal_getAppVariable (app, name)
         private native function internal_setAppVariable (app, name, value)
+        private native function internal_findServlet (app, war, name)
 
         public function getVariable (name) {
             return internal_getAppVariable (app, name)
@@ -399,8 +400,12 @@ public package HTTP {
             return internal_setAppVariable (app, name, value)
         }
 
-        public function getDir() {
+        public function getDir() :string {
             return internal_getAppDir(app)
+        }
+
+        public function findServlet (war:string, servletname:string) {
+            return internal_findServlet (app, war, servletname)
         }
     }
 }

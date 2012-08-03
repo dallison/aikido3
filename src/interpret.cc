@@ -305,7 +305,7 @@ void VirtualMachine::illegalop (const Value &v, const char *op) {
 // is the argument an integral type
 //
 bool VirtualMachine::isIntegral (const Value &v) {
-    return v.type == T_INTEGER || v.type == T_CHAR || v.type == T_ENUMCONST || v.type == T_BYTE ;
+    return v.type == T_INTEGER || v.type == T_CHAR || v.type == T_ENUMCONST || v.type == T_BYTE  || v.type == T_BOOL;
 }
 
 //
@@ -339,9 +339,9 @@ bool VirtualMachine::cmpeq (const Value &v1, const Value &v2, const char *op) {
     }
 
     switch (v1.type) {
-    case T_INTEGER: case T_CHAR: case T_BYTE:
+    case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             return v1.integer == v2.integer ;
         
         case T_STRING:
@@ -358,7 +358,7 @@ bool VirtualMachine::cmpeq (const Value &v1, const Value &v2, const char *op) {
 
     case T_REAL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             return v1.real == v2.integer ;
         
         case T_STRING:
@@ -372,7 +372,7 @@ bool VirtualMachine::cmpeq (const Value &v1, const Value &v2, const char *op) {
 
     case T_STRING:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE: case T_BOOL:
             return *v1.str == v2.toString() ;
         
         case T_STRING:
@@ -413,7 +413,7 @@ bool VirtualMachine::cmpeq (const Value &v1, const Value &v2, const char *op) {
     case T_ENUMCONST:
         if (v2.type == T_ENUMCONST) {
             return v1.ec->en == v2.ec->en && v1.ec->offset == v2.ec->offset ;
-        } else if (v2.type == T_INTEGER || v2.type == T_CHAR || v2.type == T_BYTE) {
+        } else if (v2.type == T_INTEGER || v2.type == T_CHAR || v2.type == T_BOOL || v2.type == T_BYTE) {
             return getInt (v1) == v2.integer ;
         }
         break ;
@@ -523,9 +523,9 @@ bool VirtualMachine::cmplt (const Value &v1, const Value &v2, const char *op) {
 
     switch (v1.type) {
     case T_INTEGER: case T_BYTE:
-    case T_CHAR:
+    case T_CHAR: case T_BOOL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             return v1.integer < v2.integer ;
         
         case T_STRING:
@@ -543,7 +543,7 @@ bool VirtualMachine::cmplt (const Value &v1, const Value &v2, const char *op) {
         break ;
     case T_REAL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             return v1.real < v2.integer ;
         
         case T_STRING:
@@ -558,7 +558,7 @@ bool VirtualMachine::cmplt (const Value &v1, const Value &v2, const char *op) {
         break ;
     case T_STRING:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE: case T_BOOL:
             return *v1.str < v2.toString() ;
         
         case T_STRING:
@@ -590,7 +590,7 @@ bool VirtualMachine::cmplt (const Value &v1, const Value &v2, const char *op) {
     case T_ENUMCONST:
         if (v2.type == T_ENUMCONST) {
             return v1.ec->en == v2.ec->en && v1.ec->offset < v2.ec->offset ;
-        } else if (v2.type == T_INTEGER || v2.type == T_CHAR || v2.type == T_BYTE) {
+        } else if (v2.type == T_INTEGER || v2.type == T_CHAR || v2.type == T_BOOL || v2.type == T_BYTE) {
             return getInt (v1) < v2.integer ;
         }
         break ;
@@ -695,9 +695,9 @@ bool VirtualMachine::cmpgt (const Value &v1, const Value &v2, const char *op) {
 
     switch (v1.type) {
     case T_INTEGER: case T_BYTE:
-    case T_CHAR:
+    case T_CHAR: case T_BOOL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             return v1.integer > v2.integer ;
         
         case T_STRING:
@@ -715,7 +715,7 @@ bool VirtualMachine::cmpgt (const Value &v1, const Value &v2, const char *op) {
         break ;
     case T_REAL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             return v1.real > v2.integer ;
         
         case T_STRING:
@@ -730,7 +730,7 @@ bool VirtualMachine::cmpgt (const Value &v1, const Value &v2, const char *op) {
         break ;
     case T_STRING:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE: case T_BOOL:
             return *v1.str > v2.toString() ;
         
         case T_STRING:
@@ -762,7 +762,7 @@ bool VirtualMachine::cmpgt (const Value &v1, const Value &v2, const char *op) {
     case T_ENUMCONST:
         if (v2.type == T_ENUMCONST) {
             return v1.ec->en == v2.ec->en && v1.ec->offset > v2.ec->offset ;
-        } else if (v2.type == T_INTEGER || v2.type == T_CHAR || v2.type == T_BYTE) {
+        } else if (v2.type == T_INTEGER || v2.type == T_CHAR || v2.type == T_BOOL || v2.type == T_BYTE) {
             return getInt (v1) > v2.integer ;
         }
         break ;
@@ -888,9 +888,9 @@ inline StackFrame *VirtualMachine::getStack (int level) {
 void VirtualMachine::add (Operand *r, const Value &v1, const Value &v2) {
     InterpretedBlock *opfunc ;
     switch (v1.type) {
-    case T_INTEGER: case T_CHAR: case T_BYTE:
+    case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             set (r, v1.integer + v2.integer) ;
             return ;
         
@@ -936,7 +936,7 @@ void VirtualMachine::add (Operand *r, const Value &v1, const Value &v2) {
         break ;
     case T_REAL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             set (r, (v1.real + v2.integer)) ;
             return ;
         
@@ -972,7 +972,7 @@ void VirtualMachine::add (Operand *r, const Value &v1, const Value &v2) {
         break ;
     case T_STRING:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_REAL: case T_BYTE: case T_BOOL:
             set (r, (*v1.str + v2.toString())) ;
             return ;
         
@@ -1209,9 +1209,9 @@ void VirtualMachine::add (Operand *r, const Value &v1, const Value &v2) {
 void VirtualMachine::sub (Operand *r, const Value &v1, const Value &v2) {
     InterpretedBlock *opfunc ;
     switch (v1.type) {
-    case T_INTEGER: case T_CHAR: case T_BYTE:
+    case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             set (r, (v1.integer - v2.integer)) ;
             return ;
         
@@ -1234,7 +1234,7 @@ void VirtualMachine::sub (Operand *r, const Value &v1, const Value &v2) {
 
     case T_REAL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             set (r, (v1.real - v2.integer)) ;
             return ;
         
@@ -1320,9 +1320,9 @@ void VirtualMachine::mul (Operand *r, const Value &v1, const Value &v2) {
     InterpretedBlock *opfunc ;
 
     switch (v1.type) {
-    case T_INTEGER: case T_CHAR: case T_BYTE:
+    case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             set (r, (v1.integer * v2.integer)) ;
             return ;
         case T_REAL:
@@ -1332,7 +1332,7 @@ void VirtualMachine::mul (Operand *r, const Value &v1, const Value &v2) {
         break ;
     case T_REAL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             set (r, (v1.real * v2.integer)) ;
             return ;
         case T_REAL:
@@ -1368,9 +1368,9 @@ void VirtualMachine::div (Operand *r, const Value &v1, const Value &v2) {
     InterpretedBlock *opfunc ;
 
     switch (v1.type) {
-    case T_INTEGER: case T_CHAR: case T_BYTE:
+    case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             checkZero (v2.integer) ;
             set (r, (v1.integer / v2.integer)) ;
             return ;
@@ -1382,7 +1382,7 @@ void VirtualMachine::div (Operand *r, const Value &v1, const Value &v2) {
         break ;
     case T_REAL:
         switch (v2.type) {
-        case T_INTEGER: case T_CHAR: case T_BYTE:
+        case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
             checkZero (v2.integer) ;
             set (r, (v1.real / v2.integer)) ;
             return ;
@@ -1433,7 +1433,7 @@ void VirtualMachine::sra (Operand *r, const Value &v1, const Value &v2) {
     InterpretedBlock *opfunc ;
 
     switch (v1.type) {
-    case T_INTEGER: case T_CHAR: case T_BYTE:
+    case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
         set (r, (v1.integer >> v2.integer)) ;
         return ;
     case T_STRING: {
@@ -1500,7 +1500,7 @@ void VirtualMachine::srl (Operand *r, const Value &v1, const Value &v2) {
     InterpretedBlock *opfunc ;
 
     switch (v1.type) {
-    case T_INTEGER: case T_CHAR: case T_BYTE:
+    case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
         set (r, ((UINTEGER)v1.integer >> v2.integer)) ;
         return ;
     case T_STRING: {
@@ -1567,7 +1567,7 @@ void VirtualMachine::sll (Operand *r, const Value &v1, const Value &v2) {
     InterpretedBlock *opfunc ;
 
     switch (v1.type) {
-    case T_INTEGER: case T_CHAR: case T_BYTE:
+    case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:
         set (r, (v1.integer << v2.integer)) ;
         return ;
     case T_STRING: {
@@ -1872,6 +1872,26 @@ inline Value &VirtualMachine::get (Operand *op) {
         static_cast<Variable*>(op->val.ptr)->getValue (getStack ((int)op->val.type - 100))))) ;
 }
 
+inline bool VirtualMachine::toBool (const Value &v) {
+    switch (v.type) {
+    case T_NONE:
+        return false;
+    case T_INTEGER:
+    case T_CHAR:
+    case T_BOOL:
+    case T_BYTE:
+        return v.integer != 0;
+    case T_STRING:
+        return v.str->size() > 0;
+    case T_VECTOR:
+        return v.vec->size() > 0;
+    case T_MAP:
+        return v.m->size() > 0;
+    default:
+        return false;
+    }
+}
+
 // override a variable with a new value.  This is used for virtual function assignment
 
 void VirtualMachine::overassign (Operand *dest, Value &src) {
@@ -1909,7 +1929,7 @@ inline void VirtualMachine::setbool (Operand *dest, bool v) {
     }
     val->destruct() ;
     val->integer = v ;
-    val->type = T_INTEGER ;
+    val->type = T_BOOL ;
 }
 
 
@@ -2772,12 +2792,12 @@ bool VirtualMachine::execute (int startaddr) {
             pc = ir->src[0]->val.integer ;
             break ;
         case opBT:
-            if (get (ir->src[0]).integer != 0) {
+            if (toBool(get (ir->src[0]))) {
                 pc = ir->src[1]->val.integer ;
             }
             break ;
         case opBF:
-            if (get (ir->src[0]).integer == 0) {
+            if (!toBool(get (ir->src[0]))) {
                 pc = ir->src[1]->val.integer ;
             }
             break ;
@@ -3082,6 +3102,9 @@ string VirtualMachine::typestring (const Value &v) {
     case T_CHAR:
         return "char" ;
         
+    case T_BOOL:
+        return "boolean" ;
+        
     case T_STRING:
         return "string" ;
         
@@ -3160,6 +3183,7 @@ void VirtualMachine::dosizeof (Operand *dest, Operand *op) {
         set (dest, v.pointer->mem->size - v.pointer->offset) ;
         break ;
 
+    case T_BOOL:
     case T_CHAR:
     case T_BYTE:
         set (dest, 1) ;
@@ -3243,6 +3267,10 @@ void VirtualMachine::dotypeof (Operand *dest, Operand *op) {
         
     case T_CHAR:
         set (dest, "char") ;
+        break ;
+        
+    case T_BOOL:
+        set (dest, "boolean") ;
         break ;
         
     case T_STRING:
@@ -4988,7 +5016,7 @@ void VirtualMachine::stream (Operand *dest, Value &left, Value &rightaddr) {
     } else {
         streamCopy (dest, left, right) ;
         Value &v = get(dest) ;
-        if (v.type == T_INTEGER || v.type == T_CHAR || v.type == T_REAL || v.type == T_BYTE) {
+        if (v.type == T_INTEGER || v.type == T_CHAR || v.type == T_REAL || v.type == T_BYTE || v.type == T_BOOL) {
             *destaddr = right ;
         }
     }
@@ -5103,6 +5131,10 @@ void VirtualMachine::streamCopy (Operand *dest, Value &left, Value &right) {
                 right.integer = left.integer ;
                 break ;
                 }
+            case T_BOOL: {
+                right.integer = left.integer ;
+                break ;
+                }
             case T_BYTE: {
                 right.integer = left.integer ;
                 break ;
@@ -5175,6 +5207,10 @@ void VirtualMachine::streamCopy (Operand *dest, Value &left, Value &right) {
                 break ;
                 }
             case T_CHAR: {
+                right.real = left.integer ;
+                break ;
+                }
+            case T_BOOL: {
                 right.real = left.integer ;
                 break ;
                 }
@@ -5251,6 +5287,12 @@ void VirtualMachine::streamCopy (Operand *dest, Value &left, Value &right) {
             case T_CHAR: {
                 char buf[32] ;
                 sprintf (buf, "%c", (char)left.integer) ;
+                right.str->replace (0, right.str->length(), string (buf)) ;
+                break ;
+                }
+            case T_BOOL: {
+                char buf[32] ;
+                sprintf (buf, "%s", left.integer?"true":"false") ;
                 right.str->replace (0, right.str->length(), string (buf)) ;
                 break ;
                 }
@@ -5343,7 +5385,7 @@ void VirtualMachine::streamCopy (Operand *dest, Value &left, Value &right) {
             }
             break ;
             }
-        case T_CHAR: {
+        case T_CHAR: case T_BOOL: {
             switch (left.type) {
             case T_INTEGER: {
                 right.integer = left.integer ;
@@ -5424,7 +5466,7 @@ void VirtualMachine::streamCopy (Operand *dest, Value &left, Value &right) {
                 right.integer = (*left.str)[0] ;
                 break ;
                 }
-            case T_CHAR: {
+            case T_CHAR: case T_BOOL: {
                 right.integer = left.integer ;
                 break ;
                 }
@@ -5712,7 +5754,7 @@ bool VirtualMachine::convertType (const Value &from, Value &to) {
             }
             break ;
             }
-        case T_CHAR: {
+        case T_CHAR: case T_BOOL: {
             to.integer = from.integer ;
             break ;
             }
@@ -5788,7 +5830,7 @@ bool VirtualMachine::convertType (const Value &from, Value &to) {
             }
             break ;
             }
-        case T_CHAR: {
+        case T_CHAR: case T_BOOL: {
             to.real = from.integer ;
             break ;
             }
@@ -5869,6 +5911,15 @@ bool VirtualMachine::convertType (const Value &from, Value &to) {
         case T_CHAR: {
             char buf[32] ;
             sprintf (buf, "%c", (char)from.integer) ;
+            decRef (to.str, string) ;
+            to.str = new string (buf) ;
+            incRef (to.str, string) ;
+            //to.str->replace (0, to.str->length(), string (buf)) ;
+            break ;
+            }
+        case T_BOOL: {
+            char buf[32] ;
+            sprintf (buf, "%s", from.integer?"true":"false") ;
             decRef (to.str, string) ;
             to.str = new string (buf) ;
             incRef (to.str, string) ;
@@ -5958,7 +6009,7 @@ bool VirtualMachine::convertType (const Value &from, Value &to) {
         case T_STRING: {
             return false ;
             }
-        case T_CHAR: {
+        case T_CHAR: case T_BOOL:{
             to.integer = from.integer ;
             break ;
             }
@@ -6004,6 +6055,66 @@ bool VirtualMachine::convertType (const Value &from, Value &to) {
         }
         break ;
         }
+    case T_BOOL: {
+        switch (from.type) {
+        case T_INTEGER: {
+            to.integer = from.integer & 1;
+            break ;
+            }
+        case T_REAL: {
+            to.integer = (INTEGER)from.real & 1;
+            break ;
+            }
+        case T_STRING: {
+            to.integer = from.str->str == "true" ;
+            break;
+            }
+        case T_CHAR: case T_BOOL:{
+            to.integer = from.integer & 1;
+            break ;
+            }
+        case T_ENUMCONST: 
+            to.integer = from.ec->value & 1;
+            break ;
+        case T_BYTE:
+            to.integer = from.integer & 1;
+            break ;
+        case T_VECTOR: 
+        case T_BYTEVECTOR: 
+        case T_MAP: 
+        case T_FUNCTION: 
+        case T_THREAD: 
+        case T_CLASS: 
+        case T_CLOSURE: 
+        case T_INTERFACE: 
+        case T_MONITOR: 
+        case T_PACKAGE: 
+        case T_ENUM: 
+            return false ;
+        case T_OBJECT: {
+            if (from.object == NULL) {
+                return false ;
+            } else {
+                Variable *var = from.object->block->findVariable (string("toBoolean"), scope, VAR_PUBLIC, ir->source, NULL) ;
+                if (var == NULL) {
+                    return false ;
+                } else {
+                    Value &v = var->getValue(from.object) ;
+                    if (v.type != T_FUNCTION) {
+                        return false ;
+                    } else {
+                        Operand res ;
+                        callFunction (&res, v.block, from.object) ;
+                        to = res.val ;
+                    }
+                }
+            }
+            break ;
+            }
+        default:;
+        }
+        break ;
+        }
     case T_BYTE: {
         switch (from.type) {
         case T_INTEGER: {
@@ -6017,7 +6128,7 @@ bool VirtualMachine::convertType (const Value &from, Value &to) {
         case T_STRING: {
             return false ;
             }
-        case T_CHAR: {
+        case T_CHAR: case T_BOOL:{
             to.integer = from.integer ;
             break ;
             }
@@ -6098,7 +6209,7 @@ bool VirtualMachine::convertType (const Value &from, Value &to) {
                     to.bytevec->push_back (from.integer >> i) ;
                 }
                 break ;
-            case T_CHAR:
+            case T_CHAR: case T_BOOL:
             case T_BYTE:
                 to.bytevec->push_back (from.integer) ;
                 break ;
@@ -6227,7 +6338,7 @@ bool VirtualMachine::convertType (const Value &from, Value &to) {
         break ;
 
     case T_ENUM: 
-        if (from.type == T_INTEGER || from.type == T_BYTE || from.type == T_CHAR) {           // allow cast from int to enum
+        if (from.type == T_INTEGER || from.type == T_BYTE || from.type == T_CHAR || from.type == T_BOOL) {           // allow cast from int to enum
             Enum *e = to.en ;
             for (int i = 0 ; i < e->consts.size() ; i++) {
                 if (e->consts[i]->value == from.integer) {
@@ -6765,6 +6876,7 @@ Foreach::Foreach (VirtualMachine *v, Value *var, Value &val, int end, int p, Int
     switch (workingType) {
     case T_INTEGER:
     case T_CHAR:
+    case T_BOOL:
     case T_BYTE:
         endindex = value.integer ;
         if (endindex < 0) {
@@ -6866,7 +6978,7 @@ void Foreach::next() {
         *controlVar = currindex ;		// set control var
         currindex += direction ;
         break ;
-    case T_CHAR:
+    case T_CHAR: case T_BOOL:
         if (currindex == endindex) {
             goto endforeach ;
         }
@@ -6989,7 +7101,7 @@ inline bool VirtualMachine::subscriptok (const Value &v, int i) {
             return false ;
         }
         break ;
-    case T_CHAR:
+    case T_CHAR: case T_BOOL:
     case T_BYTE:
         if (i < 0 || i > 7) {
             return false ;
@@ -7074,7 +7186,7 @@ void VirtualMachine::getsub (Operand *dest, Value &srcaddr, Value &index) {
         if (subscriptok (src, ilo)) {
 
             switch (src.type) {
-            case T_INTEGER: case T_CHAR: case T_BYTE: {
+            case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:{
                 INTEGER v = (src.integer >> ilo) & 1 ;
                 set (dest, v) ;
                 break ;
@@ -7168,7 +7280,7 @@ void VirtualMachine::setsub (Operand *dest, Value &val, Value &destaddr, Value &
         if (subscriptok (src, ilo)) {
 
             switch (src.type) {
-            case T_INTEGER: case T_CHAR: case T_BYTE: {
+            case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:{
                 INTEGER mask = (INTEGER)1 << ilo ;
                 INTEGER oldv = src.integer & ~mask ;
                 INTEGER newv = oldv | ((val.integer << ilo) & mask) ;
@@ -7223,7 +7335,7 @@ void VirtualMachine::delsub (Value &srcaddr, Value &index) {
         int ilo = getInt (index) ;
         if (subscriptok (src, ilo)) {
             switch (src.type) {
-            case T_INTEGER: case T_CHAR: case T_BYTE: {
+            case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:{
                 runtimeError ("Can't delete bits in an integer") ;
                 break ;
                 }
@@ -7297,7 +7409,7 @@ void VirtualMachine::getsub (Operand *dest, Value &srcaddr, Value &lo, Value &hi
             INTEGER range = ihi - ilo + 1 ;                     // number of bits
 
             switch (src.type) {
-            case T_INTEGER: case T_CHAR: case T_BYTE: {
+            case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:{
                 INTEGER mask = ((INTEGER)1 << range) - 1 ;
                 INTEGER v = (src.integer >> ilo) & mask ;
                 set (dest, v) ;
@@ -7360,7 +7472,7 @@ void VirtualMachine::setsub (Operand *dest, Value &val, Value &destaddr, Value &
             INTEGER range = ihi - ilo + 1 ;                     // number of bits
 
             switch (src.type) {
-            case T_INTEGER: case T_CHAR: case T_BYTE: {
+            case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:{
                 INTEGER mask = (((INTEGER)1 << range) - 1) << ilo ;
                 INTEGER oldv = src.integer & ~mask ;
                 INTEGER newv = oldv | ((val.integer << ilo) & mask) ;
@@ -7554,7 +7666,7 @@ void VirtualMachine::delsub (Value &srcaddr, Value &lo, Value &hi) {
         int width = ihi - ilo + 1;
         if (subscriptok (src, ilo) && subscriptok (src, ihi)) {
             switch (src.type) {
-            case T_INTEGER: case T_CHAR: case T_BYTE: {
+            case T_INTEGER: case T_CHAR: case T_BYTE: case T_BOOL:{
                 runtimeError ("Can't delete bits in an integer") ;
                 break ;
                 }
@@ -7742,7 +7854,7 @@ void RawNativeFunction::call (Value *dest, VirtualMachine *vm, StackFrame *stack
         const Value &v = parameters[i] ;
         switch (v.type) {
         case T_INTEGER:
-        case T_CHAR:
+        case T_CHAR: case T_BOOL:
         case T_BYTE:
             paras[p] = reinterpret_cast<void*>(v.integer) ;
             break ;
@@ -7780,6 +7892,7 @@ void RawNativeFunction::call (Value *dest, VirtualMachine *vm, StackFrame *stack
                     switch (tmp.val.type) {
                     case T_INTEGER:
                     case T_CHAR:
+                    case T_BOOL:
                     case T_BYTE:
                         paras[p] = reinterpret_cast<void*>(tmp.val.integer) ;
                         continue ;
@@ -7842,6 +7955,15 @@ struct ArgMatch {
         { 'I', POSSIBLEMATCH},
         { 'B', POSSIBLEMATCH},
         { 'C', EXACTMATCH},
+        { 'J', POSSIBLEMATCH},
+        { 'F', POSSIBLEMATCH},
+        { 'D', POSSIBLEMATCH},
+        { 'S', POSSIBLEMATCH}}
+    },
+    { T_BOOL, {
+        { 'I', POSSIBLEMATCH},
+        { 'B', EXACTMATCH},
+        { 'C', POSSIBLEMATCH},
         { 'J', POSSIBLEMATCH},
         { 'F', POSSIBLEMATCH},
         { 'D', POSSIBLEMATCH},

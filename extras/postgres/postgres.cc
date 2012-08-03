@@ -25,7 +25,7 @@ AIKIDO_NATIVE (pginit) {
     initdone = true ;
 
     Scope *scope ;
-    Tag *pkg = b->findTag (string (".PostgreSQL")) ;
+    Tag *pkg = b->findTag (string (".PostgreSQL"), currentScope) ;
     if (pkg == NULL) {
         throw Exception ("Can't find PostgreSQL package") ;
     }

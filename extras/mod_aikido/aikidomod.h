@@ -18,7 +18,7 @@ namespace aikido {
 namespace apache {
 
 class Request;
-
+class ApacheWorker;
 class Servlet;
 
 class ServletMapping {
@@ -37,11 +37,13 @@ class Servlet {
     friend class WebApp;
 public:
     Servlet (std::string nm) : name(nm),serviceFunction(NULL), doGet(NULL),
-                   doPost(NULL),doPut(NULL), doDelete(NULL), initialize(NULL), initialized(false) {}
+                   doPost(NULL),doPut(NULL), doDelete(NULL), initialize(NULL) {}
     ~Servlet();
 
     bool match (std::string url);       // does the url match a known url pattern
     std::string getName() { return name;}
+
+    Value &getObject() { return object;}
 private:
     std::string name;
     std::vector<std::string> files;
@@ -55,12 +57,11 @@ private:
     Function *doPut;
     Function *doDelete;
     Function *initialize;
-    bool initialized;
 };
 
 class WebApp {
 public:
-    WebApp (Aikido *aikido, std::string dir, std::string warfile);
+    WebApp (Aikido *aikido, ApacheWorker *worker, std::string dir, std::string warfile);
     ~WebApp();
 
     void parseWebInf();
@@ -74,18 +75,23 @@ public:
     std::string getDir() { return wardir; }
     Object *getAppObj() { return appobj; }
 
+    Servlet *findServlet (std::string name, bool create=true);
+    std::string getWARName() ;
+
+    ApacheWorker *getWorker() { return worker;}
+    void postInitialize(aikido::WorkerContext *ctx);
 private:
     void parse (Servlet *servlet,  StackFrame *stack, StaticLink *slink, Scope *scope, int sl);
     Function *findServletFunction (Servlet *servlet, std::string name);
 
     void writeErrorPage (Servlet *servlet, Request *req, std::ostream &outstream, std::string error);
 
-    Servlet *findServlet (std::string name);
     void parseServletMapping (XML::Element *tree) ;
     void parseServlet (XML::Element *tree) ;
     void parseWebApp (XML::Element *tree) ;
 
     Aikido *aikido;
+    ApacheWorker *worker;
     std::string dir;
     std::string warfile;
     std::string wardir;
@@ -97,6 +103,7 @@ private:
     // global variables shared among all servlets in this webapp
     typedef std::map<std::string, Value> Variables;
     Variables variables;
+
 };
 
 class Request {
@@ -127,6 +134,7 @@ public:
     bool isClaimed(std::string word) ;
  
     std::vector<WebApp*> &getWebApps() { return webapps;}
+    Servlet *findServlet (std::string warname, std::string serlvetname);
 private:    
     std::string webappdir;
 
@@ -143,6 +151,7 @@ private:
     std::string readString (std::string::size_type &ch, std::string line);
 
     void initWebapps(aikido::WorkerContext *ctx);
+    void postInitWebapps(aikido::WorkerContext *ctx);
 };
 
 struct aikidoenv {
