@@ -2122,7 +2122,7 @@ void Aikido::readLine(bool skipblank) {
         } while (num_replacements > 0) ;
 #endif
         
-        if (*ch == '#') {		// CPP # line "file"
+        if (*ch == '#' && ch[1] != '{') {		// CPP # line "file", but not #{
             if (properties & NOCPP) {
                continue ;
             }
