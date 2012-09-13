@@ -640,6 +640,12 @@ package CParser {
                         done = true
                     }
                     break
+
+                case T_INLINE:
+                    // ignored for now
+                    lex.nextToken()
+                    break
+
                 case T_UNSIGNED:
                     type |= CUNSIGNED
                     lex.nextToken()
@@ -794,7 +800,7 @@ package CParser {
             }
 
             function pointer {
-                if (lex.match (T_STAR)) {
+                if (lex.match (T_STAR) || lex.match (T_CARET)) {
                     var qual = 0
                     if (lex.match (T_CONST)) {
                         qual |= CCONST
@@ -811,6 +817,29 @@ package CParser {
                 }
             }
 
+           function skipBrackets() {
+               if (lex.match (T_LPAREN)) {
+                   var nbras = 1
+                   while (!lex.eof() && nbras > 0) {
+                       if (lex.match (T_RPAREN)) {
+                           nbras--
+                       } elif (lex.match (T_LPAREN)) {
+                           nbras++
+                       } else {
+                           lex.nextToken()
+                       }
+                   }
+               }
+           }
+
+           function processAsm {
+               skipBrackets()
+           }
+
+           function processAttribute {
+               skipBrackets()
+           }
+
            pointer()
            while (!stack.empty()) {
                var decl = stack.top()
@@ -824,6 +853,17 @@ package CParser {
            } else {
                symbol = new Symbol (fakename())
                symbol.setType (t)
+           }
+
+           // process gcc extensions
+           while (!lex.eof()) {
+               if (lex.match (T_ASM)) {
+                   processAsm()
+               } elif (lex.match (T_ATTRIBUTE)) {
+                   processAttribute()
+               } else {
+                  break
+               }
            }
            return symbol
            

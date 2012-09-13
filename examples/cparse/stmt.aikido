@@ -282,6 +282,7 @@ package CParser {
         function needsemi {
             if (!lex.match (T_SEMICOLON)) {
                 error ("Semicolon expected")
+                lex.nextToken()
             }
         }
 

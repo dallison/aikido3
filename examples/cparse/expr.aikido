@@ -230,6 +230,17 @@ package CParser {
             }
         }
 
+        function checkAssignment (left, right) {
+            if (left == right) {
+                return true
+            }
+
+            if (left.isIntegral() && right.isIntegral()) {
+                return true
+            }
+            return false
+        }
+
         class Expression (public opcode, public left = null, public right = null) extends Node {
 
             public function hasAddress {
@@ -413,7 +424,7 @@ package CParser {
                         }
                     }
                 } else {
-                    if (lefttype != righttype) {
+                    if (!checkAssignment(lefttype, righttype)) {
                         warning ("Illegal assignment types")
                     }
                 }
@@ -1150,7 +1161,7 @@ package CParser {
                     if (n == 0) {
                         n = 0x7fffffff                  // something pretty large
                     }
-                    int numinits = 0
+                    var numinits = 0
                     while (numinits < n) {
                         if (lex.currentToken == T_RBRACE) {
                             break

@@ -183,7 +183,7 @@ typedef unsigned long long UINTEGER ;
 #endif
 #endif
 
-#define VERSION 303
+#define VERSION 304
 const int version_number = VERSION ;
 
 // set of properties
@@ -2499,6 +2499,7 @@ private:
     void readForeignLines (std::iostream &s) ;
     bool isRecognized() ;
     Node *getBlock (Token tok, bool isstatic, bool issync, AnnotationList &annotations) ;
+    void checkAbstract (Block *block);
 
     Node *importStream (string full, string fn, std::istream &in, string dbg) ;
     bool appendIfExists (const string &name, std::vector<ImportFile> &result) ;

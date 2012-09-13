@@ -5001,6 +5001,8 @@ void Aikido::extendBlock (Block *block) {
         (*s)->block->moveMembers (delta) ;
     }
      
+    checkAbstract (block);
+
     currentMajorScope = oldscope ;
     switch (block->type) {
     case T_CLASS:
@@ -5987,19 +5989,7 @@ Node *Aikido::getBlock (Token command, bool isstatic, bool issync, AnnotationLis
             debugger->registerBlock (block) ;
         }
         currentScopeLevel = oldScopeLevel ;
-
-        // check for predefined blocks and set the isabstract flag
-        Scope::VarMap::iterator i = block->variables.begin() ;
-        for (; i != block->variables.end() ; i++) {
-            if (i->first[0] == '.') {
-                Tag *tag = (Tag*)i->second ;
-                if (tag->flags & VAR_PREDEFINED) {
-                    block->flags |= BLOCK_ISABSTRACT ;
-                    break ;
-                }
-            }
-        
-        }
+        checkAbstract (block);
 
     } else {
         error ("%s name expected", blockname) ;
@@ -6008,6 +5998,26 @@ Node *Aikido::getBlock (Token command, bool isstatic, bool issync, AnnotationLis
     currentAccessMode = oldAccessMode ;
     return node ;
 }
+
+void Aikido::checkAbstract (Block *block) {
+    // first clear flag
+    block->flags &= ~BLOCK_ISABSTRACT;
+
+    // check for predefined blocks and set the isabstract flag
+    Scope::VarMap::iterator i = block->variables.begin() ;
+    for (; i != block->variables.end() ; i++) {
+        if (i->first[0] == '.') {
+            Tag *tag = (Tag*)i->second ;
+            if (tag->flags & VAR_PREDEFINED) {
+                block->flags |= BLOCK_ISABSTRACT ;
+                break ;
+            }
+        }
+    
+    }
+
+}
+
 
 void Aikido::checkOperatorDefinition (InterpretedBlock *block) {
     int nparas = block->parameters.size() ;

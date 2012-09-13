@@ -44,6 +44,8 @@ package CParser {
         T_AUTO, T_STATIC, T_EXTERN, T_REGISTER, T_TYPEDEF,
         T_SIZEOF, T_BREAK, T_CONTINUE, T_RETURN,
         T_SWITCH, T_CASE, T_DEFAULT, T_GOTO, 
+ 
+        T_ASM, T_ATTRIBUTE, T_INLINE,
 
         T_SEMICOLON, T_STAR, T_RPAREN, T_LPAREN, T_DOT,
         T_LSQUARE, T_RSQUARE, T_PLUS, T_MINUS, T_SLASH,
@@ -96,6 +98,11 @@ package CParser {
         addReservedWord ("default", T_DEFAULT)
         addReservedWord ("goto", T_GOTO)
         addReservedWord ("void", T_VOID)
+
+        addReservedWord ("__asm", T_ASM)
+        addReservedWord ("__attribute__", T_ATTRIBUTE)
+        addReservedWord ("__inline__", T_INLINE)
+        addReservedWord ("__inline", T_INLINE)
 
         addToken ("...", T_ELLIPSIS) ;
         addToken ("*", T_STAR) ;
@@ -300,6 +307,7 @@ package CParser {
 
         function error (s) { 
             println ("\"" + lex.filename + "\", line " + lex.lineno + ": " + s, stderr)
+            println (lex.line)
             numErrors++
             if (numErrors > maxErrors) {
                 println ("Too many errors, goodbye", stderr)
